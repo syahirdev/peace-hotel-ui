@@ -369,7 +369,37 @@
       var all = areas[i].getElementsByTagName('*');
       for (var j = 0; j < all.length; j++) darkMark(all[j]);
     }
+    shopSync();
   }
+  // ---------------------------------------------------------------- full-screen Shop
+  // On a phone the Shop shows one pane at a time: the category list, then the chosen page with a back
+  // bar. nitro.css does the layout; this only switches .pu-page on the card and keeps the back bar there.
+  var shopSeen = new WeakSet();
+  function shopSync() {
+    var card = document.querySelector('.nitro-catalog');
+    if (!card) return;
+    if (!shopSeen.has(card)) { shopSeen.add(card); card.classList.remove('pu-page'); }
+    var col = card.querySelector('.catalog-left + .g-col-8');
+    if (!col) return;
+    var bar = col.querySelector(':scope > .pu-back');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'pu-back'; bar.setAttribute('role', 'button');
+      bar.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span></span>';
+      col.insertBefore(bar, col.firstChild);
+    }
+    var act = card.querySelector('.nitro-catalog-navigation-grid-container .layout-grid-item.active');
+    bar.querySelector('span').textContent = act ? act.textContent.trim() : 'Categories';
+  }
+  function shopClick(e) {
+    var t = e.target, card = t.closest && t.closest('.nitro-catalog');
+    if (!card) return;
+    if (t.closest('.pu-back') || t.closest('.nitro-card-tabs .nav-link')) { card.classList.remove('pu-page'); return; }
+    var item = t.closest('.nitro-catalog-navigation-grid-container .layout-grid-item');
+    // A branch (it has an arrow) only opens its children; a page opens full width.
+    if (item && !item.querySelector('svg')) setTimeout(function () { card.classList.add('pu-page'); shopSync(); }, 0);
+  }
+
   function darkQueue() { if (!darkQueued) { darkQueued = true; setTimeout(darkScan, 120); } }
   function setDark(on) {
     document.documentElement.classList.toggle('pu-dark', on);
@@ -817,7 +847,9 @@
   }
   function closeAll() { closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); closeRoomMenu(); report(); }
   function back() {
+    var shopPage = document.querySelector('.nitro-catalog.pu-page');
     if ($rpop.classList.contains('on')) closeRoomMenu();
+    else if (shopPage) shopPage.classList.remove('pu-page');
     else if ($pop.classList.contains('on')) $pop.classList.remove('on');
     else if ($modal.classList.contains('on')) closeModal();
     else if (pageOpen()) closePage();
@@ -909,6 +941,7 @@
     window.addEventListener('battlepass.unclaimed', function (e) {
       S.bp.unclaimed = Math.max(0, (e.detail && e.detail.count) || 0); changed('bp');
     });
+    document.addEventListener('click', shopClick, true);
     // A tap on the game closes the currency and Room drop-downs.
     document.addEventListener('pointerdown', function (e) {
       if (e.target === host) return;
