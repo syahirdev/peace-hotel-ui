@@ -146,7 +146,7 @@ html.pu-dark .draggable-window .content-area select {
 html.pu-dark .draggable-window .content-area ::placeholder { color: var(--pw-ink2) !important; }
 html.pu-dark .draggable-window .content-area .btn { border-radius: 10px !important; box-shadow: none !important; text-shadow: none !important; }
 html.pu-dark .draggable-window .content-area .btn-primary,
-html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #0b1116 !important; font-weight: 600 !important; }
+html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #fff !important; font-weight: 700 !important; }
 html.pu-dark .draggable-window .content-area .btn-secondary,
 html.pu-dark .draggable-window .content-area .btn-dark,
 html.pu-dark .draggable-window .content-area .btn-light { background: var(--pw-s2) !important; border-color: var(--pw-line) !important; color: var(--pw-ink) !important; }
@@ -159,7 +159,7 @@ html.pu-dark .user-profile .profile-nav-bar { background: var(--pw-bg) !importan
 /* Marks set by the dark-windows pass in frame.js. */
 html.pu-dark [data-pu-ink="1"] { color: var(--pw-ink) !important; }
 html.pu-dark [data-pu-ink="2"] { color: var(--pw-ink2) !important; }
-html.pu-dark [data-pu-ink="tint"] { filter: brightness(2.2) saturate(.8); }
+html.pu-dark [data-pu-ink="tint"] { color: var(--pu-ink) !important; }
 html.pu-dark [data-pu-bg="1"] { background: var(--pw-s1) !important; box-shadow: none !important; }
 html.pu-dark [data-pu-bg="2"] { background: var(--pw-s2) !important; box-shadow: none !important; }
 html.pu-dark [data-pu-bg="tint"] { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
@@ -245,3 +245,75 @@ html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child se
 html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn { height: 38px !important; width: 38px !important; }
 html.pu-on .nitro-catalog .purchase-buttons .btn-primary { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important; }
 html.pu-on .nitro-inventory:not(.trading) .g-col-5 .btn-primary { background: #169ccc !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #47e3fc !important; font-weight: 700 !important; }
+
+/* ---------------------------------------------------------------- Phase 3
+   Rooms and Change looks full screen too; dark buttons everywhere; Rare values fixes. */
+html.pu-on .draggable-window:has(> .nitro-navigator),
+html.pu-on .draggable-window:has(> .nitro-avatar-editor),
+html.pu-on .draggable-window:has(> .nitro-rarevalues-window) { top: 52px !important; }
+html.pu-on .draggable-window > .nitro-navigator,
+html.pu-on .draggable-window > .nitro-avatar-editor,
+html.pu-on .draggable-window > .nitro-rarevalues-window { height: 100% !important; max-height: none !important; border-radius: 0 !important; box-shadow: none !important; }
+html.pu-on .nitro-navigator .nitro-card-header,
+html.pu-on .nitro-avatar-editor .nitro-card-header,
+html.pu-on .nitro-rarevalues-window .nitro-card-header { min-height: 44px !important; padding: 0 !important; }
+html.pu-on .nitro-navigator .content-area,
+html.pu-on .nitro-avatar-editor .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; padding: 8px 10px 10px !important; }
+
+/* Rooms: pencil centred in the search box; equal space left and right of the room list */
+html.pu-on .nitro-navigator .navigator-search-button { top: 50% !important; right: 10px !important; transform: translateY(-50%) !important; margin: 0 !important; }
+html.pu-on .nitro-navigator input.form-control, html.pu-on .nitro-navigator select.form-select { height: 38px !important; font-size: 14px !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto { scrollbar-width: none !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto::-webkit-scrollbar { display: none !important; }
+html.pu-on .nitro-navigator .containernew-kvjd { width: 100% !important; }
+html.pu-on .nitro-navigator .navigator-item { border-radius: 6px !important; padding: 4px !important; }
+html.pu-on .nitro-navigator .nav-category { font-family: UbuntuBold, Ubuntu, sans-serif !important; }
+
+/* Change looks: preview row on top, wardrobe fills the screen, colours in a strip under it */
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-4 { height: 138px !important; }
+html.pu-on .nitro-avatar-editor .figure-preview-container { zoom: .45 !important; }
+html.pu-on .nitro-avatar-editor .choose-clothing { height: 100% !important; overflow: hidden !important; }
+html.pu-on .nitro-avatar-editor .choose-clothing > .d-flex.overflow-hidden { flex: 1 1 auto !important; min-height: 0 !important; flex-direction: column !important; }
+html.pu-on .nitro-avatar-editor .avatar-parts-container { flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; max-width: none !important; }
+html.pu-on .nitro-avatar-editor .avatar-color-palette-container { flex: 0 0 auto !important; width: 100% !important; height: 80px !important; max-width: none !important; }
+html.pu-on .nitro-avatar-editor .avatar-color-palette-container .insidething { height: 100% !important; }
+html.pu-on .nitro-avatar-editor .avatar-editor-palette-set-view { grid-template-columns: repeat(auto-fill, minmax(26px, 1fr)) !important; grid-auto-rows: 26px !important; height: 100% !important; }
+html.pu-on .nitro-avatar-editor .avatar-editor-palette-set-view > * { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-avatar-editor .category-item { height: 40px !important; }
+/* Wardrobe pictures are dark line art drawn for a light box, so their tiles stay light. */
+html.pu-on .nitro-avatar-editor .clothing-container .layout-grid-item { background-color: #c4c8ce !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: none !important; }
+html.pu-on .nitro-avatar-editor .clothing-container .layout-grid-item.active { box-shadow: 0 0 0 2px #169ccc !important; background-color: #d9eef7 !important; }
+
+/* Buttons in every window: Peace dark buttons, blue for the main action */
+html.pu-dark .draggable-window .btn-secondary, html.pu-dark .draggable-window .btn-light,
+html.pu-dark .draggable-window .btn-dark, html.pu-dark .draggable-window .btn-outline-secondary {
+  background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important;
+}
+html.pu-dark .draggable-window .btn-primary, html.pu-dark .draggable-window .btn-success {
+  background: #169ccc !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #47e3fc !important; font-weight: 700 !important;
+}
+html.pu-dark .draggable-window .btn-danger { background: #c62f32 !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #ff7b7d !important; }
+html.pu-dark .draggable-window .btn.disabled, html.pu-dark .draggable-window .btn:disabled { opacity: .45 !important; }
+html.pu-on .nitro-catalog .purchase-buttons .btn-primary { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important; font-weight: 400 !important; }
+
+/* Rare values: search on its own row, readable cards and paging */
+html.pu-on .rv-bar { flex-wrap: wrap !important; gap: 8px !important; }
+html.pu-on .rv-bar-search { flex: 1 1 100% !important; }
+html.pu-on .rv-bar-input { flex: 1 1 auto !important; width: auto !important; }
+html.pu-on .rv-bar-select { flex: 1 1 0 !important; min-width: 0 !important; }
+html.pu-dark .rv-card { background: #1c1c1c !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important; }
+html.pu-dark .rv-card-tag { background: rgba(0,0,0,.7) !important; color: #fff !important; }
+html.pu-dark .rv-card-name { color: #f2f2f2 !important; }
+html.pu-dark .rv-pill, html.pu-dark .rv-pagelabel { color: #d0d0d0 !important; }
+html.pu-dark .rv-pagebtn { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; }
+/* Change looks: keep the clothing grid roomy when Peace's layer panel shows */
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-4 { height: 124px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel { gap: 4px !important; padding: 6px 8px !important; flex: none !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel > .d-flex:first-child { height: 22px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column { max-height: 76px !important; overflow-y: auto !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-row { min-height: 0 !important; padding: 3px 6px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-row .avatar-layer-main { height: 28px !important; }
+html.pu-on .nitro-avatar-editor .avatar-color-palette-container { height: 78px !important; }
+html.pu-on .nitro-avatar-editor .avatar-editor-palette-set-view { grid-auto-rows: 26px !important; }
+html.pu-on .nitro-avatar-editor .figure-preview-container { zoom: .4 !important; }
+html.pu-on .nitro-navigator .d-flex:has(> .navigator-search-button) { position: relative !important; }
