@@ -1,0 +1,8 @@
+/*
+ * Added to the Peace website page that hosts the game iframe (www.peacehotel.my/game/nitro).
+ * Hides the CMS's yellow Home / Reload / Fullscreen / online-count buttons; Reload and
+ * Back to website live in the Peace UI's Me sheet instead. Only applies on the game page.
+ */
+body:has(iframe#nitro) .absolute.top-4.left-4 {
+  display: none !important;
+}
