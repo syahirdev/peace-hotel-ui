@@ -53,8 +53,9 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .tab.on { color: var(--ink); }
 .tab.on .ico { background: var(--acc-soft); color: var(--acc); }
 .tab:active .ico { background: var(--s2); }
-.mehead { width: 26px; height: 26px; border-radius: 8px; overflow: hidden; display: grid; place-items: end center; background: var(--s2); }
-.mehead img { width: 27px; height: 30px; margin-bottom: -4px; object-fit: cover; }
+/* Peace's imager always returns the full body (64x110), so avatars show the top of it: head and shoulders. */
+.mehead { width: 26px; height: 26px; border-radius: 8px; overflow: hidden; display: grid; place-items: start center; background: var(--s2); }
+.mehead img { width: 44px; height: 76px; max-width: none; margin-top: -9px; }
 .badge { position: absolute; top: -3px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; line-height: 14px; text-align: center; font-variant-numeric: tabular-nums; border: 2px solid var(--s0); font-style: normal; }
 
 /* sheets */
@@ -90,11 +91,11 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 6px 10px 6px 16px; text-align: left; cursor: pointer; }
 .row:active { background: var(--s2); }
 .avw { position: relative; flex: none; }
-.av { width: 44px; height: 44px; border-radius: 12px; background: #24262c; display: grid; place-items: end center; overflow: hidden; color: var(--ink2); font-weight: 650; font-size: 17px; }
-.av img { width: 44px; height: 50px; margin-bottom: -6px; object-fit: cover; }
+.av { width: 44px; height: 44px; border-radius: 12px; background: #24262c; display: grid; place-items: start center; overflow: hidden; color: var(--ink2); font-weight: 650; font-size: 17px; }
+.av img { width: 64px; height: 110px; max-width: none; margin-top: -14px; }
 .av.ini { place-items: center; background: hsl(var(--h, 200) 22% 22%); color: hsl(var(--h, 200) 60% 78%); }
 .av.xl { width: 72px; height: 72px; border-radius: 18px; font-size: 26px; }
-.av.xl img { width: 72px; height: 82px; margin-bottom: -10px; }
+.av.xl img { width: 96px; height: 165px; margin-top: -20px; }
 .avw .st { position: absolute; right: -3px; bottom: -3px; width: 13px; height: 13px; border-radius: 50%; background: var(--on); border: 3px solid var(--s1); }
 .off .av img { filter: grayscale(.9); opacity: .55; }
 .off .av.ini { opacity: .55; }
@@ -140,6 +141,10 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .lt { display: flex; flex-direction: column; }
 .lt small { font-size: 12.5px; color: var(--ink2); }
 .danger { color: var(--bad); }
+.sw { position: relative; width: 40px; height: 24px; border-radius: 12px; background: #3a3d44; transition: background .2s; flex: none; }
+.sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.sw.on { background: var(--acc); }
+.sw.on::after { transform: translateX(16px); }
 .tsw { width: 26px; height: 26px; border-radius: 50%; background: var(--c); border: 2px solid transparent; }
 .tsw.on { box-shadow: 0 0 0 2px var(--s2), 0 0 0 4px var(--ink); }
 .footnote { display: flex; align-items: center; gap: 8px; margin: 14px 16px 0; font-size: 12.5px; color: var(--ink3); }

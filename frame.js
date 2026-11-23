@@ -22,7 +22,8 @@
   var BRIDGE = window.PeaceUi || null;
 
   // ---------------------------------------------------------------- config
-  var IMAGER = 'https://www.habbo.com/habbo-imaging/avatarimage?figure=';
+  // Peace's own imager (the website uses it too), so custom clothes render.
+  var IMAGER = 'https://imager.peacehotel.my/?figure=';
   var IN = {
     ROOM_ENTER: 758, ROOM_INFO: 687, DESKTOP_VIEW: 122,
     USER_INFO: 2725, USER_FIGURE: 2429,
@@ -31,23 +32,26 @@
   };
   var OUT = { FOLLOW: 3997, PROFILE: 3265, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
   // Nitro controls the tabs and Me tiles press. Each entry: selectors to try, in order.
+  // Peace's client always renders its desktop toolbar (.nitro-toolbar) next to the phone tab bar, so the
+  // first group is always in the page. The Me group lives in Nitro's Me menu (.nitro-toolbar-me), which
+  // only exists while that menu is open.
   var NITRO = {
-    rooms: ['.navigation-item.icon-rooms'],
-    shop: ['.navigation-item.icon-catalog'],
-    inventory: ['.navigation-item.icon-inventory'],
-    mentions: ['.navigation-item.icon-mention'],
-    phone: ['.navigation-item.icon-phone'],
-    camera: ['.navigation-item.icon-camera'],
-    profile: ['.navigation-item.icon-me-profile'],
-    looks: ['.navigation-item.icon-me-clothing'],
-    achievements: ['.navigation-item.icon-me-achievements'],
-    myrooms: ['.navigation-item.icon-me-rooms'],
-    settings: ['.navigation-item.icon-me-settings'],
-    help: ['.navigation-item.icon-me-helper-tool']
+    rooms: ['.nitro-toolbar .navigation-item.icon-rooms', '.navigation-item.icon-rooms'],
+    shop: ['.nitro-toolbar .navigation-item.icon-catalog', '.navigation-item.icon-catalog'],
+    inventory: ['.nitro-toolbar .navigation-item.icon-inventory', '.navigation-item.icon-inventory'],
+    mentions: ['.nitro-toolbar-right .navigation-item.icon-mention', '.navigation-item.icon-mention'],
+    phone: ['.nitro-toolbar-right .navigation-item.icon-phone', '.navigation-item.icon-phone'],
+    camera: ['.nitro-toolbar .navigation-item.icon-camera', '.navigation-item.icon-camera'],
+    profile: ['.nitro-toolbar-me .icon-me-profile'],
+    looks: ['.nitro-toolbar-me .icon-me-clothing'],
+    achievements: ['.nitro-toolbar-me .icon-me-achievements'],
+    prestige: ['.nitro-toolbar-me .icon-me-battlepass'],
+    rares: ['.nitro-toolbar-me .icon-me-rarevalues']
   };
-  // Buttons that open Nitro's Me/More panel, where some of the controls above live.
-  var NITRO_PANEL = ['.navigation-item.item-avatar', '.navigation-item.icon-more', '.toolbar-collapse-toggle'];
+  // The avatar button that opens Nitro's Me menu. It has the "active" class while the menu is open.
+  var NITRO_ME = ['.nitro-toolbar .navigation-item.item-avatar-bg-icon', '.navigation-item.item-avatar-bg-icon'];
   var DUCKETS = 0, DIAMONDS = 5;
+  var DARK_KEY = 'peaceUi.dark', FIGS_KEY = 'peaceUi.figs';
   var ACCENTS = ['#5cc8f2', '#a78bfa', '#34d399', '#f5c542'];
 
   // ---------------------------------------------------------------- state
@@ -107,9 +111,20 @@
     if (p < u.length) carry = u.slice(p);
   }
 
+  // The server sends a friend's look only while they are online, so remember the last one we saw.
+  var figs = {};
+  try { figs = JSON.parse(localStorage.getItem(FIGS_KEY) || '{}') || {}; } catch (e) { figs = {}; }
+  var figsTimer = 0;
   function readFriend(r) {
     var f = { id: r.int(), name: r.str(), gender: r.int(), online: r.bool(), follow: r.bool(), figure: r.str(), cat: r.int(), motto: r.str() };
     try { r.str(); r.str(); r.bool(); r.bool(); r.bool(); f.rel = r.short(); } catch (e) { f.rel = 0; }
+    if (f.figure) {
+      if (figs[f.id] !== f.figure) {
+        figs[f.id] = f.figure;
+        clearTimeout(figsTimer);
+        figsTimer = setTimeout(function () { try { localStorage.setItem(FIGS_KEY, JSON.stringify(figs)); } catch (e) {} }, 1000);
+      }
+    } else if (figs[f.id]) f.figure = figs[f.id];
     return f;
   }
 
@@ -229,30 +244,113 @@
     for (var i = 0; i < list.length; i++) { var el = document.querySelector(list[i]); if (el) return el; }
     return null;
   }
+  function meToggle() {
+    for (var i = 0; i < NITRO_ME.length; i++) { var el = document.querySelector(NITRO_ME[i]); if (el) return el; }
+    return null;
+  }
   function pressNitro(key) {
     var el = findNitro(key);
     if (el) { el.click(); return Promise.resolve(true); }
-    // Not on screen: open Nitro's Me/More panel, press the control, then close the panel again.
-    var toggle = null;
-    for (var i = 0; i < NITRO_PANEL.length && !toggle; i++) toggle = document.querySelector(NITRO_PANEL[i]);
-    if (!toggle) return Promise.resolve(false);
-    toggle.click();
+    // A Me menu control: open Nitro's Me menu, press the control, and make sure the menu ends up closed.
+    // The menu fades out (still in the page for a moment), so check the toggle's "active" class, not the menu.
+    var toggle = meToggle();
+    if (!toggle || !/^(profile|looks|achievements|prestige|rares)$/.test(key)) return Promise.resolve(false);
+    var wasOpen = toggle.classList.contains('active');
+    if (!wasOpen) toggle.click();
+    function closeMenu() { var t = meToggle(); if (t && t.classList.contains('active')) t.click(); }
     return new Promise(function (resolve) {
       var tries = 0;
       (function poll() {
         var el2 = findNitro(key);
         if (el2) {
           el2.click();
-          setTimeout(function () { if (findNitro(key)) toggle.click(); }, 50);
+          setTimeout(closeMenu, 60);
           resolve(true);
         } else if (++tries < 12) setTimeout(poll, 50);
-        else { toggle.click(); resolve(false); }
+        else { closeMenu(); resolve(false); }
       })();
     });
   }
   function openNitro(key, label) {
     closeAll();
     pressNitro(key).then(function (ok) { if (!ok) toast(label + ' is not available here yet'); });
+  }
+
+  // ---------------------------------------------------------------- dark Nitro windows
+  // Nitro's windows are drawn for a light theme. Instead of a rule for every window, elements are
+  // marked by their computed colours: near-black text turns light, light neutral backgrounds turn into
+  // dark surfaces, light pastel backgrounds keep a faint tint, light borders turn subtle. nitro.css
+  // styles the marks. They are data attributes, which React leaves alone when it re-renders.
+  var darkSeen = new WeakSet(), darkQueued = false, darkObserver = null;
+  var DARK_SKIP = 'img,canvas,svg,path,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
+  function rgba(s) {
+    var m = s && s.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+))?/);
+    return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] == null ? 1 : +m[4] } : null;
+  }
+  function lum(c) { return (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255; }
+  function sat(c) { var mx = Math.max(c.r, c.g, c.b), mn = Math.min(c.r, c.g, c.b); return mx ? (mx - mn) / mx : 0; }
+  function ownText(el) {
+    for (var n = el.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.nodeValue.trim()) return true;
+    return false;
+  }
+  function darkMark(el) {
+    if (darkSeen.has(el)) return;
+    darkSeen.add(el);
+    if (el.closest(DARK_SKIP)) return;
+    var cs = getComputedStyle(el);
+    if (ownText(el) || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      var c = rgba(cs.color);
+      if (c && c.a > 0.4) {
+        var L = lum(c);
+        if (L < 0.3) el.setAttribute('data-pu-ink', sat(c) > 0.35 ? 'tint' : '1');
+        else if (L < 0.5 && sat(c) < 0.2) el.setAttribute('data-pu-ink', '2');
+      }
+    }
+    // Flat colours and CSS gradients count; pictures never do. Inline colours are content (colour swatches).
+    var bi = cs.backgroundImage;
+    if ((bi === 'none' || (bi.indexOf('gradient') >= 0 && bi.indexOf('url(') < 0)) && !el.style.backgroundColor && !el.style.background) {
+      var b = rgba(bi === 'none' ? cs.backgroundColor : bi);
+      if (b && b.a > 0.5 && lum(b) > 0.7) {
+        if (sat(b) > 0.12) { el.style.setProperty('--pu-tint', 'rgb(' + b.r + ',' + b.g + ',' + b.b + ')'); el.setAttribute('data-pu-bg', 'tint'); }
+        else el.setAttribute('data-pu-bg', el.parentElement && el.parentElement.closest('[data-pu-bg]') ? '2' : '1');
+      }
+    }
+    var bd = rgba(cs.borderTopColor);
+    if (bd && parseFloat(cs.borderTopWidth) > 0 && lum(bd) > 0.55) el.setAttribute('data-pu-bd', '1');
+  }
+  function darkScan() {
+    darkQueued = false;
+    var areas = document.querySelectorAll('.draggable-window .nitro-card .content-area');
+    for (var i = 0; i < areas.length; i++) {
+      var all = areas[i].getElementsByTagName('*');
+      for (var j = 0; j < all.length; j++) darkMark(all[j]);
+    }
+  }
+  function darkQueue() { if (!darkQueued) { darkQueued = true; setTimeout(darkScan, 120); } }
+  function darkOn() {
+    try { return localStorage.getItem(DARK_KEY) !== '0'; } catch (e) { return true; }
+  }
+  function setDark(on) {
+    try { localStorage.setItem(DARK_KEY, on ? '1' : '0'); } catch (e) {}
+    document.documentElement.classList.toggle('pu-dark', on);
+    if (on && !darkObserver) {
+      darkObserver = new MutationObserver(function (ms) {
+        if (darkQueued) return;
+        for (var i = 0; i < ms.length; i++) {
+          var t = ms[i].target;
+          if (t.nodeType === 1 && t.closest('.draggable-window')) { darkQueue(); return; }
+          var add = ms[i].addedNodes;
+          for (var k = 0; k < add.length; k++) {
+            var n = add[k];
+            if (n.nodeType === 1 && (n.matches('.draggable-window,.nitro-card') || n.querySelector('.nitro-card'))) { darkQueue(); return; }
+          }
+        }
+      });
+      darkObserver.observe(document.body, { childList: true, subtree: true });
+      darkQueue();
+    } else if (!on && darkObserver) {
+      darkObserver.disconnect(); darkObserver = null;
+    }
   }
 
   // ---------------------------------------------------------------- helpers
@@ -284,7 +382,10 @@
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
     layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
     palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.7 1.7 0 0 1 1.7-1.7h2A5.6 5.6 0 0 0 22 10.8C22 5.9 17.5 2 12 2Z"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>'
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    moon: '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/>',
+    gem: '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/>',
+    star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
   };
   function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -296,7 +397,7 @@
     var cls = 'av' + (size ? ' ' + size : '');
     var ini = '<span class="' + cls + ' ini" style="--h:' + hue(name || '?') + '">' + esc((name || '?').charAt(0).toUpperCase()) + '</span>';
     if (!figure || !IMAGER) return ini;
-    var src = IMAGER + encodeURIComponent(figure) + '&headonly=1&size=m&direction=2&head_direction=2&gesture=sml';
+    var src = IMAGER + encodeURIComponent(figure) + '&direction=2&headonly=1&head_direction=2&gesture=sml';
     return '<span class="' + cls + '" data-ini="' + esc(name || '?') + '"><img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></span>';
   }
   function avw(f, size) { return '<span class="avw">' + av(f.name, f.figure, size) + (f.online ? '<i class="st"></i>' : '') + '</span>'; }
@@ -347,6 +448,7 @@
     nitroStyle.textContent = assets.nitro || '';
     (document.head || document.documentElement).appendChild(nitroStyle);
     document.documentElement.classList.add('pu-on');
+    setDark(darkOn());
 
     try { setAccent(localStorage.getItem('peaceUi.accent') || ACCENTS[0]); } catch (e) {}
     bind();
@@ -399,7 +501,7 @@
   }
   function renderMeTab() {
     var el = $('#mehead');
-    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&headonly=1&size=m&direction=2&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
+    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&direction=2&headonly=1&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
   }
   function renderBadges() {
     var n = unreadTotal() + S.requests.length, b = $('#fbadge');
@@ -582,7 +684,7 @@
   var TILES = [
     ['profile', 'Profile', 'user'], ['looks', 'Change looks', 'shirt'], ['mentions', 'Mentions', 'at'],
     ['phone', 'Phone', 'phone'], ['achievements', 'Achievements', 'trophy'], ['camera', 'Camera', 'camera'],
-    ['myrooms', 'My rooms', 'home'], ['settings', 'Settings', 'sliders'], ['help', 'Help', 'help']
+    ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star'], ['rooms', 'Rooms', 'compass']
   ];
   function meHTML() {
     var acc = '';
@@ -596,6 +698,7 @@
       '<div class="tools">' + TILES.map(function (t) { return '<button class="tool" data-me="' + t[0] + '">' + ic(t[2], 22) + '<span>' + t[1] + '</span></button>'; }).join('') + '</div>' +
       '<div class="sec"><span>App</span></div><div class="list mx">' +
       '<div class="li">' + ic('palette') + '<span class="lt">Theme<small>Accent colour</small></span><span class="end">' + ACCENTS.map(function (c) { return '<button class="tsw' + (c === acc ? ' on' : '') + '" style="--c:' + c + '" data-acc-c="' + c + '" aria-label="Accent ' + c + '"></button>'; }).join('') + '</span></div>' +
+      '<button class="li" data-dark="1" role="switch" aria-checked="' + darkOn() + '">' + ic('moon') + '<span class="lt">Dark game windows<small>Shop, rooms, profile and more</small></span><span class="end"><i class="sw' + (darkOn() ? ' on' : '') + '"></i></span></button>' +
       '<button class="li" data-app="reload">' + ic('refresh') + '<span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li" data-app="chatlog">' + ic('file') + '<span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li" data-app="classic">' + ic('layout') + '<span class="lt">Classic UI<small>Switch back to the original game layout</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
@@ -604,6 +707,7 @@
   }
   function setAccent(c) {
     host.style.setProperty('--acc', c);
+    document.documentElement.style.setProperty('--pu-acc', c);
     try { localStorage.setItem('peaceUi.accent', c); } catch (e) {}
   }
 
@@ -651,7 +755,7 @@
     }, true);
 
     root.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-acc-c]');
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-acc-c],[data-dark]');
       if (!el || el.disabled) return;
       var d = el.dataset;
       if (d.tab) {
@@ -697,6 +801,7 @@
       }
       if (d.app) { closeAll(); post({ a: d.app }); return; }
       if (d.accC) { setAccent(d.accC); rerenderSheet(); }
+      if (d.dark) { setDark(!darkOn()); rerenderSheet(); }
     });
 
     root.addEventListener('input', function (e) {
@@ -723,6 +828,6 @@
   else document.addEventListener('DOMContentLoaded', mount);
   window.__peaceUiDebug = function () {
     return { connected: !!(sock && sock.readyState === 1), me: S.me, credits: S.credits, cur: S.cur, room: S.room, friends: friendList().length, requests: S.requests.length,
-      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), panel: NITRO_PANEL.filter(function (s) { return !!document.querySelector(s); }) };
+      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), meToggle: !!meToggle() };
   };
 })();
