@@ -28,8 +28,10 @@
         else if (L < 0.5 && sat(c) < 0.2) el.setAttribute('data-pu-ink', '2');
       }
     }
-    if (cs.backgroundImage === 'none' && !el.style.backgroundColor && !el.style.background) {
-      var b = rgba(cs.backgroundColor);
+    var bi = cs.backgroundImage;
+    // Flat colours and CSS gradients count; pictures (url) never do. Inline colours are content (colour swatches).
+    if ((bi === 'none' || (bi.indexOf('gradient') >= 0 && bi.indexOf('url(') < 0)) && !el.style.backgroundColor && !el.style.background) {
+      var b = rgba(bi === 'none' ? cs.backgroundColor : bi);
       if (b && b.a > 0.5 && lum(b) > 0.7) {
         if (sat(b) > 0.12) { el.style.setProperty('--pu-tint', 'rgb(' + b.r + ',' + b.g + ',' + b.b + ')'); el.setAttribute('data-pu-bg', 'tint'); }
         else el.setAttribute('data-pu-bg', el.parentElement && el.parentElement.closest('[data-pu-bg]') ? '2' : '1');
