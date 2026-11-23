@@ -46,3 +46,37 @@ html.pu-on .user-profile .identity-row { width: 100% !important; height: auto !i
 html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
 html.pu-on .user-profile .identity-relationships { width: 100% !important; height: auto !important; }
 html.pu-on .user-profile .area-identity { height: auto !important; }
+
+/* Dark content: the common Nitro building blocks. */
+html.pu-on .draggable-window .nitro-card .content-area { background: var(--pw-bg) !important; color: var(--pw-ink) !important; }
+html.pu-on .draggable-window .content-area .text-black, html.pu-on .draggable-window .content-area .text-dark { color: var(--pw-ink) !important; }
+html.pu-on .draggable-window .content-area .text-muted { color: var(--pw-ink2) !important; }
+html.pu-on .draggable-window .content-area .bg-white, html.pu-on .draggable-window .content-area .bg-light,
+html.pu-on .draggable-window .content-area .bg-secondary, html.pu-on .draggable-window .content-area .bg-muted { background: var(--pw-s1) !important; }
+html.pu-on .draggable-window .content-area .layout-grid-item {
+  background-color: var(--pw-s1) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window .content-area .layout-grid-item.active { border-color: var(--pw-acc) !important; background-color: var(--pw-s2) !important; }
+html.pu-on .draggable-window .content-area input.form-control, html.pu-on .draggable-window .content-area .form-control,
+html.pu-on .draggable-window .content-area input[type=text], html.pu-on .draggable-window .content-area select {
+  background: var(--pw-s1) !important; color: var(--pw-ink) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; box-shadow: none !important; min-height: 34px;
+}
+html.pu-on .draggable-window .content-area ::placeholder { color: var(--pw-ink2) !important; }
+html.pu-on .draggable-window .content-area .btn { border-radius: 10px !important; box-shadow: none !important; text-shadow: none !important; }
+html.pu-on .draggable-window .content-area .btn-primary, html.pu-on .draggable-window .content-area .btn-success {
+  background: var(--pw-acc) !important; border-color: transparent !important; color: #0b1116 !important; font-weight: 600 !important;
+}
+html.pu-on .draggable-window .content-area .btn-secondary, html.pu-on .draggable-window .content-area .btn-dark, html.pu-on .draggable-window .content-area .btn-light {
+  background: var(--pw-s2) !important; border-color: var(--pw-line) !important; color: var(--pw-ink) !important;
+}
+
+/* Profile bento cards. */
+html.pu-on .user-profile .bento { background: var(--pw-s1) !important; color: var(--pw-ink) !important; border: 1px solid var(--pw-line) !important; border-radius: 14px !important; box-shadow: none !important; }
+html.pu-on .user-profile .bento * { color: inherit; }
+html.pu-on .user-profile .bento-title { color: var(--pw-ink2) !important; letter-spacing: .04em; }
+html.pu-on .user-profile .bento-count { background: var(--pw-s2) !important; color: var(--pw-ink) !important; border: 0 !important; }
+html.pu-on .user-profile .relationship-row { background: var(--pw-s2) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; color: var(--pw-ink2) !important; }
+html.pu-on .user-profile .profile-nav-bar { background: var(--pw-bg) !important; box-shadow: none !important; border: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .user-profile .profile-nav-actions { flex: none !important; }
