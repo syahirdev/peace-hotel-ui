@@ -23,7 +23,11 @@ html.pu-on body {
 }
 
 /* Nitro's own navigation, replaced by the Peace tab bar, Friends and Me.
+   Peace's phone layout has its own tab bar (.nitro-hud-tabbar), a toggle for it and a More sheet.
    Hidden elements can still be clicked from script, which is how the tabs open Nitro windows. */
+html.pu-on .nitro-hud-tabbar,
+html.pu-on .nitro-hud-tabs-toggle,
+html.pu-on .nitro-hud-more-sheet,
 html.pu-on .toolbar-navigation-list,
 html.pu-on .toolbar-collapse-toggle,
 html.pu-on .nitro-toolbar-me,

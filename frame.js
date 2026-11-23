@@ -22,7 +22,8 @@
   var BRIDGE = window.PeaceUi || null;
 
   // ---------------------------------------------------------------- config
-  var IMAGER = 'https://www.habbo.com/habbo-imaging/avatarimage?figure=';
+  // Peace's own imager (the website uses it too), so custom clothes render.
+  var IMAGER = 'https://imager.peacehotel.my/?figure=';
   var IN = {
     ROOM_ENTER: 758, ROOM_INFO: 687, DESKTOP_VIEW: 122,
     USER_INFO: 2725, USER_FIGURE: 2429,
@@ -31,22 +32,24 @@
   };
   var OUT = { FOLLOW: 3997, PROFILE: 3265, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
   // Nitro controls the tabs and Me tiles press. Each entry: selectors to try, in order.
+  // Peace's client always renders its desktop toolbar (.nitro-toolbar) next to the phone tab bar, so the
+  // first group is always in the page. The Me group lives in Nitro's Me menu (.nitro-toolbar-me), which
+  // only exists while that menu is open.
   var NITRO = {
-    rooms: ['.navigation-item.icon-rooms'],
-    shop: ['.navigation-item.icon-catalog'],
-    inventory: ['.navigation-item.icon-inventory'],
-    mentions: ['.navigation-item.icon-mention'],
-    phone: ['.navigation-item.icon-phone'],
-    camera: ['.navigation-item.icon-camera'],
-    profile: ['.navigation-item.icon-me-profile'],
-    looks: ['.navigation-item.icon-me-clothing'],
-    achievements: ['.navigation-item.icon-me-achievements'],
-    myrooms: ['.navigation-item.icon-me-rooms'],
-    settings: ['.navigation-item.icon-me-settings'],
-    help: ['.navigation-item.icon-me-helper-tool']
+    rooms: ['.nitro-toolbar .navigation-item.icon-rooms', '.navigation-item.icon-rooms'],
+    shop: ['.nitro-toolbar .navigation-item.icon-catalog', '.navigation-item.icon-catalog'],
+    inventory: ['.nitro-toolbar .navigation-item.icon-inventory', '.navigation-item.icon-inventory'],
+    mentions: ['.nitro-toolbar-right .navigation-item.icon-mention', '.navigation-item.icon-mention'],
+    phone: ['.nitro-toolbar-right .navigation-item.icon-phone', '.navigation-item.icon-phone'],
+    camera: ['.nitro-toolbar .navigation-item.icon-camera', '.navigation-item.icon-camera'],
+    profile: ['.nitro-toolbar-me .icon-me-profile'],
+    looks: ['.nitro-toolbar-me .icon-me-clothing'],
+    achievements: ['.nitro-toolbar-me .icon-me-achievements'],
+    prestige: ['.nitro-toolbar-me .icon-me-battlepass'],
+    rares: ['.nitro-toolbar-me .icon-me-rarevalues']
   };
-  // Buttons that open Nitro's Me/More panel, where some of the controls above live.
-  var NITRO_PANEL = ['.navigation-item.item-avatar', '.navigation-item.icon-more', '.toolbar-collapse-toggle'];
+  // The avatar button that opens Nitro's Me menu. It has the "active" class while the menu is open.
+  var NITRO_ME = ['.nitro-toolbar .navigation-item.item-avatar-bg-icon', '.navigation-item.item-avatar-bg-icon'];
   var DUCKETS = 0, DIAMONDS = 5;
   var ACCENTS = ['#5cc8f2', '#a78bfa', '#34d399', '#f5c542'];
 
@@ -229,24 +232,30 @@
     for (var i = 0; i < list.length; i++) { var el = document.querySelector(list[i]); if (el) return el; }
     return null;
   }
+  function meToggle() {
+    for (var i = 0; i < NITRO_ME.length; i++) { var el = document.querySelector(NITRO_ME[i]); if (el) return el; }
+    return null;
+  }
   function pressNitro(key) {
     var el = findNitro(key);
     if (el) { el.click(); return Promise.resolve(true); }
-    // Not on screen: open Nitro's Me/More panel, press the control, then close the panel again.
-    var toggle = null;
-    for (var i = 0; i < NITRO_PANEL.length && !toggle; i++) toggle = document.querySelector(NITRO_PANEL[i]);
-    if (!toggle) return Promise.resolve(false);
-    toggle.click();
+    // A Me menu control: open Nitro's Me menu, press the control, and make sure the menu ends up closed.
+    // The menu fades out (still in the page for a moment), so check the toggle's "active" class, not the menu.
+    var toggle = meToggle();
+    if (!toggle || !/^(profile|looks|achievements|prestige|rares)$/.test(key)) return Promise.resolve(false);
+    var wasOpen = toggle.classList.contains('active');
+    if (!wasOpen) toggle.click();
+    function closeMenu() { var t = meToggle(); if (t && t.classList.contains('active')) t.click(); }
     return new Promise(function (resolve) {
       var tries = 0;
       (function poll() {
         var el2 = findNitro(key);
         if (el2) {
           el2.click();
-          setTimeout(function () { if (findNitro(key)) toggle.click(); }, 50);
+          setTimeout(closeMenu, 60);
           resolve(true);
         } else if (++tries < 12) setTimeout(poll, 50);
-        else { toggle.click(); resolve(false); }
+        else { closeMenu(); resolve(false); }
       })();
     });
   }
@@ -284,7 +293,9 @@
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
     layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
     palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.7 1.7 0 0 1 1.7-1.7h2A5.6 5.6 0 0 0 22 10.8C22 5.9 17.5 2 12 2Z"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>'
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    gem: '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/>',
+    star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
   };
   function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -296,7 +307,7 @@
     var cls = 'av' + (size ? ' ' + size : '');
     var ini = '<span class="' + cls + ' ini" style="--h:' + hue(name || '?') + '">' + esc((name || '?').charAt(0).toUpperCase()) + '</span>';
     if (!figure || !IMAGER) return ini;
-    var src = IMAGER + encodeURIComponent(figure) + '&headonly=1&size=m&direction=2&head_direction=2&gesture=sml';
+    var src = IMAGER + encodeURIComponent(figure) + '&direction=2&headonly=1&head_direction=2&gesture=sml';
     return '<span class="' + cls + '" data-ini="' + esc(name || '?') + '"><img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></span>';
   }
   function avw(f, size) { return '<span class="avw">' + av(f.name, f.figure, size) + (f.online ? '<i class="st"></i>' : '') + '</span>'; }
@@ -399,7 +410,7 @@
   }
   function renderMeTab() {
     var el = $('#mehead');
-    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&headonly=1&size=m&direction=2&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
+    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&direction=2&headonly=1&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
   }
   function renderBadges() {
     var n = unreadTotal() + S.requests.length, b = $('#fbadge');
@@ -582,7 +593,7 @@
   var TILES = [
     ['profile', 'Profile', 'user'], ['looks', 'Change looks', 'shirt'], ['mentions', 'Mentions', 'at'],
     ['phone', 'Phone', 'phone'], ['achievements', 'Achievements', 'trophy'], ['camera', 'Camera', 'camera'],
-    ['myrooms', 'My rooms', 'home'], ['settings', 'Settings', 'sliders'], ['help', 'Help', 'help']
+    ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star'], ['rooms', 'Rooms', 'compass']
   ];
   function meHTML() {
     var acc = '';
@@ -723,6 +734,6 @@
   else document.addEventListener('DOMContentLoaded', mount);
   window.__peaceUiDebug = function () {
     return { connected: !!(sock && sock.readyState === 1), me: S.me, credits: S.credits, cur: S.cur, room: S.room, friends: friendList().length, requests: S.requests.length,
-      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), panel: NITRO_PANEL.filter(function (s) { return !!document.querySelector(s); }) };
+      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), meToggle: !!meToggle() };
   };
 })();
