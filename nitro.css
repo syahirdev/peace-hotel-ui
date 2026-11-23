@@ -146,7 +146,7 @@ html.pu-dark .draggable-window .content-area select {
 html.pu-dark .draggable-window .content-area ::placeholder { color: var(--pw-ink2) !important; }
 html.pu-dark .draggable-window .content-area .btn { border-radius: 10px !important; box-shadow: none !important; text-shadow: none !important; }
 html.pu-dark .draggable-window .content-area .btn-primary,
-html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #0b1116 !important; font-weight: 600 !important; }
+html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #fff !important; font-weight: 700 !important; }
 html.pu-dark .draggable-window .content-area .btn-secondary,
 html.pu-dark .draggable-window .content-area .btn-dark,
 html.pu-dark .draggable-window .content-area .btn-light { background: var(--pw-s2) !important; border-color: var(--pw-line) !important; color: var(--pw-ink) !important; }
@@ -306,3 +306,14 @@ html.pu-dark .rv-card-tag { background: rgba(0,0,0,.7) !important; color: #fff !
 html.pu-dark .rv-card-name { color: #f2f2f2 !important; }
 html.pu-dark .rv-pill, html.pu-dark .rv-pagelabel { color: #d0d0d0 !important; }
 html.pu-dark .rv-pagebtn { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; }
+/* Change looks: keep the clothing grid roomy when Peace's layer panel shows */
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-4 { height: 124px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel { gap: 4px !important; padding: 6px 8px !important; flex: none !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel > .d-flex:first-child { height: 22px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column { max-height: 76px !important; overflow-y: auto !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-row { min-height: 0 !important; padding: 3px 6px !important; }
+html.pu-on .nitro-avatar-editor .avatar-layer-row .avatar-layer-main { height: 28px !important; }
+html.pu-on .nitro-avatar-editor .avatar-color-palette-container { height: 78px !important; }
+html.pu-on .nitro-avatar-editor .avatar-editor-palette-set-view { grid-auto-rows: 26px !important; }
+html.pu-on .nitro-avatar-editor .figure-preview-container { zoom: .4 !important; }
+html.pu-on .nitro-navigator .d-flex:has(> .navigator-search-button) { position: relative !important; }
