@@ -89,3 +89,17 @@ html.pu-on [data-pu-bg="1"] { background-color: var(--pw-s1) !important; box-sha
 html.pu-on [data-pu-bg="2"] { background-color: var(--pw-s2) !important; box-shadow: none !important; }
 html.pu-on [data-pu-bg="tint"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
 html.pu-on [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
+
+/* Change looks: preview and buttons on top, the wardrobe full width below. */
+html.pu-on .nitro-avatar-editor .content-area > .grid { display: flex !important; flex-direction: column-reverse !important; gap: 10px !important; height: 100% !important; }
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-4 { flex: none !important; width: 100% !important; height: 168px !important; }
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-8 { flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 > div, html.pu-on .nitro-avatar-editor .g-col-4 > div > div { height: 100% !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 > div > div { flex-direction: row !important; gap: 10px !important; align-items: stretch !important; }
+html.pu-on .nitro-avatar-editor .figure-preview-container { flex: 0 0 132px !important; width: 132px !important; height: 168px !important; border-radius: 14px !important; overflow: hidden !important; }
+html.pu-on .nitro-avatar-editor .figure-preview-container .avatar-image { transform: scale(1.25) !important; transform-origin: 50% 60% !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 .flex-grow-1 { display: flex !important; flex-direction: column !important; justify-content: flex-end !important; gap: 8px !important; }
+html.pu-on .nitro-avatar-editor .action-buttons { width: 100% !important; gap: 6px !important; }
+html.pu-on .nitro-avatar-editor .action-buttons .btn { flex: 1 1 0 !important; height: 38px !important; border-radius: 10px !important; display: grid !important; place-items: center !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 .btn-success { width: 100% !important; height: 44px !important; display: grid !important; place-items: center !important; font-size: 15px !important; }
+html.pu-on .nitro-avatar-editor .choose-clothing { height: 100% !important; }
