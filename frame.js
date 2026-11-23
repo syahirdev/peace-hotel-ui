@@ -363,7 +363,8 @@
   }
   function darkScan() {
     darkQueued = false;
-    var areas = document.querySelectorAll('.draggable-window .nitro-card .content-area');
+    // Whole card: some windows (chat history) don't use .content-area. Header and tabs are in DARK_SKIP.
+    var areas = document.querySelectorAll('.draggable-window .nitro-card');
     for (var i = 0; i < areas.length; i++) {
       var all = areas[i].getElementsByTagName('*');
       for (var j = 0; j < all.length; j++) darkMark(all[j]);
@@ -558,7 +559,7 @@
     voice: function (el) { return ['mic', el.classList.contains('is-live') ? 'Voice (live)' : 'Room voice']; },
     youtube: function () { return ['play', 'YouTube']; },
     builder: function () { return ['grid', 'Builder tools']; },
-    settings: function () { return ['cog', 'Room info & settings']; }
+    settings: function () { return ['cog', 'Room settings']; }
   };
   function openRoomMenu() {
     $pop.classList.remove('on');

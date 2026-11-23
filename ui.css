@@ -254,3 +254,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .m { border-radius: 8px 8px 8px 3px; background: var(--s2); border: var(--edge); box-shadow: var(--inset); }
 .m.me { border-radius: 8px 8px 3px 8px; background: var(--acc); color: #fff; border: var(--edge); box-shadow: inset 0 1px 0 var(--acc-hi); }
 .toast { border-radius: var(--r); background: var(--hud); color: var(--ink); border: var(--edge); box-shadow: var(--inset), 0 6px 18px rgba(0,0,0,.5); }
+.roomchip { flex: 1 1 auto; min-width: 0; max-width: none; padding: 0 6px 0 10px; }
+.roomchip .nm { flex: 1; min-width: 0; }
+.money { flex: none; }
+.money .cy { flex: none; white-space: nowrap; }
