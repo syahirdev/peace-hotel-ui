@@ -28,7 +28,8 @@
     ROOM_ENTER: 758, ROOM_INFO: 687, DESKTOP_VIEW: 122,
     USER_INFO: 2725, USER_FIGURE: 2429,
     CREDITS: 3475, CURRENCY: 2018, ACTIVITY_POINTS: 2275,
-    FRIENDS: 3130, FRIENDS_UPDATE: 2800, REQUESTS: 280, NEW_REQUEST: 2219, MESSENGER_CHAT: 1587
+    FRIENDS: 3130, FRIENDS_UPDATE: 2800, REQUESTS: 280, NEW_REQUEST: 2219, MESSENGER_CHAT: 1587,
+    BATTLEPASS_DATA: 7212
   };
   var OUT = { FOLLOW: 3997, PROFILE: 3265, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
   // Nitro controls the tabs and Me tiles press. Each entry: selectors to try, in order.
@@ -51,8 +52,12 @@
   // The avatar button that opens Nitro's Me menu. It has the "active" class while the menu is open.
   var NITRO_ME = ['.nitro-toolbar .navigation-item.item-avatar-bg-icon', '.navigation-item.item-avatar-bg-icon'];
   var DUCKETS = 0, DIAMONDS = 5;
-  var DARK_KEY = 'peaceUi.dark', FIGS_KEY = 'peaceUi.figs';
-  var ACCENTS = ['#5cc8f2', '#a78bfa', '#34d399', '#f5c542'];
+  var FIGS_KEY = 'peaceUi.figs';
+  // Currencies in Peace's order (ui-config system.currency.types). -1 = credits. Icons are Peace's own wallet icons.
+  var WALLET = 'https://nitro.peacehotel.my/nitro-assets/images/wallet/';
+  var CURRENCIES = [[-1, 'Credits'], [0, 'Duckets'], [5, 'Diamonds'], [103, 'Event points'], [130, 'Peace coins']];
+  // Shown in the top pill (the rest are in the drop-down).
+  var PILL = [-1, 0, 5];
 
   // ---------------------------------------------------------------- state
   var S = {
@@ -61,7 +66,8 @@
     room: null, awaitingRoom: false,
     friends: {}, requests: [],
     conv: {}, unread: {},
-    sheet: null, hmode: 'half', ff: 'online', q: '', chat: 0, card: 0
+    sheet: null, hmode: 'half', ff: 'online', q: '', chat: 0, card: 0,
+    bp: { avail: null, unclaimed: 0 }
   };
   var sock = null;
 
@@ -140,6 +146,8 @@
       case IN.CURRENCY:
         for (var n = r.int(); n > 0; n--) { var t = r.int(); S.cur[t] = r.int(); }
         changed('money'); break;
+      case IN.BATTLEPASS_DATA:
+        S.bp.avail = r.bool(); changed('me'); break;
       case IN.ACTIVITY_POINTS:
         var amount = r.int(); r.int(); S.cur[r.int()] = amount; changed('money'); break;
       case IN.FRIENDS:
@@ -271,6 +279,41 @@
       })();
     });
   }
+  // Room tools (zoom, chat history, bubbles, like, room settings, voice). On phones Peace only renders them
+  // inside its More sheet (#hud-more-room), which this UI hides. The sheet stays open until its own tab is
+  // pressed again, so it is opened (still hidden) while the Room menu is open and the tools are pressed there.
+  var RT = [
+    ['zoom', '.icon-zoom-more,.icon-zoom-less'], ['history', '.icon-chat-history'],
+    ['bubbles', '.icon-chat-enablebubble,.icon-chat-disablebubble'], ['like', '.icon-like-room'],
+    ['voice', '.voice-room-button'], ['youtube', '.icon-youtube-rt'], ['builder', '.icon-buildertools-rt'],
+    ['settings', '.nitro-room-tools-settings']
+  ];
+  function moreTab() {
+    var tabs = document.querySelectorAll('.nitro-hud-tabbar .hud-tab');
+    return tabs.length ? tabs[tabs.length - 1] : null;
+  }
+  function roomTools() { var el = document.getElementById('hud-more-room'); return el && el.querySelector('.nitro-room-tools') ? el : null; }
+  function openRoomTools() {
+    if (roomTools()) return Promise.resolve(roomTools());
+    var hidden = document.querySelector('.nitro-hud-tabs-toggle.is-hidden');
+    if (hidden) hidden.click();
+    return new Promise(function (resolve) {
+      var tries = 0, pressed = false;
+      (function poll() {
+        var el = roomTools();
+        if (el) return resolve(el);
+        var t = moreTab();
+        if (t && !pressed && !t.classList.contains('active')) { t.click(); pressed = true; }
+        if (++tries < 16) setTimeout(poll, 50); else resolve(null);
+      })();
+    });
+  }
+  function closeRoomTools() { var t = moreTab(); if (t && t.classList.contains('active')) t.click(); }
+  function rtFind(key) {
+    var box = roomTools(), def = RT.find(function (x) { return x[0] === key; });
+    return box && def ? box.querySelector(def[1]) : null;
+  }
+
   function openNitro(key, label) {
     closeAll();
     pressNitro(key).then(function (ok) { if (!ok) toast(label + ' is not available here yet'); });
@@ -282,7 +325,7 @@
   // dark surfaces, light pastel backgrounds keep a faint tint, light borders turn subtle. nitro.css
   // styles the marks. They are data attributes, which React leaves alone when it re-renders.
   var darkSeen = new WeakSet(), darkQueued = false, darkObserver = null;
-  var DARK_SKIP = 'img,canvas,svg,path,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
+  var DARK_SKIP = 'img,canvas,svg,path,.chat-content,.chat-bubble,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
   function rgba(s) {
     var m = s && s.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+))?/);
     return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] == null ? 1 : +m[4] } : null;
@@ -320,18 +363,15 @@
   }
   function darkScan() {
     darkQueued = false;
-    var areas = document.querySelectorAll('.draggable-window .nitro-card .content-area');
+    // Whole card: some windows (chat history) don't use .content-area. Header and tabs are in DARK_SKIP.
+    var areas = document.querySelectorAll('.draggable-window .nitro-card');
     for (var i = 0; i < areas.length; i++) {
       var all = areas[i].getElementsByTagName('*');
       for (var j = 0; j < all.length; j++) darkMark(all[j]);
     }
   }
   function darkQueue() { if (!darkQueued) { darkQueued = true; setTimeout(darkScan, 120); } }
-  function darkOn() {
-    try { return localStorage.getItem(DARK_KEY) !== '0'; } catch (e) { return true; }
-  }
   function setDark(on) {
-    try { localStorage.setItem(DARK_KEY, on ? '1' : '0'); } catch (e) {}
     document.documentElement.classList.toggle('pu-dark', on);
     if (on && !darkObserver) {
       darkObserver = new MutationObserver(function (ms) {
@@ -381,10 +421,17 @@
     file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h6M16 13H8M16 17H8M10 9H8"/>',
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
     layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
-    palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.7 1.7 0 0 1 1.7-1.7h2A5.6 5.6 0 0 0 22 10.8C22 5.9 17.5 2 12 2Z"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
-    moon: '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/>',
     gem: '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20M12 21 8 9l4-6 4 6-4 12"/>',
+    zoomin: '<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2M11 8v6M8 11h6"/>',
+    zoomout: '<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2M8 11h6"/>',
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    bubble: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/>',
+    bubbleoff: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="m3 3 18 18"/>',
+    mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/>',
+    play: '<rect x="2" y="4" width="20" height="16" rx="4"/><path d="m10 9 5 3-5 3Z"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
   };
   function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
@@ -397,7 +444,7 @@
     var cls = 'av' + (size ? ' ' + size : '');
     var ini = '<span class="' + cls + ' ini" style="--h:' + hue(name || '?') + '">' + esc((name || '?').charAt(0).toUpperCase()) + '</span>';
     if (!figure || !IMAGER) return ini;
-    var src = IMAGER + encodeURIComponent(figure) + '&direction=2&headonly=1&head_direction=2&gesture=sml';
+    var src = IMAGER + encodeURIComponent(figure) + '&direction=2&head_direction=2&gesture=sml';
     return '<span class="' + cls + '" data-ini="' + esc(name || '?') + '"><img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></span>';
   }
   function avw(f, size) { return '<span class="avw">' + av(f.name, f.figure, size) + (f.online ? '<i class="st"></i>' : '') + '</span>'; }
@@ -413,7 +460,7 @@
   function nameOf(id) { var f = S.friends[id]; return f ? f.name : 'User ' + id; }
 
   // ---------------------------------------------------------------- DOM
-  var host, root, $tabs, $sheet, $shc, $page, $modal, $card, $toast, $pop, $chip, $money;
+  var host, root, $tabs, $sheet, $shc, $page, $modal, $card, $toast, $pop, $rpop, $chip, $money;
   function $(sel) { return root.querySelector(sel); }
 
   function mount() {
@@ -426,13 +473,14 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><button class="pill roomchip" data-a="rooms" hidden><span class="nm"></span><span class="ct">' + ic('user', 14) + '<b></b></span></button>' +
-      '<button class="pill money" data-a="money"><i class="dot" style="background:var(--gold)"></i><span id="crk">…</span>' + ic('chevd', 16) + '</button></div>' +
+      '<div class="top"><button class="pill roomchip" data-a="room" hidden><span class="nm"></span><span class="ct">' + ic('user', 14) + '<b></b></span>' + ic('chevd', 16) + '</button>' +
+      '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
+      '<div class="pop rpop" id="rpop"></div>' +
       '<div class="sheet" id="sheet"><div class="grab" id="grab"><i></i></div><div class="shc" id="shc"></div></div>' +
       '<nav class="tabs" id="tabs">' +
       tab('rooms', 'compass', 'Rooms') + tab('shop', 'bag', 'Shop') + tab('friends', 'users', 'Friends', 'fbadge') + tab('inventory', 'box', 'Inventory') +
-      '<button class="tab" data-tab="me"><span class="ico"><span class="mehead" id="mehead">' + ic('user', 18) + '</span></span><span>Me</span></button>' +
+      '<button class="tab" data-tab="me"><span class="ico"><span class="mehead" id="mehead">' + ic('user', 18) + '</span><i class="rdot" id="medot" hidden></i></span><span>Me</span></button>' +
       '</nav>' +
       '<div class="page" id="page"></div>' +
       '<div class="modal" id="modal"><div class="scrim" data-a="cclose"></div><div class="card" id="card"></div></div>' +
@@ -441,16 +489,14 @@
     document.body.appendChild(host);
 
     $tabs = $('#tabs'); $sheet = $('#sheet'); $shc = $('#shc'); $page = $('#page'); $modal = $('#modal'); $card = $('#card');
-    $toast = $('#toast'); $pop = $('#pop'); $chip = $('.roomchip'); $money = $('#crk');
+    $toast = $('#toast'); $pop = $('#pop'); $rpop = $('#rpop'); $chip = $('.roomchip'); $money = $('#crk');
 
     var nitroStyle = document.createElement('style');
     nitroStyle.id = 'peace-ui-nitro';
     nitroStyle.textContent = assets.nitro || '';
     (document.head || document.documentElement).appendChild(nitroStyle);
     document.documentElement.classList.add('pu-on');
-    setDark(darkOn());
-
-    try { setAccent(localStorage.getItem('peaceUi.accent') || ACCENTS[0]); } catch (e) {}
+    setDark(true);
     bind();
     renderAll();
     post({ a: 'ready' });
@@ -473,10 +519,10 @@
     var d = dirty; dirty = {};
     if (d.money || d.me) renderTop();
     if (d.room) renderTop();
-    if (d.me) renderMeTab();
+    if (d.me || d.bp) renderMeTab();
     if (d.friends || d.chat) renderBadges();
     if (S.sheet === 'friends' && (d.friends || d.chat)) rerenderSheet();
-    if (S.sheet === 'me' && (d.me || d.money)) rerenderSheet();
+    if (S.sheet === 'me' && (d.me || d.money || d.bp)) rerenderSheet();
     if (pageOpen() && d.chat) renderChat(true);
     if ($modal.classList.contains('on') && S.card && d.friends) renderCard();
   }
@@ -489,19 +535,68 @@
       var ct = $chip.querySelector('.ct');
       ct.hidden = S.room.users == null;
       ct.querySelector('b').textContent = S.room.users == null ? '' : S.room.users;
-    } else $chip.hidden = true;
-    $money.textContent = short(S.credits);
+    } else { $chip.hidden = true; if ($rpop.classList.contains('on')) closeRoomMenu(); }
+    $money.innerHTML = PILL.filter(function (t) { return t === -1 || amount(t) != null; }).map(function (t) {
+      return '<span class="cy">' + cicon(t) + '<b>' + short(amount(t)) + '</b></span>';
+    }).join('') + ic('chevd', 16);
     if ($pop.classList.contains('on')) renderPop();
   }
+  function amount(t) { return t === -1 ? S.credits : S.cur[t]; }
+  function cicon(t) { return '<img class="ci" src="' + WALLET + t + '.png" alt="" referrerpolicy="no-referrer">'; }
   function renderPop() {
-    var rows = [['var(--gold)', 'Credits', S.credits]];
-    if (S.cur[DUCKETS] != null) rows.push(['var(--duck)', 'Duckets', S.cur[DUCKETS]]);
-    if (S.cur[DIAMONDS] != null) rows.push(['var(--dia)', 'Diamonds', S.cur[DIAMONDS]]);
-    $pop.innerHTML = rows.map(function (r) { return '<div class="pr"><i class="dot" style="background:' + r[0] + '"></i>' + r[1] + '<b>' + (r[2] == null ? '…' : num(r[2])) + '</b></div>'; }).join('');
+    $pop.innerHTML = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; }).map(function (c) {
+      var v = amount(c[0]);
+      return '<div class="pr">' + cicon(c[0]) + c[1] + '<b>' + (v == null ? '…' : num(v)) + '</b></div>';
+    }).join('');
+  }
+
+  // Room menu: the room's own tools, pressed inside Peace's hidden More sheet.
+  var RT_UI = {
+    zoom: function (el) { return el.querySelector('.icon-zoom-more') || el.classList.contains('icon-zoom-more') ? ['zoomin', 'Zoom in'] : ['zoomout', 'Zoom out']; },
+    history: function () { return ['history', 'Chat history']; },
+    bubbles: function (el) { return el.classList.contains('icon-chat-disablebubble') ? ['bubble', 'Show bubbles'] : ['bubbleoff', 'Hide bubbles']; },
+    like: function () { return ['heart', 'Like room']; },
+    voice: function (el) { return ['mic', el.classList.contains('is-live') ? 'Voice (live)' : 'Room voice']; },
+    youtube: function () { return ['play', 'YouTube']; },
+    builder: function () { return ['grid', 'Builder tools']; },
+    settings: function () { return ['cog', 'Room settings']; }
+  };
+  function openRoomMenu() {
+    $pop.classList.remove('on');
+    $rpop.innerHTML = '<div class="rhead"><b>' + esc(S.room ? S.room.name : 'Room') + '</b></div><div class="empty sm">Loading room tools…</div>';
+    $rpop.classList.add('on'); report();
+    openRoomTools().then(function () { if ($rpop.classList.contains('on')) renderRoomMenu(); });
+  }
+  function closeRoomMenu() {
+    if (!$rpop.classList.contains('on')) return;
+    $rpop.classList.remove('on'); closeRoomTools(); report();
+  }
+  function renderRoomMenu() {
+    var box = roomTools();
+    var name = box && box.querySelector('.rt-room-name'), owner = box && box.querySelector('.rt-room-name + * .mb-1');
+    var head = '<div class="rhead"><b>' + esc(name ? name.textContent : (S.room ? S.room.name : 'Room')) + '</b>' + (owner ? '<small>' + esc(owner.textContent) + '</small>' : '') + '</div>';
+    if (!box) { $rpop.innerHTML = head + '<div class="empty sm">Room tools are not available here</div>'; return; }
+    var btns = RT.map(function (d) {
+      var el = box.querySelector(d[1]); if (!el) return '';
+      var u = RT_UI[d[0]](el);
+      return '<button class="rt" data-rt="' + d[0] + '">' + ic(u[0], 22) + '<span>' + u[1] + '</span></button>';
+    }).join('');
+    $rpop.innerHTML = head + '<div class="rts">' + btns + '</div>' +
+      '<button class="li" data-a="rooms">' + ic('compass') + '<span class="lt">Browse rooms</span><span class="end">' + ic('chevr', 18) + '</span></button>';
+  }
+  function pressRoomTool(key) {
+    openRoomTools().then(function () {
+      var el = rtFind(key);
+      if (!el) { toast('Not available in this room'); return; }
+      el.click();
+      if (key === 'zoom' || key === 'bubbles' || key === 'voice') setTimeout(renderRoomMenu, 120);
+      else { closeRoomMenu(); }
+    });
   }
   function renderMeTab() {
     var el = $('#mehead');
-    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&direction=2&headonly=1&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
+    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&direction=2&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
+    var dot = $('#medot'); if (dot) dot.hidden = !(S.bp.avail && S.bp.unclaimed > 0);
   }
   function renderBadges() {
     var n = unreadTotal() + S.requests.length, b = $('#fbadge');
@@ -684,31 +779,27 @@
   var TILES = [
     ['profile', 'Profile', 'user'], ['looks', 'Change looks', 'shirt'], ['mentions', 'Mentions', 'at'],
     ['phone', 'Phone', 'phone'], ['achievements', 'Achievements', 'trophy'], ['camera', 'Camera', 'camera'],
-    ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star'], ['rooms', 'Rooms', 'compass']
+    ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star']
   ];
   function meHTML() {
-    var acc = '';
-    try { acc = localStorage.getItem('peaceUi.accent') || ACCENTS[0]; } catch (e) { acc = ACCENTS[0]; }
-    var stats = [['var(--gold)', 'Credits', S.credits]];
-    if (S.cur[DUCKETS] != null) stats.push(['var(--duck)', 'Duckets', S.cur[DUCKETS]]);
-    if (S.cur[DIAMONDS] != null) stats.push(['var(--dia)', 'Diamonds', S.cur[DIAMONDS]]);
+    var stats = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; });
     return '<div class="sbody" style="padding-top:2px">' +
       '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure) + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
-      '<div class="stats">' + stats.map(function (s) { return '<div class="stat"><b><i class="dot" style="background:' + s[0] + '"></i>' + (s[2] == null ? '…' : num(s[2])) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>' +
-      '<div class="tools">' + TILES.map(function (t) { return '<button class="tool" data-me="' + t[0] + '">' + ic(t[2], 22) + '<span>' + t[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="stats">' + stats.map(function (c) { var v = amount(c[0]); return '<div class="stat"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="tools">' + TILES.map(function (t) {
+        var cls = 'tool', dot = '';
+        if (t[0] === 'prestige') {
+          if (S.bp.avail === false) cls += ' dis';
+          if (S.bp.avail && S.bp.unclaimed > 0) dot = '<i class="rdot"></i>';
+        }
+        return '<button class="' + cls + '" data-me="' + t[0] + '">' + dot + ic(t[2], 22) + '<span>' + t[1] + '</span></button>';
+      }).join('') + '</div>' +
       '<div class="sec"><span>App</span></div><div class="list mx">' +
-      '<div class="li">' + ic('palette') + '<span class="lt">Theme<small>Accent colour</small></span><span class="end">' + ACCENTS.map(function (c) { return '<button class="tsw' + (c === acc ? ' on' : '') + '" style="--c:' + c + '" data-acc-c="' + c + '" aria-label="Accent ' + c + '"></button>'; }).join('') + '</span></div>' +
-      '<button class="li" data-dark="1" role="switch" aria-checked="' + darkOn() + '">' + ic('moon') + '<span class="lt">Dark game windows<small>Shop, rooms, profile and more</small></span><span class="end"><i class="sw' + (darkOn() ? ' on' : '') + '"></i></span></button>' +
       '<button class="li" data-app="reload">' + ic('refresh') + '<span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li" data-app="chatlog">' + ic('file') + '<span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li" data-app="classic">' + ic('layout') + '<span class="lt">Classic UI<small>Switch back to the original game layout</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li danger" data-app="website">' + ic('logout') + '<span class="lt">Back to website<small>Leaves the game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '</div><div class="footnote">Peace UI beta · tap Back on your phone to close panels</div></div>';
-  }
-  function setAccent(c) {
-    host.style.setProperty('--acc', c);
-    document.documentElement.style.setProperty('--pu-acc', c);
-    try { localStorage.setItem('peaceUi.accent', c); } catch (e) {}
   }
 
   // ---------------------------------------------------------------- misc
@@ -721,12 +812,13 @@
   function post(o) { if (BRIDGE) { try { BRIDGE.postMessage(JSON.stringify(o)); } catch (e) {} } }
   var lastReported = null;
   function report() {
-    var open = !!(S.sheet || pageOpen() || ($modal && $modal.classList.contains('on')) || ($pop && $pop.classList.contains('on')));
+    var open = !!(S.sheet || pageOpen() || ($modal && $modal.classList.contains('on')) || ($pop && $pop.classList.contains('on')) || ($rpop && $rpop.classList.contains('on')));
     if (open !== lastReported) { lastReported = open; post({ a: 'overlay', open: open }); }
   }
-  function closeAll() { closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); report(); }
+  function closeAll() { closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); closeRoomMenu(); report(); }
   function back() {
-    if ($pop.classList.contains('on')) $pop.classList.remove('on');
+    if ($rpop.classList.contains('on')) closeRoomMenu();
+    else if ($pop.classList.contains('on')) $pop.classList.remove('on');
     else if ($modal.classList.contains('on')) closeModal();
     else if (pageOpen()) closePage();
     else if (S.sheet) closeSheet();
@@ -755,7 +847,7 @@
     }, true);
 
     root.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-acc-c],[data-dark]');
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt]');
       if (!el || el.disabled) return;
       var d = el.dataset;
       if (d.tab) {
@@ -767,7 +859,8 @@
       if (d.a) {
         switch (d.a) {
           case 'rooms': openNitro('rooms', 'Rooms'); break;
-          case 'money': if ($pop.classList.toggle('on')) renderPop(); report(); break;
+          case 'room': if ($rpop.classList.contains('on')) closeRoomMenu(); else openRoomMenu(); break;
+          case 'money': closeRoomMenu(); if ($pop.classList.toggle('on')) renderPop(); report(); break;
           case 'fclr': S.q = ''; var i = $('#fq'); if (i) i.value = ''; renderFriendBody(); break;
           case 'cclose': closeModal(); break;
           case 'back': closePage(); break;
@@ -793,15 +886,15 @@
       if (d.chat) { openChat(d.chat); return; }
       if (d.prof) { profile(d.prof); return; }
       if (d.f) { openCard(d.f); return; }
+      if (d.rt) { pressRoomTool(d.rt); return; }
       if (d.me) {
         if (d.me === 'profile' && S.me.id) { profile(S.me.id); return; }
+        if (d.me === 'prestige' && S.bp.avail === false) { toast('Peace Prestige is not open right now'); return; }
         var tile = TILES.find(function (x) { return x[0] === d.me; });
         openNitro(d.me, tile ? tile[1] : 'This');
         return;
       }
       if (d.app) { closeAll(); post({ a: d.app }); return; }
-      if (d.accC) { setAccent(d.accC); rerenderSheet(); }
-      if (d.dark) { setDark(!darkOn()); rerenderSheet(); }
     });
 
     root.addEventListener('input', function (e) {
@@ -812,6 +905,16 @@
     root.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && e.target.closest && e.target.closest('[role=button]')) e.target.click();
     });
+    // Peace's client tells its HUD how many Prestige rewards wait to be claimed with this event.
+    window.addEventListener('battlepass.unclaimed', function (e) {
+      S.bp.unclaimed = Math.max(0, (e.detail && e.detail.count) || 0); changed('bp');
+    });
+    // A tap on the game closes the currency and Room drop-downs.
+    document.addEventListener('pointerdown', function (e) {
+      if (e.target === host) return;
+      if ($pop.classList.contains('on')) { $pop.classList.remove('on'); report(); }
+      closeRoomMenu();
+    }, true);
     root.addEventListener('pointerdown', dragStart);
     root.addEventListener('pointermove', dragMove);
     root.addEventListener('pointerup', dragEnd);
@@ -828,6 +931,7 @@
   else document.addEventListener('DOMContentLoaded', mount);
   window.__peaceUiDebug = function () {
     return { connected: !!(sock && sock.readyState === 1), me: S.me, credits: S.credits, cur: S.cur, room: S.room, friends: friendList().length, requests: S.requests.length,
-      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), meToggle: !!meToggle() };
+      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), meToggle: !!meToggle(), bp: S.bp,
+      roomTools: RT.filter(function (d) { return !!rtFind(d[0]); }).map(function (d) { return d[0]; }) };
   };
 })();

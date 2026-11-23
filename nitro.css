@@ -19,7 +19,7 @@ html.pu-on #root {
 }
 
 html.pu-on body {
-  background: #0e0f11 !important;
+  background: #0b0b0b !important;
 }
 
 /* Nitro's own navigation, replaced by the Peace tab bar, Friends and Me.
@@ -54,7 +54,7 @@ html.pu-on .draggable-window > .nitro-card {
   min-width: 0 !important;
   max-width: none !important;
   max-height: calc(100vh - var(--pu-bottom, 60px) - 60px) !important;
-  border-radius: 16px 16px 0 0 !important;
+  border-radius: 8px 8px 0 0 !important;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, .45) !important;
   overflow: hidden !important;
 }
@@ -102,18 +102,18 @@ html.pu-on .nitro-avatar-editor .choose-clothing { height: 100% !important; }
 
 /* ---------------------------------------------------------------- dark game windows */
 html.pu-dark {
-  --pw-bg: #121317;
-  --pw-s1: #1a1c21;
-  --pw-s2: #23262c;
+  --pw-bg: #141414;
+  --pw-s1: #1c1c1c;
+  --pw-s2: #262626;
   --pw-line: rgba(255, 255, 255, .08);
-  --pw-ink: #ececee;
-  --pw-ink2: #a3a6ad;
-  --pw-acc: var(--pu-acc, #5cc8f2);
-  --pw-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pw-ink: #f2f2f2;
+  --pw-ink2: #a6a6a6;
+  --pw-acc: #169ccc;
+  --pw-font: Ubuntu, system-ui, -apple-system, Roboto, sans-serif;
 }
-html.pu-dark .draggable-window > .nitro-card { border: 0 !important; background: var(--pw-bg) !important; }
-html.pu-dark .draggable-window .nitro-card-header { background: var(--pw-bg) !important; border: 0 !important; box-shadow: none !important; }
-html.pu-dark .draggable-window .nitro-card-header-text { color: var(--pw-ink) !important; font: 650 16px/1.2 var(--pw-font) !important; text-shadow: none !important; }
+html.pu-dark .draggable-window > .nitro-card { border: 1px solid #000 !important; background: var(--pw-bg) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1) !important; }
+html.pu-dark .draggable-window .nitro-card-header { background: linear-gradient(#202020 50%, #161616 50%) !important; border: 0 !important; border-bottom: 1px solid #000 !important; box-shadow: none !important; }
+html.pu-dark .draggable-window .nitro-card-header-text { color: var(--pw-ink) !important; font: 700 16px/1.2 UbuntuBold, var(--pw-font) !important; text-shadow: none !important; }
 html.pu-dark .draggable-window .nitro-card-header-close { background: var(--pw-s2) !important; border: 0 !important; box-shadow: none !important; color: var(--pw-ink) !important; }
 html.pu-dark .draggable-window .nitro-card-tabs { background: var(--pw-bg) !important; border: 0 !important; box-shadow: none !important; }
 html.pu-dark .draggable-window .nitro-card-tabs .nav-link {

@@ -6,14 +6,19 @@
   z-index: 2147483000;
   pointer-events: none;
   color-scheme: dark;
-  --bg: #0a0b0d; --s0: #0e0f11; --s1: #141518; --s2: #1b1c20; --s3: #25272c;
-  --line: rgba(255,255,255,.08); --line2: rgba(255,255,255,.13);
-  --ink: #f1f2f4; --ink2: #a4a7ae; --ink3: #70737b;
-  --acc: #5cc8f2; --acc-ink: #03131b; --acc-soft: color-mix(in srgb, var(--acc) 15%, transparent);
-  --on: #34d399; --bad: #f43f5e; --gold: #f5c542; --duck: #c08bfa; --dia: #7dd3fc;
-  --glass: rgba(15,16,19,.74);
+  /* Peace's HUD look: near-black panels split in two tones, black outline, faint inner highlight, small radius, Peace blue. */
+  --bg: #0b0b0b; --s0: #101010; --s1: #161616; --s2: #202020; --s3: #2a2a2a;
+  --hud: linear-gradient(#202020 50%, #141414 50%);
+  --hud-hi: linear-gradient(#2a2a2a 50%, #1c1c1c 50%);
+  --edge: 1px solid #000; --inset: inset 0 0 0 1px rgba(255,255,255,.12);
+  --line: rgba(255,255,255,.07); --line2: rgba(255,255,255,.12);
+  --ink: #f2f2f2; --ink2: #a6a6a6; --ink3: #737373;
+  --acc: #169ccc; --acc-hi: #47e3fc; --acc-ink: #fff; --acc-soft: rgba(22,156,204,.18);
+  --on: #3fd26b; --bad: #e5383b; --gold: #f5c542; --duck: #c08bfa; --dia: #7dd3fc;
+  --glass: rgba(16,16,16,.86);
+  --r: 6px;
   --tabs: 60px;
-  font: 15px/1.45 system-ui, -apple-system, Roboto, sans-serif;
+  font: 15px/1.45 Ubuntu, system-ui, -apple-system, Roboto, sans-serif;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
@@ -54,8 +59,9 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .tab.on .ico { background: var(--acc-soft); color: var(--acc); }
 .tab:active .ico { background: var(--s2); }
 /* Peace's imager always returns the full body (64x110), so avatars show the top of it: head and shoulders. */
-.mehead { width: 26px; height: 26px; border-radius: 8px; overflow: hidden; display: grid; place-items: start center; background: var(--s2); }
-.mehead img { width: 44px; height: 76px; max-width: none; margin-top: -9px; }
+.mehead { position: relative; width: 28px; height: 28px; border-radius: 5px; overflow: hidden; display: grid; place-items: center; background: var(--s3); box-shadow: var(--inset); }
+/* The head sits at about x 32, y 37 of the 64x110 image: centre that point in the box (absolute, so it can't drift). */
+.mehead img { position: absolute; left: 50%; top: 50%; width: 46px; height: 79px; max-width: none; margin: -27px 0 0 -23px; }
 .badge { position: absolute; top: -3px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 700; line-height: 14px; text-align: center; font-variant-numeric: tabular-nums; border: 2px solid var(--s0); font-style: normal; }
 
 /* sheets */
@@ -91,11 +97,11 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 6px 10px 6px 16px; text-align: left; cursor: pointer; }
 .row:active { background: var(--s2); }
 .avw { position: relative; flex: none; }
-.av { width: 44px; height: 44px; border-radius: 12px; background: #24262c; display: grid; place-items: start center; overflow: hidden; color: var(--ink2); font-weight: 650; font-size: 17px; }
-.av img { width: 64px; height: 110px; max-width: none; margin-top: -14px; }
+.av { position: relative; width: 44px; height: 44px; border-radius: var(--r); background: var(--hud-hi); box-shadow: var(--inset); display: grid; place-items: center; overflow: hidden; color: var(--ink2); font-weight: 700; font-size: 17px; }
+.av img { position: absolute; left: 50%; top: 50%; width: 64px; height: 110px; max-width: none; margin: -38px 0 0 -32px; }
 .av.ini { place-items: center; background: hsl(var(--h, 200) 22% 22%); color: hsl(var(--h, 200) 60% 78%); }
-.av.xl { width: 72px; height: 72px; border-radius: 18px; font-size: 26px; }
-.av.xl img { width: 96px; height: 165px; margin-top: -20px; }
+.av.xl { width: 72px; height: 72px; border-radius: 8px; font-size: 26px; }
+.av.xl img { width: 96px; height: 165px; margin: -57px 0 0 -48px; }
 .avw .st { position: absolute; right: -3px; bottom: -3px; width: 13px; height: 13px; border-radius: 50%; background: var(--on); border: 3px solid var(--s1); }
 .off .av img { filter: grayscale(.9); opacity: .55; }
 .off .av.ini { opacity: .55; }
@@ -145,8 +151,6 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .2s; }
 .sw.on { background: var(--acc); }
 .sw.on::after { transform: translateX(16px); }
-.tsw { width: 26px; height: 26px; border-radius: 50%; background: var(--c); border: 2px solid transparent; }
-.tsw.on { box-shadow: 0 0 0 2px var(--s2), 0 0 0 4px var(--ink); }
 .footnote { display: flex; align-items: center; gap: 8px; margin: 14px 16px 0; font-size: 12.5px; color: var(--ink3); }
 
 /* friend card */
@@ -187,3 +191,70 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 @keyframes fade { from { opacity: 0; } }
 @keyframes slide { from { transform: translateX(28px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }
+
+/* ---------------------------------------------------------------- Peace HUD skin */
+.pill, .tabs, .pop, .card, .phead, .compose, .sheet .shead, .toast { font-family: Ubuntu, system-ui, sans-serif; }
+.pill { height: 36px; border-radius: var(--r); background: var(--hud); border: var(--edge); box-shadow: var(--inset); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.pill:active { background: var(--hud-hi); }
+.money { gap: 8px; padding: 0 6px 0 8px; }
+.money .cy { display: flex; align-items: center; gap: 4px; font-family: UbuntuBold, Ubuntu, sans-serif; font-weight: 700; font-size: 13px; }
+.ci { width: 18px; height: 18px; object-fit: contain; image-rendering: pixelated; flex: none; }
+.pop { top: 52px; width: 220px; padding: 4px; border-radius: var(--r); background: var(--s1); border: var(--edge); box-shadow: var(--inset), 0 10px 24px rgba(0,0,0,.5); }
+.pr { height: 36px; gap: 9px; border-radius: 4px; }
+.pr + .pr { border-top: 1px solid var(--line); }
+.pr b { font-family: UbuntuBold, Ubuntu, sans-serif; }
+
+/* Room menu */
+.rpop { left: 10px; right: auto; width: min(320px, calc(100% - 20px)); padding: 0; overflow: hidden; }
+.rhead { display: flex; flex-direction: column; padding: 8px 12px; background: var(--hud); border-bottom: 1px solid #000; }
+.rhead b { font-family: UbuntuBold, Ubuntu, sans-serif; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rhead small { font-size: 12px; color: var(--ink2); }
+.rts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+.rt { height: 62px; border-radius: var(--r); background: var(--hud); border: var(--edge); box-shadow: var(--inset); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; font-size: 12px; color: var(--ink); }
+.rt:active { background: var(--hud-hi); }
+.rt span { max-width: 94%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rpop .li { border-top: 1px solid #000; background: var(--s1); }
+.empty.sm { padding: 16px; font-size: 13px; }
+
+/* tab bar */
+.tabs { background: var(--hud); border-top: 1px solid #000; box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+.tab { font-size: 11.5px; color: var(--ink2); }
+.tab .ico { width: 50px; height: 30px; border-radius: var(--r); }
+.tab.on { color: #fff; }
+.tab.on .ico { background: var(--acc); color: #fff; box-shadow: inset 0 1px 0 var(--acc-hi), inset 0 0 0 1px rgba(0,0,0,.35); }
+.tab:active .ico { background: var(--s3); }
+.badge { top: -4px; right: 2px; border-radius: 9px; background: var(--bad); border: 2px solid #141414; }
+.rdot { position: absolute; top: 3px; right: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--bad); border: 2px solid #141414; }
+.tab .rdot { top: -2px; right: 8px; }
+
+/* sheets and panels */
+.sheet { background: var(--s1); border-radius: 8px 8px 0 0; border: var(--edge); border-bottom: 0; box-shadow: var(--inset), 0 -10px 28px rgba(0,0,0,.45); }
+.grab > i { background: #444; }
+.sec { background: var(--s1); color: var(--ink3); font-family: UbuntuBold, Ubuntu, sans-serif; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.ghost, .act, .send, .stat, .tool, .trio button, .chip, .btn.sec { border-radius: var(--r); background: var(--hud); border: var(--edge); box-shadow: var(--inset); }
+.ghost:active, .act:active, .tool:active, .trio button:active, .chip:active { background: var(--hud-hi); }
+.chip.on { background: var(--acc); color: #fff; border: var(--edge); box-shadow: inset 0 1px 0 var(--acc-hi); }
+.search, .field { border-radius: var(--r); background: #0d0d0d; border: var(--edge); box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.06); }
+.search:focus-within { border-color: var(--acc); }
+.list { border-radius: var(--r); background: var(--s2); border: var(--edge); box-shadow: var(--inset); }
+.li + .li { border-top: 1px solid #000; }
+.pri, .trio button.pri, .send.on, .sw.on { background: var(--acc); color: #fff; border: var(--edge); box-shadow: inset 0 1px 0 var(--acc-hi); }
+.btn { border-radius: var(--r); }
+.stat b { gap: 5px; font-family: UbuntuBold, Ubuntu, sans-serif; font-size: 15px; }
+.stat .ci { width: 16px; height: 16px; }
+.stats { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.tool.dis { opacity: .4; filter: grayscale(1); }
+.mehero h3, .shead h3, .phead h3, .hero h4 { font-family: UbuntuBold, Ubuntu, sans-serif; font-weight: 700; }
+.row:active { background: var(--s2); }
+.avw .st { border-color: var(--s1); }
+.card { border-radius: 8px 8px 0 0; border: var(--edge); border-bottom: 0; box-shadow: var(--inset); }
+.motto { border-radius: var(--r); background: #0d0d0d; border: var(--edge); }
+.phead { background: var(--hud); border-bottom: 1px solid #000; }
+.compose { background: var(--s1); border-top: 1px solid #000; }
+.m { border-radius: 8px 8px 8px 3px; background: var(--s2); border: var(--edge); box-shadow: var(--inset); }
+.m.me { border-radius: 8px 8px 3px 8px; background: var(--acc); color: #fff; border: var(--edge); box-shadow: inset 0 1px 0 var(--acc-hi); }
+.toast { border-radius: var(--r); background: var(--hud); color: var(--ink); border: var(--edge); box-shadow: var(--inset), 0 6px 18px rgba(0,0,0,.5); }
+.roomchip { flex: 1 1 auto; min-width: 0; max-width: none; padding: 0 6px 0 10px; }
+.roomchip .nm { flex: 1; min-width: 0; }
+.money { flex: none; }
+.money .cy { flex: none; white-space: nowrap; }
