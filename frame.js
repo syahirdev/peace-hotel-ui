@@ -325,7 +325,7 @@
   // dark surfaces, light pastel backgrounds keep a faint tint, light borders turn subtle. nitro.css
   // styles the marks. They are data attributes, which React leaves alone when it re-renders.
   var darkSeen = new WeakSet(), darkQueued = false, darkObserver = null;
-  var DARK_SKIP = 'img,canvas,svg,path,.chat-content,.chat-bubble,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
+  var DARK_SKIP = 'img,canvas,svg,path,.btn,.chat-content,.chat-bubble,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
   function rgba(s) {
     var m = s && s.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+))?/);
     return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] == null ? 1 : +m[4] } : null;
@@ -345,8 +345,13 @@
       var c = rgba(cs.color);
       if (c && c.a > 0.4) {
         var L = lum(c);
-        if (L < 0.3) el.setAttribute('data-pu-ink', sat(c) > 0.35 ? 'tint' : '1');
-        else if (L < 0.5 && sat(c) < 0.2) el.setAttribute('data-pu-ink', '2');
+        if (L < 0.5 && sat(c) > 0.2) {
+          // Coloured dark text keeps its hue, lifted to a light shade (a filter would also brighten the box).
+          var m = function (v) { return Math.round(v + (255 - v) * 0.72); };
+          el.style.setProperty('--pu-ink', 'rgb(' + m(c.r) + ',' + m(c.g) + ',' + m(c.b) + ')');
+          el.setAttribute('data-pu-ink', 'tint');
+        } else if (L < 0.3) el.setAttribute('data-pu-ink', '1');
+        else if (L < 0.5) el.setAttribute('data-pu-ink', '2');
       }
     }
     // Flat colours and CSS gradients count; pictures never do. Inline colours are content (colour swatches).
@@ -884,7 +889,7 @@
       var d = el.dataset;
       if (d.tab) {
         var t = d.tab;
-        if (t === 'friends' || t === 'me') { if (S.sheet === t) closeSheet(); else openSheet(t, t === 'me' ? 'full' : 'half'); }
+        if (t === 'friends' || t === 'me') { if (S.sheet === t) closeSheet(); else openSheet(t, 'full'); }
         else openNitro(t, el.textContent.trim());
         return;
       }
