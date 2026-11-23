@@ -325,7 +325,7 @@
   // dark surfaces, light pastel backgrounds keep a faint tint, light borders turn subtle. nitro.css
   // styles the marks. They are data attributes, which React leaves alone when it re-renders.
   var darkSeen = new WeakSet(), darkQueued = false, darkObserver = null;
-  var DARK_SKIP = 'img,canvas,svg,path,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
+  var DARK_SKIP = 'img,canvas,svg,path,.chat-content,.chat-bubble,.avatar-image,.nitro-card-header,.nitro-card-tabs,.phone-window,.phone-outer';
   function rgba(s) {
     var m = s && s.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+))?/);
     return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] == null ? 1 : +m[4] } : null;
