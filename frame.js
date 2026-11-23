@@ -1,0 +1,728 @@
+/*
+ * Peace UI: a phone-friendly HUD for the Nitro game client.
+ * Runs at document start inside the game frame (nitro.peacehotel.my), injected by PeaceUi.kt.
+ *
+ * - Draws its own tab bar, top bar, Friends and Me sheets in a shadow root.
+ * - Reads friends, currencies, the user and the room from the game's WebSocket
+ *   (packets are [int32 length][int16 header][body], unencrypted; strings are uint16 length + UTF-8).
+ * - Opens Nitro's own windows (Navigator, Catalog, Inventory, Mentions, Phone...) by clicking
+ *   Nitro's toolbar buttons, which nitro.css hides while this UI is on.
+ * - Friend actions (follow, profile, message, accept) send the same packets Nitro sends.
+ * - Talks to the app through window.PeaceUi (a web message listener limited to this origin).
+ *
+ * Selectors and packet ids are collected at the top so they are easy to adjust.
+ */
+(function () {
+  'use strict';
+  if (window.__peaceUi) return;
+  window.__peaceUi = true;
+
+  var assets = window.__peaceUiAssets || {};
+  try { delete window.__peaceUiAssets; } catch (e) { window.__peaceUiAssets = undefined; }
+  var BRIDGE = window.PeaceUi || null;
+
+  // ---------------------------------------------------------------- config
+  var IMAGER = 'https://www.habbo.com/habbo-imaging/avatarimage?figure=';
+  var IN = {
+    ROOM_ENTER: 758, ROOM_INFO: 687, DESKTOP_VIEW: 122,
+    USER_INFO: 2725, USER_FIGURE: 2429,
+    CREDITS: 3475, CURRENCY: 2018, ACTIVITY_POINTS: 2275,
+    FRIENDS: 3130, FRIENDS_UPDATE: 2800, REQUESTS: 280, NEW_REQUEST: 2219, MESSENGER_CHAT: 1587
+  };
+  var OUT = { FOLLOW: 3997, PROFILE: 3265, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
+  // Nitro controls the tabs and Me tiles press. Each entry: selectors to try, in order.
+  var NITRO = {
+    rooms: ['.navigation-item.icon-rooms'],
+    shop: ['.navigation-item.icon-catalog'],
+    inventory: ['.navigation-item.icon-inventory'],
+    mentions: ['.navigation-item.icon-mention'],
+    phone: ['.navigation-item.icon-phone'],
+    camera: ['.navigation-item.icon-camera'],
+    profile: ['.navigation-item.icon-me-profile'],
+    looks: ['.navigation-item.icon-me-clothing'],
+    achievements: ['.navigation-item.icon-me-achievements'],
+    myrooms: ['.navigation-item.icon-me-rooms'],
+    settings: ['.navigation-item.icon-me-settings'],
+    help: ['.navigation-item.icon-me-helper-tool']
+  };
+  // Buttons that open Nitro's Me/More panel, where some of the controls above live.
+  var NITRO_PANEL = ['.navigation-item.item-avatar', '.navigation-item.icon-more', '.toolbar-collapse-toggle'];
+  var DUCKETS = 0, DIAMONDS = 5;
+  var ACCENTS = ['#5cc8f2', '#a78bfa', '#34d399', '#f5c542'];
+
+  // ---------------------------------------------------------------- state
+  var S = {
+    me: { id: 0, name: '', figure: '', motto: '' },
+    credits: null, cur: {},
+    room: null, awaitingRoom: false,
+    friends: {}, requests: [],
+    conv: {}, unread: {},
+    sheet: null, hmode: 'half', ff: 'online', q: '', chat: 0, card: 0
+  };
+  var sock = null;
+
+  // ---------------------------------------------------------------- packets in
+  var utf8 = new TextDecoder('utf-8');
+  var enc = new TextEncoder();
+  var WANT = {};
+  Object.keys(IN).forEach(function (k) { WANT[IN[k]] = true; });
+
+  function Reader(u, p, end) { this.u = u; this.dv = new DataView(u.buffer, u.byteOffset, u.byteLength); this.p = p; this.end = end; }
+  Reader.prototype.need = function (n) { if (this.p + n > this.end) throw new Error('eof'); };
+  Reader.prototype.int = function () { this.need(4); var v = this.dv.getInt32(this.p); this.p += 4; return v; };
+  Reader.prototype.short = function () { this.need(2); var v = this.dv.getInt16(this.p); this.p += 2; return v; };
+  Reader.prototype.bool = function () { this.need(1); var v = this.dv.getUint8(this.p) !== 0; this.p += 1; return v; };
+  Reader.prototype.str = function () {
+    this.need(2); var n = this.dv.getUint16(this.p); this.p += 2; this.need(n);
+    var s = utf8.decode(this.u.subarray(this.p, this.p + n)); this.p += n; return s;
+  };
+
+  var carry = null, skip = 0;
+  function feed(data) {
+    if (!(data instanceof ArrayBuffer)) return;
+    var u = new Uint8Array(data);
+    if (skip > 0) {
+      if (skip >= u.length) { skip -= u.length; return; }
+      u = u.subarray(skip); skip = 0;
+    }
+    if (carry) {
+      var joined = new Uint8Array(carry.length + u.length);
+      joined.set(carry, 0); joined.set(u, carry.length);
+      u = joined; carry = null;
+    }
+    var dv = new DataView(u.buffer, u.byteOffset, u.byteLength), p = 0;
+    while (u.length - p >= 6) {
+      var len = dv.getInt32(p);
+      if (len < 2 || len > 67108864) return; // Out of sync; resume with the next frame.
+      var head = dv.getInt16(p + 4), avail = u.length - p - 4;
+      if (len > avail) {
+        if (WANT[head]) carry = u.slice(p); else skip = len - avail;
+        return;
+      }
+      if (WANT[head]) {
+        try { onPacket(head, new Reader(u, p + 6, p + 4 + len)); } catch (e) { /* malformed or unexpected layout */ }
+      }
+      p += 4 + len;
+    }
+    if (p < u.length) carry = u.slice(p);
+  }
+
+  function readFriend(r) {
+    var f = { id: r.int(), name: r.str(), gender: r.int(), online: r.bool(), follow: r.bool(), figure: r.str(), cat: r.int(), motto: r.str() };
+    try { r.str(); r.str(); r.bool(); r.bool(); r.bool(); f.rel = r.short(); } catch (e) { f.rel = 0; }
+    return f;
+  }
+
+  function onPacket(h, r) {
+    switch (h) {
+      case IN.USER_INFO:
+        S.me.id = r.int(); S.me.name = r.str(); S.me.figure = r.str(); r.str(); S.me.motto = r.str();
+        changed('me'); break;
+      case IN.USER_FIGURE:
+        S.me.figure = r.str(); changed('me'); break;
+      case IN.CREDITS:
+        S.credits = Math.floor(parseFloat(r.str()) || 0); changed('money'); break;
+      case IN.CURRENCY:
+        for (var n = r.int(); n > 0; n--) { var t = r.int(); S.cur[t] = r.int(); }
+        changed('money'); break;
+      case IN.ACTIVITY_POINTS:
+        var amount = r.int(); r.int(); S.cur[r.int()] = amount; changed('money'); break;
+      case IN.FRIENDS:
+        r.int(); var index = r.int();
+        if (index === 0) S.friends = {};
+        for (var c = r.int(); c > 0; c--) { var f = readFriend(r); S.friends[f.id] = f; }
+        changed('friends'); break;
+      case IN.FRIENDS_UPDATE:
+        for (var k = r.int(); k > 0; k--) { r.int(); r.str(); }
+        for (var u = r.int(); u > 0; u--) {
+          var type = r.int();
+          if (type === -1) delete S.friends[r.int()];
+          else { var g = readFriend(r); S.friends[g.id] = g; }
+        }
+        changed('friends'); break;
+      case IN.REQUESTS:
+        r.int(); S.requests = [];
+        for (var q = r.int(); q > 0; q--) S.requests.push({ id: r.int(), name: r.str(), figure: r.str() });
+        changed('friends'); break;
+      case IN.NEW_REQUEST:
+        var req = { id: r.int(), name: r.str(), figure: r.str() };
+        S.requests = S.requests.filter(function (x) { return x.id !== req.id; }).concat(req);
+        changed('friends'); break;
+      case IN.MESSENGER_CHAT:
+        var from = r.int(), text = r.str(), secs = 0;
+        try { secs = r.int(); } catch (e) {}
+        addMsg(from, false, text, Date.now() - secs * 1000);
+        if (S.chat !== from || !pageOpen()) S.unread[from] = (S.unread[from] || 0) + 1;
+        changed('chat'); break;
+      case IN.ROOM_ENTER:
+        S.awaitingRoom = true; break;
+      case IN.ROOM_INFO:
+        var enter = r.bool(), rid = r.int(), name = r.str(), info = { id: rid, name: name.trim() };
+        try { r.int(); info.owner = r.str(); r.int(); info.users = r.int(); info.max = r.int(); } catch (e) {}
+        if (info.name && (enter || S.awaitingRoom || (S.room && S.room.id === rid))) {
+          S.room = info; S.awaitingRoom = false; changed('room');
+        }
+        break;
+      case IN.DESKTOP_VIEW:
+        S.room = null; changed('room'); break;
+    }
+  }
+
+  // ---------------------------------------------------------------- packets out
+  function send(header, args) {
+    if (!sock || sock.readyState !== 1) { toast('Not connected to the hotel'); return false; }
+    var parts = [], size = 2;
+    args.forEach(function (a) {
+      if (typeof a === 'string') { var b = enc.encode(a); parts.push(b); size += 2 + b.length; }
+      else if (typeof a === 'boolean') { parts.push(a); size += 1; }
+      else { parts.push(a | 0); size += 4; }
+    });
+    var buf = new ArrayBuffer(4 + size), dv = new DataView(buf), u = new Uint8Array(buf), p = 6;
+    dv.setInt32(0, size); dv.setInt16(4, header);
+    parts.forEach(function (a) {
+      if (a instanceof Uint8Array) { dv.setUint16(p, a.length); u.set(a, p + 2); p += 2 + a.length; }
+      else if (typeof a === 'boolean') { dv.setUint8(p, a ? 1 : 0); p += 1; }
+      else { dv.setInt32(p, a); p += 4; }
+    });
+    try { sock.send(buf); return true; } catch (e) { return false; }
+  }
+
+  // ---------------------------------------------------------------- WebSocket hook
+  try {
+    var NativeWs = window.WebSocket;
+    if (NativeWs) {
+      var PeaceWs = function (url, protocols) {
+        var ws = protocols === undefined ? new NativeWs(url) : new NativeWs(url, protocols);
+        sock = ws; carry = null; skip = 0;
+        ws.addEventListener('message', function (e) {
+          try { feed(e.data); } catch (err) { carry = null; skip = 0; }
+        });
+        ws.addEventListener('close', function () { if (sock === ws) sock = null; });
+        return ws;
+      };
+      PeaceWs.prototype = NativeWs.prototype;
+      ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach(function (k) { PeaceWs[k] = NativeWs[k]; });
+      window.WebSocket = PeaceWs;
+    }
+  } catch (e) {}
+
+  // ---------------------------------------------------------------- chat history (kept on this device)
+  var CONV_KEY = 'peaceUi.conv';
+  try { S.conv = JSON.parse(localStorage.getItem(CONV_KEY) || '{}') || {}; } catch (e) { S.conv = {}; }
+  var saveTimer = 0;
+  function addMsg(id, mine, text, at) {
+    var list = S.conv[id] || (S.conv[id] = []);
+    list.push([mine ? 1 : 0, text, at]);
+    if (list.length > 100) list.splice(0, list.length - 100);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      var ids = Object.keys(S.conv).sort(function (a, b) { return lastAt(b) - lastAt(a); }).slice(0, 40), keep = {};
+      ids.forEach(function (i) { keep[i] = S.conv[i]; });
+      try { localStorage.setItem(CONV_KEY, JSON.stringify(keep)); } catch (e) {}
+    }, 800);
+  }
+  function lastAt(id) { var l = S.conv[id]; return l && l.length ? l[l.length - 1][2] : 0; }
+
+  // ---------------------------------------------------------------- Nitro controls
+  function findNitro(key) {
+    var list = NITRO[key] || [];
+    for (var i = 0; i < list.length; i++) { var el = document.querySelector(list[i]); if (el) return el; }
+    return null;
+  }
+  function pressNitro(key) {
+    var el = findNitro(key);
+    if (el) { el.click(); return Promise.resolve(true); }
+    // Not on screen: open Nitro's Me/More panel, press the control, then close the panel again.
+    var toggle = null;
+    for (var i = 0; i < NITRO_PANEL.length && !toggle; i++) toggle = document.querySelector(NITRO_PANEL[i]);
+    if (!toggle) return Promise.resolve(false);
+    toggle.click();
+    return new Promise(function (resolve) {
+      var tries = 0;
+      (function poll() {
+        var el2 = findNitro(key);
+        if (el2) {
+          el2.click();
+          setTimeout(function () { if (findNitro(key)) toggle.click(); }, 50);
+          resolve(true);
+        } else if (++tries < 12) setTimeout(poll, 50);
+        else { toggle.click(); resolve(false); }
+      })();
+    });
+  }
+  function openNitro(key, label) {
+    closeAll();
+    pressNitro(key).then(function (ok) { if (!ok) toast(label + ' is not available here yet'); });
+  }
+
+  // ---------------------------------------------------------------- helpers
+  var P = {
+    search: '<circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    chevl: '<path d="m15 18-6-6 6-6"/>', chevr: '<path d="m9 18 6-6-6-6"/>', chevd: '<path d="m6 9 6 6 6-6"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+    msg: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    follow: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/>',
+    compass: '<circle cx="12" cy="12" r="9.5"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3Z"/>',
+    bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+    box: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+    heart: '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/>',
+    smile: '<circle cx="12" cy="12" r="9.5"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/>',
+    skull: '<path d="M16 20a2 2 0 0 0 1.6-3.2 8 8 0 1 0-11.2 0A2 2 0 0 0 8 20Z"/><path d="M8 20v2h8v-2"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/>',
+    shirt: '<path d="M20.4 3.5 16 2a4 4 0 0 1-8 0L3.6 3.5a2 2 0 0 0-1.3 2.2l.6 3.5a1 1 0 0 0 1 .8H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.2a1 1 0 0 0 1-.8l.6-3.5a2 2 0 0 0-1.4-2.2Z"/>',
+    at: '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>',
+    phone: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M11 18h2"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 3.8"/><path d="M18 2H6v7a6 6 0 0 0 12 0Z"/>',
+    camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3"/>',
+    home: '<path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/>',
+    sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+    help: '<circle cx="12" cy="12" r="9.5"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+    refresh: '<path d="M3 12a9 9 0 0 1 9-9 9.8 9.8 0 0 1 6.7 2.7L21 8"/><path d="M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.8 9.8 0 0 1-6.7-2.7L3 16"/><path d="M8 16H3v5"/>',
+    file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h6M16 13H8M16 17H8M10 9H8"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+    layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>',
+    palette: '<circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2a10 10 0 0 0 0 20c.9 0 1.7-.8 1.7-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1a1.7 1.7 0 0 1 1.7-1.7h2A5.6 5.6 0 0 0 22 10.8C22 5.9 17.5 2 12 2Z"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>'
+  };
+  function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function num(n) { return (n || 0).toLocaleString('en-US'); }
+  function short(n) { if (n == null) return '…'; return n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : n >= 1e4 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K' : num(n); }
+  function hhmm(t) { var d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  function hue(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; }
+  function av(name, figure, size) {
+    var cls = 'av' + (size ? ' ' + size : '');
+    var ini = '<span class="' + cls + ' ini" style="--h:' + hue(name || '?') + '">' + esc((name || '?').charAt(0).toUpperCase()) + '</span>';
+    if (!figure || !IMAGER) return ini;
+    var src = IMAGER + encodeURIComponent(figure) + '&headonly=1&size=m&direction=2&head_direction=2&gesture=sml';
+    return '<span class="' + cls + '" data-ini="' + esc(name || '?') + '"><img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></span>';
+  }
+  function avw(f, size) { return '<span class="avw">' + av(f.name, f.figure, size) + (f.online ? '<i class="st"></i>' : '') + '</span>'; }
+  var REL = { 1: ['heart', '#f472b6', 'Heart', 1], 2: ['smile', '#facc15', 'Smile', 0], 3: ['skull', '#a1a1aa', 'Bobba', 0] };
+  function rel(r) { var x = REL[r]; return x ? '<span class="rl' + (x[3] ? ' fill' : '') + '" style="--c:' + x[1] + '" title="' + x[2] + '">' + ic(x[0]) + '</span>' : ''; }
+
+  function friendList() { return Object.keys(S.friends).map(function (k) { return S.friends[k]; }); }
+  function byName(a, b) { return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; }
+  function sortFriends(a, b) {
+    return ((S.unread[b.id] || 0) - (S.unread[a.id] || 0)) || ((b.rel === 1) - (a.rel === 1)) || byName(a, b);
+  }
+  function unreadTotal() { var t = 0; Object.keys(S.unread).forEach(function (k) { t += S.unread[k]; }); return t; }
+  function nameOf(id) { var f = S.friends[id]; return f ? f.name : 'User ' + id; }
+
+  // ---------------------------------------------------------------- DOM
+  var host, root, $tabs, $sheet, $shc, $page, $modal, $card, $toast, $pop, $chip, $money;
+  function $(sel) { return root.querySelector(sel); }
+
+  function mount() {
+    if (host || !document.body) return;
+    host = document.createElement('div');
+    host.id = 'peace-ui';
+    root = host.attachShadow({ mode: 'open' });
+    var style = document.createElement('style');
+    style.textContent = assets.ui || '';
+    root.appendChild(style);
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div class="top"><button class="pill roomchip" data-a="rooms" hidden><span class="nm"></span><span class="ct">' + ic('user', 14) + '<b></b></span></button>' +
+      '<button class="pill money" data-a="money"><i class="dot" style="background:var(--gold)"></i><span id="crk">…</span>' + ic('chevd', 16) + '</button></div>' +
+      '<div class="pop" id="pop"></div>' +
+      '<div class="sheet" id="sheet"><div class="grab" id="grab"><i></i></div><div class="shc" id="shc"></div></div>' +
+      '<nav class="tabs" id="tabs">' +
+      tab('rooms', 'compass', 'Rooms') + tab('shop', 'bag', 'Shop') + tab('friends', 'users', 'Friends', 'fbadge') + tab('inventory', 'box', 'Inventory') +
+      '<button class="tab" data-tab="me"><span class="ico"><span class="mehead" id="mehead">' + ic('user', 18) + '</span></span><span>Me</span></button>' +
+      '</nav>' +
+      '<div class="page" id="page"></div>' +
+      '<div class="modal" id="modal"><div class="scrim" data-a="cclose"></div><div class="card" id="card"></div></div>' +
+      '<div class="toast" id="toast" role="status"></div>';
+    while (wrap.firstChild) root.appendChild(wrap.firstChild);
+    document.body.appendChild(host);
+
+    $tabs = $('#tabs'); $sheet = $('#sheet'); $shc = $('#shc'); $page = $('#page'); $modal = $('#modal'); $card = $('#card');
+    $toast = $('#toast'); $pop = $('#pop'); $chip = $('.roomchip'); $money = $('#crk');
+
+    var nitroStyle = document.createElement('style');
+    nitroStyle.id = 'peace-ui-nitro';
+    nitroStyle.textContent = assets.nitro || '';
+    (document.head || document.documentElement).appendChild(nitroStyle);
+    document.documentElement.classList.add('pu-on');
+
+    try { setAccent(localStorage.getItem('peaceUi.accent') || ACCENTS[0]); } catch (e) {}
+    bind();
+    renderAll();
+    post({ a: 'ready' });
+  }
+  function tab(id, icon, label, badge) {
+    return '<button class="tab" data-tab="' + id + '"><span class="ico">' + ic(icon, 22) + (badge ? '<b class="badge" id="' + badge + '" hidden></b>' : '') + '</span><span>' + label + '</span></button>';
+  }
+
+  // ---------------------------------------------------------------- rendering
+  var dirty = {};
+  var flushQueued = false;
+  function changed(what) {
+    dirty[what] = true;
+    if (flushQueued || !root) return;
+    flushQueued = true;
+    requestAnimationFrame(flush);
+  }
+  function flush() {
+    flushQueued = false;
+    var d = dirty; dirty = {};
+    if (d.money || d.me) renderTop();
+    if (d.room) renderTop();
+    if (d.me) renderMeTab();
+    if (d.friends || d.chat) renderBadges();
+    if (S.sheet === 'friends' && (d.friends || d.chat)) rerenderSheet();
+    if (S.sheet === 'me' && (d.me || d.money)) rerenderSheet();
+    if (pageOpen() && d.chat) renderChat(true);
+    if ($modal.classList.contains('on') && S.card && d.friends) renderCard();
+  }
+  function renderAll() { renderTop(); renderMeTab(); renderBadges(); }
+
+  function renderTop() {
+    if (S.room) {
+      $chip.hidden = false;
+      $chip.querySelector('.nm').textContent = S.room.name;
+      var ct = $chip.querySelector('.ct');
+      ct.hidden = S.room.users == null;
+      ct.querySelector('b').textContent = S.room.users == null ? '' : S.room.users;
+    } else $chip.hidden = true;
+    $money.textContent = short(S.credits);
+    if ($pop.classList.contains('on')) renderPop();
+  }
+  function renderPop() {
+    var rows = [['var(--gold)', 'Credits', S.credits]];
+    if (S.cur[DUCKETS] != null) rows.push(['var(--duck)', 'Duckets', S.cur[DUCKETS]]);
+    if (S.cur[DIAMONDS] != null) rows.push(['var(--dia)', 'Diamonds', S.cur[DIAMONDS]]);
+    $pop.innerHTML = rows.map(function (r) { return '<div class="pr"><i class="dot" style="background:' + r[0] + '"></i>' + r[1] + '<b>' + (r[2] == null ? '…' : num(r[2])) + '</b></div>'; }).join('');
+  }
+  function renderMeTab() {
+    var el = $('#mehead');
+    el.innerHTML = S.me.figure && IMAGER ? '<img src="' + esc(IMAGER + encodeURIComponent(S.me.figure) + '&headonly=1&size=m&direction=2&head_direction=2') + '" alt="" referrerpolicy="no-referrer">' : ic('user', 18);
+  }
+  function renderBadges() {
+    var n = unreadTotal() + S.requests.length, b = $('#fbadge');
+    b.textContent = n; b.hidden = !n;
+  }
+  function setTabs() {
+    root.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.tab === S.sheet); });
+  }
+
+  // ---------------------------------------------------------------- sheets
+  var SHEETS = {
+    friends: { html: friendsHTML, after: function () { var i = $('#fq'); if (i) i.value = S.q; } },
+    me: { html: meHTML }
+  };
+  function openSheet(k, mode) {
+    closeModal(); closePage(); $pop.classList.remove('on');
+    S.sheet = k;
+    $shc.innerHTML = SHEETS[k].html();
+    if (SHEETS[k].after) SHEETS[k].after();
+    $sheet.classList.add('open');
+    setTabs();
+    setH(mode || 'half');
+    report();
+  }
+  function rerenderSheet() {
+    if (!S.sheet) return;
+    var b = $shc.querySelector('.sbody'), y = b ? b.scrollTop : 0;
+    var focused = root.activeElement && root.activeElement.id === 'fq';
+    if (focused) { renderFriendBody(); return; }
+    $shc.innerHTML = SHEETS[S.sheet].html();
+    if (SHEETS[S.sheet].after) SHEETS[S.sheet].after();
+    var nb = $shc.querySelector('.sbody'); if (nb) nb.scrollTop = y;
+  }
+  function closeSheet() {
+    if (!S.sheet) return;
+    S.sheet = null;
+    $sheet.classList.remove('open');
+    $sheet.style.height = '0px';
+    setTabs();
+    report();
+  }
+  function heights() {
+    var h = host.clientHeight - $tabs.offsetHeight;
+    return { half: Math.round(h * 0.58), full: h - 8 };
+  }
+  function setH(mode) { S.hmode = mode; $sheet.style.height = heights()[mode] + 'px'; }
+
+  // drag the sheet by its handle or header
+  var drag = null;
+  function dragStart(e) {
+    if (!S.sheet || e.target.closest('button, input')) return;
+    if (!e.target.closest('#grab, .shead')) return;
+    drag = { y: e.clientY, h: $sheet.offsetHeight, id: e.pointerId };
+    $sheet.classList.add('drag');
+    try { e.target.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function dragMove(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var hs = heights(), h = Math.max(0, Math.min(hs.full, drag.h + drag.y - e.clientY));
+    $sheet.style.height = h + 'px';
+  }
+  function dragEnd(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    $sheet.classList.remove('drag');
+    var hs = heights(), h = $sheet.offsetHeight, moved = Math.abs(e.clientY - drag.y);
+    drag = null;
+    if (moved < 6) { setH(S.hmode === 'half' ? 'full' : 'half'); return; }
+    if (h < hs.half * 0.55) closeSheet();
+    else setH(Math.abs(h - hs.half) < Math.abs(h - hs.full) ? 'half' : 'full');
+  }
+
+  // ---------------------------------------------------------------- Friends
+  function chipRow(items) {
+    return '<div class="chips" id="fchips">' + items.map(function (c) {
+      return '<button class="chip' + (S.ff === c[0] ? ' on' : '') + '" data-ff="' + c[0] + '">' + c[1] + '<span class="n">' + c[2] + '</span>' + (c[3] ? '<i class="rd"></i>' : '') + '</button>';
+    }).join('') + '</div>';
+  }
+  function friendsHTML() {
+    var all = friendList(), on = all.filter(function (f) { return f.online; }).length;
+    var chats = Object.keys(S.conv).filter(function (k) { return S.conv[k].length; }).length;
+    return '<div class="shead"><div class="tt"><h3>Friends</h3><div class="sub"><i class="sdot"></i>' + on + ' online · ' + all.length + ' friends</div></div></div>' +
+      '<label class="search">' + ic('search', 18) + '<input id="fq" type="search" placeholder="Search ' + all.length + ' friends" autocomplete="off" enterkeyhint="search"><button class="clr" data-a="fclr" aria-label="Clear search"' + (S.q ? '' : ' hidden') + '>' + ic('x', 16) + '</button></label>' +
+      chipRow([['online', 'Online', on], ['all', 'All', all.length], ['chats', 'Chats', chats, unreadTotal() > 0], ['req', 'Requests', S.requests.length, S.requests.length > 0]]) +
+      '<div class="sbody" id="fbody">' + friendBody() + '</div>';
+  }
+  function renderFriendBody() { var b = $('#fbody'); if (b) b.innerHTML = friendBody(); var c = root.querySelector('[data-a=fclr]'); if (c) c.hidden = !S.q; }
+  function friendRow(f) {
+    var u = S.unread[f.id] || 0;
+    return '<div class="row' + (f.online ? '' : ' off') + (u ? ' unread' : '') + '" data-f="' + f.id + '" role="button" tabindex="0">' + avw(f) +
+      '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span>' + rel(f.rel) + '</span><span class="mt">' + esc(f.motto || (f.online ? 'Online' : 'Offline')) + '</span></span>' +
+      '<span class="acts">' + (f.online ? '<button class="act" data-follow="' + f.id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.follow ? '' : ' disabled') + '>' + ic('follow') + '</button>' : '') +
+      '<button class="act" data-chat="' + f.id + '" aria-label="Message ' + esc(f.name) + '">' + ic('msg') + (u ? '<b class="badge">' + u + '</b>' : '') + '</button></span></div>';
+  }
+  function friendBody() {
+    var q = S.q.trim().toLowerCase(), list = friendList();
+    var match = function (f) { return !q || f.name.toLowerCase().indexOf(q) >= 0 || (f.motto || '').toLowerCase().indexOf(q) >= 0; };
+    if (!list.length && S.ff !== 'req') return '<div class="empty"><p>Friends appear here once the hotel has loaded.</p></div>';
+    if (S.ff === 'req') {
+      if (!S.requests.length) return '<div class="empty"><p>No friend requests.</p></div>';
+      return '<div class="sec"><span>Friend requests</span><button class="link" data-a="accall">Accept all</button></div>' + S.requests.map(function (r) {
+        return '<div class="row">' + avw({ name: r.name, figure: r.figure }) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
+      }).join('');
+    }
+    if (S.ff === 'chats') {
+      var ids = Object.keys(S.conv).filter(function (k) { return S.conv[k].length; }).sort(function (a, b) { return lastAt(b) - lastAt(a); });
+      ids = ids.filter(function (id) { return !q || nameOf(id).toLowerCase().indexOf(q) >= 0; });
+      if (!ids.length) return '<div class="empty"><p>No chats yet. Tap the message button next to a friend.</p></div>';
+      return ids.map(function (id) {
+        var f = S.friends[id] || { id: id, name: nameOf(id) }, l = S.conv[id][S.conv[id].length - 1], u = S.unread[id] || 0;
+        return '<div class="row' + (u ? ' unread' : '') + '" data-chat="' + id + '" role="button" tabindex="0">' + avw(f) +
+          '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span><time>' + hhmm(l[2]) + '</time></span><span class="mt">' + (l[0] ? 'You: ' : '') + esc(l[1]) + '</span></span>' + (u ? '<span class="cnt">' + u + '</span>' : '') + '</div>';
+      }).join('');
+    }
+    var online = list.filter(function (f) { return f.online && match(f); }).sort(sortFriends);
+    var h = '';
+    if (online.length) h += '<div class="sec"><span>Online</span><span>' + online.length + '</span></div>' + online.map(friendRow).join('');
+    if (S.ff === 'all') {
+      var off = list.filter(function (f) { return !f.online && match(f); }).sort(sortFriends);
+      if (off.length) h += '<div class="sec"><span>Offline</span><span>' + off.length + '</span></div>' + off.map(friendRow).join('');
+    }
+    if (!h) h = q ? '<div class="empty"><p>No friends match “' + esc(S.q) + '”.</p></div>' : '<div class="empty"><p>No friends online right now.</p><button class="btn sec" data-ff="all">Show all friends</button></div>';
+    return h;
+  }
+
+  // friend card
+  function openCard(id) { S.card = +id; renderCard(); $modal.classList.add('on'); report(); }
+  function renderCard() {
+    var f = S.friends[S.card];
+    if (!f) { closeModal(); return; }
+    $card.innerHTML = '<div class="grab"><i></i></div><div class="hero">' + avw(f, 'xl') + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div></div><button class="ghost" data-a="cclose" aria-label="Close">' + ic('x') + '</button></div>' +
+      (f.motto ? '<div class="motto">' + esc(f.motto) + '</div>' : '') +
+      '<div class="trio"><button class="pri" data-chat="' + f.id + '">' + ic('msg') + 'Message</button><button data-follow="' + f.id + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + 'Go to</button><button data-prof="' + f.id + '">' + ic('user') + 'Profile</button></div>';
+  }
+  function closeModal() { if (!$modal.classList.contains('on')) return; $modal.classList.remove('on'); S.card = 0; report(); }
+
+  // ---------------------------------------------------------------- Messages page
+  function pageOpen() { return $page && $page.classList.contains('on'); }
+  function openChat(id) {
+    id = +id; closeModal();
+    S.chat = id; S.unread[id] = 0;
+    S.conv[id] = S.conv[id] || [];
+    var f = S.friends[id] || { id: id, name: nameOf(id) };
+    $page.innerHTML = '<header class="phead"><button class="ibtn" data-a="back" aria-label="Back">' + ic('chevl') + '</button>' + avw(f) +
+      '<div class="tt"><h3>' + esc(f.name) + '</h3><div class="sub">' + (f.online ? 'Online' : 'Offline') + '</div></div>' +
+      '<button class="ghost" data-follow="' + id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + '</button></header>' +
+      '<div class="msgs" id="msgs"></div>' +
+      '<form class="compose" id="compose"><label class="field"><input id="cin" type="text" placeholder="Message ' + esc(f.name) + '" autocomplete="off" enterkeyhint="send" maxlength="255"></label><button class="send" type="submit" aria-label="Send">' + ic('send') + '</button></form>';
+    $page.classList.add('on');
+    renderChat();
+    renderBadges();
+    report();
+  }
+  function renderChat(keepInput) {
+    var box = $('#msgs');
+    if (!box) return;
+    S.unread[S.chat] = 0;
+    var l = S.conv[S.chat] || [], h = '', lastDay = '';
+    l.forEach(function (m) {
+      var d = new Date(m[2]).toDateString();
+      if (d !== lastDay) { lastDay = d; h += '<div class="day">' + (d === new Date().toDateString() ? 'Today' : esc(d)) + '</div>'; }
+      h += '<div class="m' + (m[0] ? ' me' : '') + '">' + esc(m[1]) + '<time>' + hhmm(m[2]) + '</time></div>';
+    });
+    if (!l.length) h = '<div class="day">Messages you send and receive here are kept on this phone.</div>';
+    box.innerHTML = h;
+    box.scrollTop = box.scrollHeight;
+    if (!keepInput) { var i = $('#cin'); if (i) i.value = ''; }
+    renderBadges();
+  }
+  function sendChat() {
+    var i = $('#cin'), t = i ? i.value.trim() : '';
+    if (!t) return;
+    if (!send(OUT.MESSENGER_CHAT, [S.chat, t])) return;
+    addMsg(S.chat, true, t, Date.now());
+    i.value = '';
+    renderChat(true);
+  }
+  function closePage() { if (!pageOpen()) return; $page.classList.remove('on'); $page.innerHTML = ''; S.chat = 0; report(); }
+
+  // ---------------------------------------------------------------- Me
+  var TILES = [
+    ['profile', 'Profile', 'user'], ['looks', 'Change looks', 'shirt'], ['mentions', 'Mentions', 'at'],
+    ['phone', 'Phone', 'phone'], ['achievements', 'Achievements', 'trophy'], ['camera', 'Camera', 'camera'],
+    ['myrooms', 'My rooms', 'home'], ['settings', 'Settings', 'sliders'], ['help', 'Help', 'help']
+  ];
+  function meHTML() {
+    var acc = '';
+    try { acc = localStorage.getItem('peaceUi.accent') || ACCENTS[0]; } catch (e) { acc = ACCENTS[0]; }
+    var stats = [['var(--gold)', 'Credits', S.credits]];
+    if (S.cur[DUCKETS] != null) stats.push(['var(--duck)', 'Duckets', S.cur[DUCKETS]]);
+    if (S.cur[DIAMONDS] != null) stats.push(['var(--dia)', 'Diamonds', S.cur[DIAMONDS]]);
+    return '<div class="sbody" style="padding-top:2px">' +
+      '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure) + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
+      '<div class="stats">' + stats.map(function (s) { return '<div class="stat"><b><i class="dot" style="background:' + s[0] + '"></i>' + (s[2] == null ? '…' : num(s[2])) + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="tools">' + TILES.map(function (t) { return '<button class="tool" data-me="' + t[0] + '">' + ic(t[2], 22) + '<span>' + t[1] + '</span></button>'; }).join('') + '</div>' +
+      '<div class="sec"><span>App</span></div><div class="list mx">' +
+      '<div class="li">' + ic('palette') + '<span class="lt">Theme<small>Accent colour</small></span><span class="end">' + ACCENTS.map(function (c) { return '<button class="tsw' + (c === acc ? ' on' : '') + '" style="--c:' + c + '" data-acc-c="' + c + '" aria-label="Accent ' + c + '"></button>'; }).join('') + '</span></div>' +
+      '<button class="li" data-app="reload">' + ic('refresh') + '<span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
+      '<button class="li" data-app="chatlog">' + ic('file') + '<span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
+      '<button class="li" data-app="classic">' + ic('layout') + '<span class="lt">Classic UI<small>Switch back to the original game layout</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
+      '<button class="li danger" data-app="website">' + ic('logout') + '<span class="lt">Back to website<small>Leaves the game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
+      '</div><div class="footnote">Peace UI beta · tap Back on your phone to close panels</div></div>';
+  }
+  function setAccent(c) {
+    host.style.setProperty('--acc', c);
+    try { localStorage.setItem('peaceUi.accent', c); } catch (e) {}
+  }
+
+  // ---------------------------------------------------------------- misc
+  var toastTimer = 0;
+  function toast(t) {
+    if (!$toast) return;
+    $toast.textContent = t; $toast.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { $toast.classList.remove('on'); }, 2200);
+  }
+  function post(o) { if (BRIDGE) { try { BRIDGE.postMessage(JSON.stringify(o)); } catch (e) {} } }
+  var lastReported = null;
+  function report() {
+    var open = !!(S.sheet || pageOpen() || ($modal && $modal.classList.contains('on')) || ($pop && $pop.classList.contains('on')));
+    if (open !== lastReported) { lastReported = open; post({ a: 'overlay', open: open }); }
+  }
+  function closeAll() { closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); report(); }
+  function back() {
+    if ($pop.classList.contains('on')) $pop.classList.remove('on');
+    else if ($modal.classList.contains('on')) closeModal();
+    else if (pageOpen()) closePage();
+    else if (S.sheet) closeSheet();
+    report();
+  }
+  function follow(id) {
+    if (send(OUT.FOLLOW, [+id])) { var f = S.friends[id]; toast('Going to ' + (f ? f.name : 'friend') + '…'); closeAll(); }
+  }
+  function profile(id) { if (send(OUT.PROFILE, [+id, true])) closeAll(); }
+
+  // ---------------------------------------------------------------- events
+  function bind() {
+    // Keep typing inside this UI from reaching Nitro's "type anywhere to chat" handler.
+    ['keydown', 'keyup', 'keypress', 'input'].forEach(function (t) {
+      root.addEventListener(t, function (e) { e.stopPropagation(); });
+    });
+    // Broken avatar image: fall back to the initial letter.
+    root.addEventListener('error', function (e) {
+      var img = e.target;
+      if (!img || img.tagName !== 'IMG') return;
+      var box = img.parentNode, n = (box && box.dataset && box.dataset.ini) || '?';
+      if (box && box.classList.contains('mehead')) box.innerHTML = ic('user', 18);
+      else if (box && box.classList.contains('av')) {
+        box.classList.add('ini'); box.style.setProperty('--h', hue(n)); box.textContent = n.charAt(0).toUpperCase();
+      } else img.remove();
+    }, true);
+
+    root.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-acc-c]');
+      if (!el || el.disabled) return;
+      var d = el.dataset;
+      if (d.tab) {
+        var t = d.tab;
+        if (t === 'friends' || t === 'me') { if (S.sheet === t) closeSheet(); else openSheet(t, t === 'me' ? 'full' : 'half'); }
+        else openNitro(t, el.textContent.trim());
+        return;
+      }
+      if (d.a) {
+        switch (d.a) {
+          case 'rooms': openNitro('rooms', 'Rooms'); break;
+          case 'money': if ($pop.classList.toggle('on')) renderPop(); report(); break;
+          case 'fclr': S.q = ''; var i = $('#fq'); if (i) i.value = ''; renderFriendBody(); break;
+          case 'cclose': closeModal(); break;
+          case 'back': closePage(); break;
+          case 'accall':
+            if (S.requests.length && send(OUT.ACCEPT, [S.requests.length].concat(S.requests.map(function (r) { return r.id; })))) {
+              toast('Accepted ' + S.requests.length + ' friend request' + (S.requests.length > 1 ? 's' : '')); S.requests = []; changed('friends');
+            }
+            break;
+        }
+        return;
+      }
+      if (d.ff) { S.ff = d.ff; rerenderSheet(); return; }
+      if (d.acc) {
+        var r = S.requests.find(function (x) { return x.id === +d.acc; });
+        if (send(OUT.ACCEPT, [1, +d.acc])) { S.requests = S.requests.filter(function (x) { return x.id !== +d.acc; }); toast('You and ' + (r ? r.name : 'them') + ' are now friends'); changed('friends'); }
+        return;
+      }
+      if (d.dec) {
+        if (send(OUT.DECLINE, [false, 1, +d.dec])) { S.requests = S.requests.filter(function (x) { return x.id !== +d.dec; }); changed('friends'); }
+        return;
+      }
+      if (d.follow) { follow(d.follow); return; }
+      if (d.chat) { openChat(d.chat); return; }
+      if (d.prof) { profile(d.prof); return; }
+      if (d.f) { openCard(d.f); return; }
+      if (d.me) {
+        if (d.me === 'profile' && S.me.id) { profile(S.me.id); return; }
+        var tile = TILES.find(function (x) { return x[0] === d.me; });
+        openNitro(d.me, tile ? tile[1] : 'This');
+        return;
+      }
+      if (d.app) { closeAll(); post({ a: d.app }); return; }
+      if (d.accC) { setAccent(d.accC); rerenderSheet(); }
+    });
+
+    root.addEventListener('input', function (e) {
+      if (e.target.id === 'fq') { S.q = e.target.value; renderFriendBody(); }
+      if (e.target.id === 'cin') { var s = root.querySelector('.send'); if (s) s.classList.toggle('on', !!e.target.value.trim()); }
+    });
+    root.addEventListener('submit', function (e) { if (e.target.id === 'compose') { e.preventDefault(); sendChat(); } });
+    root.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target.closest && e.target.closest('[role=button]')) e.target.click();
+    });
+    root.addEventListener('pointerdown', dragStart);
+    root.addEventListener('pointermove', dragMove);
+    root.addEventListener('pointerup', dragEnd);
+    root.addEventListener('pointercancel', dragEnd);
+    window.addEventListener('resize', function () { if (S.sheet) setH(S.hmode); });
+
+    if (BRIDGE) {
+      BRIDGE.addEventListener('message', function (e) { if (e.data === 'back') back(); });
+    }
+  }
+
+  // ---------------------------------------------------------------- start
+  if (document.body) mount();
+  else document.addEventListener('DOMContentLoaded', mount);
+  window.__peaceUiDebug = function () {
+    return { connected: !!(sock && sock.readyState === 1), me: S.me, credits: S.credits, cur: S.cur, room: S.room, friends: friendList().length, requests: S.requests.length,
+      found: Object.keys(NITRO).filter(function (k) { return !!findNitro(k); }), panel: NITRO_PANEL.filter(function (s) { return !!document.querySelector(s); }) };
+  };
+})();

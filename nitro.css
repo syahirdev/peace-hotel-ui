@@ -1,0 +1,35 @@
+/*
+ * Added to the Nitro game document (not the Peace UI shadow root).
+ * Every rule is gated on html.pu-on, which frame.js sets only after the Peace UI has mounted,
+ * so if the script fails the original Nitro HUD stays visible.
+ */
+
+/* Keep all of Nitro (room, windows, chat input) above the Peace tab bar.
+   The transform makes Nitro's position:fixed children use #root as their box. */
+html.pu-on #root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: var(--pu-bottom, 60px) !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: hidden !important;
+  transform: translateZ(0);
+}
+
+html.pu-on body {
+  background: #0e0f11 !important;
+}
+
+/* Nitro's own navigation, replaced by the Peace tab bar, Friends and Me.
+   Hidden elements can still be clicked from script, which is how the tabs open Nitro windows. */
+html.pu-on .toolbar-navigation-list,
+html.pu-on .toolbar-collapse-toggle,
+html.pu-on .nitro-toolbar-me,
+html.pu-on .hud-more-friends,
+html.pu-on .toolbar-friend-bar-container,
+html.pu-on .nitro-purse-container,
+html.pu-on .nitro-phone-corner {
+  display: none !important;
+}
