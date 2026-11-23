@@ -169,7 +169,7 @@ html.pu-dark [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
    Both take the whole game area. The Shop works in two steps on a phone: a full-width category list,
    then the chosen page full width with a back bar (frame.js toggles .pu-page on the card). */
 html.pu-on .draggable-window:has(> .nitro-catalog),
-html.pu-on .draggable-window:has(> .nitro-inventory:not(.trading)) { top: 0 !important; }
+html.pu-on .draggable-window:has(> .nitro-inventory:not(.trading)) { top: 52px !important; }
 html.pu-on .draggable-window > .nitro-catalog,
 html.pu-on .draggable-window > .nitro-inventory:not(.trading) {
   height: 100% !important; max-height: none !important; border-radius: 0 !important; box-shadow: none !important;
@@ -209,7 +209,12 @@ html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { flex
 html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 > .grid {
   height: 100% !important; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)) !important; grid-auto-rows: 58px !important; gap: 6px !important; align-content: start !important;
 }
-html.pu-on .nitro-catalog .layout-catalog-grid-item { width: 100% !important; height: 100% !important; background-size: auto !important; background-position: center !important; border-radius: 6px !important; }
+html.pu-on .nitro-catalog .catalog-grid-active { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-catalog .layout-catalog-grid-item {
+  width: 100% !important; height: 100% !important; background-color: #262626 !important; background-repeat: no-repeat !important; background-position: center !important;
+  border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
+}
+html.pu-on .nitro-catalog .catalog-grid-active.active .layout-catalog-grid-item { border-color: #169ccc !important; box-shadow: inset 0 0 0 2px #169ccc !important; background-color: #1d3340 !important; }
 html.pu-on .nitro-catalog .quanity-container { align-items: center !important; }
 html.pu-on .nitro-catalog .quantity-input { width: 64px !important; height: 36px !important; text-align: center !important; }
 html.pu-on .nitro-catalog .purchase-buttons { flex: none !important; gap: 8px !important; }
@@ -238,3 +243,5 @@ html.pu-on .nitro-inventory:not(.trading) .g-col-5 .btn { height: 40px !importan
 html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input,
 html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child select { height: 38px !important; font-size: 14px !important; }
 html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn { height: 38px !important; width: 38px !important; }
+html.pu-on .nitro-catalog .purchase-buttons .btn-primary { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 .btn-primary { background: #169ccc !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #47e3fc !important; font-weight: 700 !important; }

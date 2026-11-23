@@ -388,7 +388,7 @@
       bar.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span></span>';
       col.insertBefore(bar, col.firstChild);
     }
-    var act = card.querySelector('.nitro-catalog-navigation-grid-container .layout-grid-item.active');
+    var acts = card.querySelectorAll('.nitro-catalog-navigation-grid-container .layout-grid-item.active'), act = acts[acts.length - 1];
     bar.querySelector('span').textContent = act ? act.textContent.trim() : 'Categories';
   }
   function shopClick(e) {
