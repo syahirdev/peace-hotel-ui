@@ -51,7 +51,12 @@
   new MutationObserver(function (ms) {
     for (var i = 0; i < ms.length; i++) {
       var t = ms[i].target;
-      if (t.nodeType === 1 && t.closest && t.closest('.draggable-windows-container')) { queue(); return; }
+      if (t.nodeType === 1 && t.closest && t.closest('.draggable-window')) { queue(); return; }
+      var add = ms[i].addedNodes;
+      for (var k = 0; k < add.length; k++) {
+        var n = add[k];
+        if (n.nodeType === 1 && (n.matches('.draggable-window,.nitro-card') || n.querySelector('.nitro-card'))) { queue(); return; }
+      }
     }
   }).observe(document.body, { childList: true, subtree: true });
   queue();

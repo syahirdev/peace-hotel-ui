@@ -53,10 +53,10 @@ html.pu-on .draggable-window .content-area .text-black, html.pu-on .draggable-wi
 html.pu-on .draggable-window .content-area .text-muted { color: var(--pw-ink2) !important; }
 html.pu-on .draggable-window .content-area .bg-white, html.pu-on .draggable-window .content-area .bg-light,
 html.pu-on .draggable-window .content-area .bg-secondary, html.pu-on .draggable-window .content-area .bg-muted { background: var(--pw-s1) !important; }
-html.pu-on .draggable-window .content-area .layout-grid-item {
+html.pu-on .draggable-window .content-area .layout-grid-item:not([style*="background"]) {
   background-color: var(--pw-s1) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; box-shadow: none !important;
 }
-html.pu-on .draggable-window .content-area .layout-grid-item.active { border-color: var(--pw-acc) !important; background-color: var(--pw-s2) !important; }
+html.pu-on .draggable-window .content-area .layout-grid-item.active:not([style*="background"]) { border-color: var(--pw-acc) !important; background-color: var(--pw-s2) !important; }
 html.pu-on .draggable-window .content-area input.form-control, html.pu-on .draggable-window .content-area .form-control,
 html.pu-on .draggable-window .content-area input[type=text], html.pu-on .draggable-window .content-area select {
   background: var(--pw-s1) !important; color: var(--pw-ink) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; box-shadow: none !important; min-height: 34px;
