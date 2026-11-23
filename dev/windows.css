@@ -80,3 +80,12 @@ html.pu-on .user-profile .profile-nav-bar { background: var(--pw-bg) !important;
 html.pu-on .user-profile .profile-nav-bar .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; }
 html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
 html.pu-on .user-profile .profile-nav-actions { flex: none !important; }
+
+/* Marks from the dark-windows pass in frame.js. */
+html.pu-on [data-pu-ink="1"] { color: var(--pw-ink) !important; }
+html.pu-on [data-pu-ink="2"] { color: var(--pw-ink2) !important; }
+html.pu-on [data-pu-ink="tint"] { filter: brightness(2.2) saturate(.8); }
+html.pu-on [data-pu-bg="1"] { background-color: var(--pw-s1) !important; box-shadow: none !important; }
+html.pu-on [data-pu-bg="2"] { background-color: var(--pw-s2) !important; box-shadow: none !important; }
+html.pu-on [data-pu-bg="tint"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
+html.pu-on [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
