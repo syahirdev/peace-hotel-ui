@@ -37,3 +37,130 @@ html.pu-on .nitro-purse-container,
 html.pu-on .nitro-phone-corner {
   display: none !important;
 }
+
+/* ---------------------------------------------------------------- Nitro windows
+   Every Nitro window becomes a full-width sheet at the bottom of the game area, so none is wider
+   than the screen. Colours below are gated on html.pu-dark (the "Dark game windows" switch). */
+html.pu-on .draggable-window {
+  left: 0 !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+}
+html.pu-on .draggable-window > .nitro-card {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: calc(100vh - var(--pu-bottom, 60px) - 60px) !important;
+  border-radius: 16px 16px 0 0 !important;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, .45) !important;
+  overflow: hidden !important;
+}
+html.pu-on .draggable-window .nitro-card-header { min-height: 48px !important; }
+html.pu-on .draggable-window .nitro-card-header-close { width: 32px !important; height: 32px !important; border-radius: 10px !important; }
+html.pu-on .draggable-window .nitro-card-tabs { padding: 0 12px 8px !important; overflow-x: auto !important; scrollbar-width: none; }
+html.pu-on .draggable-window .nitro-card-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-tabs { flex-wrap: nowrap !important; gap: 6px !important; border: 0 !important; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-link {
+  flex: none !important;
+  height: 32px !important;
+  padding: 0 12px !important;
+  border-radius: 16px !important;
+  margin: 0 !important;
+}
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:before,
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:after { display: none !important; }
+
+/* Profile: stack the identity card instead of squeezing two columns side by side. */
+html.pu-on .user-profile .profile-nav-bar { min-height: 52px !important; padding: 8px 10px 8px 12px !important; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .user-profile .profile-nav-actions { flex: none !important; gap: 8px !important; }
+html.pu-on .user-profile .profile-nav-actions .btn { width: 32px !important; height: 32px !important; border-radius: 10px !important; }
+html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: 12px !important; height: auto !important; }
+html.pu-on .user-profile .identity-row,
+html.pu-on .user-profile .identity-relationships,
+html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !important; }
+html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
+
+/* Change looks: preview and buttons on top, the wardrobe full width below. */
+html.pu-on .nitro-avatar-editor .content-area > .grid { display: flex !important; flex-direction: column-reverse !important; gap: 10px !important; height: 100% !important; }
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-4 { flex: none !important; width: 100% !important; height: 168px !important; }
+html.pu-on .nitro-avatar-editor .content-area > .grid > .g-col-8 { flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 > div,
+html.pu-on .nitro-avatar-editor .g-col-4 > div > div { height: 100% !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 > div > div { flex-direction: row !important; gap: 10px !important; align-items: stretch !important; }
+/* Nitro places the preview for a 307px tall box, so shrink the whole box instead of moving its parts. */
+html.pu-on .nitro-avatar-editor .figure-preview-container { zoom: .55; flex: 0 0 auto !important; width: 240px !important; height: 307px !important; border-radius: 25px !important; overflow: hidden !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 .flex-grow-1 { display: flex !important; flex-direction: column !important; justify-content: flex-end !important; gap: 8px !important; }
+html.pu-on .nitro-avatar-editor .action-buttons { width: 100% !important; gap: 6px !important; }
+html.pu-on .nitro-avatar-editor .action-buttons .btn { flex: 1 1 0 !important; height: 38px !important; border-radius: 10px !important; display: grid !important; place-items: center !important; }
+html.pu-on .nitro-avatar-editor .g-col-4 .btn-success { width: 100% !important; height: 44px !important; display: grid !important; place-items: center !important; font-size: 15px !important; }
+html.pu-on .nitro-avatar-editor .choose-clothing { height: 100% !important; }
+
+/* ---------------------------------------------------------------- dark game windows */
+html.pu-dark {
+  --pw-bg: #121317;
+  --pw-s1: #1a1c21;
+  --pw-s2: #23262c;
+  --pw-line: rgba(255, 255, 255, .08);
+  --pw-ink: #ececee;
+  --pw-ink2: #a3a6ad;
+  --pw-acc: var(--pu-acc, #5cc8f2);
+  --pw-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+html.pu-dark .draggable-window > .nitro-card { border: 0 !important; background: var(--pw-bg) !important; }
+html.pu-dark .draggable-window .nitro-card-header { background: var(--pw-bg) !important; border: 0 !important; box-shadow: none !important; }
+html.pu-dark .draggable-window .nitro-card-header-text { color: var(--pw-ink) !important; font: 650 16px/1.2 var(--pw-font) !important; text-shadow: none !important; }
+html.pu-dark .draggable-window .nitro-card-header-close { background: var(--pw-s2) !important; border: 0 !important; box-shadow: none !important; color: var(--pw-ink) !important; }
+html.pu-dark .draggable-window .nitro-card-tabs { background: var(--pw-bg) !important; border: 0 !important; box-shadow: none !important; }
+html.pu-dark .draggable-window .nitro-card-tabs .nav-link {
+  background: var(--pw-s1) !important;
+  border: 1px solid var(--pw-line) !important;
+  box-shadow: none !important;
+  color: var(--pw-ink2) !important;
+  font: 550 13px/1 var(--pw-font) !important;
+  text-shadow: none !important;
+}
+html.pu-dark .draggable-window .nitro-card-tabs .nav-link.active { background: var(--pw-ink) !important; color: #111 !important; border-color: transparent !important; }
+html.pu-dark .draggable-window .nitro-card .content-area { background: var(--pw-bg) !important; color: var(--pw-ink) !important; }
+html.pu-dark .draggable-window .content-area .layout-grid-item:not([style*="background"]) {
+  background-color: var(--pw-s1) !important;
+  border: 1px solid var(--pw-line) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+html.pu-dark .draggable-window .content-area .layout-grid-item.active:not([style*="background"]) { border-color: var(--pw-acc) !important; background-color: var(--pw-s2) !important; }
+html.pu-dark .draggable-window .content-area .form-control,
+html.pu-dark .draggable-window .content-area input[type=text],
+html.pu-dark .draggable-window .content-area select {
+  background: var(--pw-s1) !important;
+  color: var(--pw-ink) !important;
+  border: 1px solid var(--pw-line) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  min-height: 34px;
+}
+html.pu-dark .draggable-window .content-area ::placeholder { color: var(--pw-ink2) !important; }
+html.pu-dark .draggable-window .content-area .btn { border-radius: 10px !important; box-shadow: none !important; text-shadow: none !important; }
+html.pu-dark .draggable-window .content-area .btn-primary,
+html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #0b1116 !important; font-weight: 600 !important; }
+html.pu-dark .draggable-window .content-area .btn-secondary,
+html.pu-dark .draggable-window .content-area .btn-dark,
+html.pu-dark .draggable-window .content-area .btn-light { background: var(--pw-s2) !important; border-color: var(--pw-line) !important; color: var(--pw-ink) !important; }
+html.pu-dark .user-profile .bento { background: var(--pw-s1) !important; border: 1px solid var(--pw-line) !important; border-radius: 14px !important; box-shadow: none !important; }
+html.pu-dark .user-profile .bento-title { color: var(--pw-ink2) !important; letter-spacing: .04em; }
+html.pu-dark .user-profile .bento-count { background: var(--pw-s2) !important; color: var(--pw-ink) !important; border: 0 !important; }
+html.pu-dark .user-profile .relationship-row { background: var(--pw-s2) !important; border: 1px solid var(--pw-line) !important; border-radius: 10px !important; }
+html.pu-dark .user-profile .profile-nav-bar { background: var(--pw-bg) !important; box-shadow: none !important; border: 0 !important; }
+
+/* Marks set by the dark-windows pass in frame.js. */
+html.pu-dark [data-pu-ink="1"] { color: var(--pw-ink) !important; }
+html.pu-dark [data-pu-ink="2"] { color: var(--pw-ink2) !important; }
+html.pu-dark [data-pu-ink="tint"] { filter: brightness(2.2) saturate(.8); }
+html.pu-dark [data-pu-bg="1"] { background: var(--pw-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"] { background: var(--pw-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"] { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
