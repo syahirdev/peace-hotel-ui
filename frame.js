@@ -65,7 +65,7 @@
     credits: null, cur: {},
     room: null, awaitingRoom: false,
     friends: {}, requests: [],
-    conv: {}, unread: {},
+    conv: {}, unread: {}, ret: null,
     sheet: null, hmode: 'half', ff: 'online', q: '', chat: 0, card: 0,
     bp: { avail: null, unclaimed: 0 }
   };
@@ -315,7 +315,7 @@
   }
 
   function openNitro(key, label) {
-    closeAll();
+    closeAll(); S.ret = null;
     pressNitro(key).then(function (ok) { if (!ok) toast(label + ' is not available here yet'); });
   }
 
@@ -647,7 +647,7 @@
     me: { html: meHTML }
   };
   function openSheet(k, mode) {
-    closeModal(); closePage(); $pop.classList.remove('on');
+    S.ret = null; closeModal(); closePage(); $pop.classList.remove('on');
     S.sheet = k;
     $shc.innerHTML = SHEETS[k].html();
     if (SHEETS[k].after) SHEETS[k].after();
@@ -851,20 +851,42 @@
     if (open !== lastReported) { lastReported = open; post({ a: 'overlay', open: open }); }
   }
   function closeAll() { closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); closeRoomMenu(); report(); }
+  // Android Back button, one step at a time: the top panel of this UI, then the top Nitro window, then a
+  // panel that opened that window (a profile opened from Friends goes back to Friends). The app asks the
+  // player to close the game only when this answers that nothing was left to close.
+  function nitroWindows() {
+    return Array.prototype.filter.call(document.querySelectorAll('.draggable-window'), function (w) {
+      return w.getClientRects().length > 0 && w.querySelector('.nitro-card-header-close');
+    });
+  }
+  function topNitroWindow() {
+    var best = null, bz = -Infinity;
+    nitroWindows().forEach(function (w) { var z = parseInt(getComputedStyle(w).zIndex, 10) || 0; if (z >= bz) { bz = z; best = w; } });
+    return best;
+  }
   function back() {
-    var shopPage = document.querySelector('.nitro-catalog.pu-page');
+    var shopPage = document.querySelector('.nitro-catalog.pu-page'), win;
     if ($rpop.classList.contains('on')) closeRoomMenu();
-    else if (shopPage) shopPage.classList.remove('pu-page');
     else if ($pop.classList.contains('on')) $pop.classList.remove('on');
     else if ($modal.classList.contains('on')) closeModal();
     else if (pageOpen()) closePage();
     else if (S.sheet) closeSheet();
+    else if (shopPage && topNitroWindow() === shopPage.closest('.draggable-window')) shopPage.classList.remove('pu-page');
+    else if ((win = topNitroWindow())) {
+      win.querySelector('.nitro-card-header-close').click();
+      var ret = S.ret; S.ret = null;
+      if (ret) setTimeout(function () { if (!nitroWindows().length && !S.sheet) { openSheet(ret.sheet, ret.mode); if (ret.card) openCard(ret.card); } }, 80);
+    } else { S.ret = null; report(); return false; }
     report();
+    return true;
   }
   function follow(id) {
     if (send(OUT.FOLLOW, [+id])) { var f = S.friends[id]; toast('Going to ' + (f ? f.name : 'friend') + '…'); closeAll(); }
   }
-  function profile(id) { if (send(OUT.PROFILE, [+id, true])) closeAll(); }
+  function profile(id) {
+    var ret = S.sheet ? { sheet: S.sheet, mode: S.hmode, card: S.card } : null;
+    if (send(OUT.PROFILE, [+id, true])) { closeAll(); S.ret = ret; }
+  }
 
   // ---------------------------------------------------------------- events
   function bind() {
@@ -960,7 +982,7 @@
     window.addEventListener('resize', function () { if (S.sheet) setH(S.hmode); });
 
     if (BRIDGE) {
-      BRIDGE.addEventListener('message', function (e) { if (e.data === 'back') back(); });
+      BRIDGE.addEventListener('message', function (e) { if (e.data === 'back') post({ a: 'back', handled: back() }); });
     }
   }
 
