@@ -937,7 +937,7 @@
     ca.querySelectorAll('.btn-grpup > .btn').forEach(function (b) {
       var u = b.querySelector('.icon-house-small') ? ['home', 'Home room'] : b.querySelector('[title*="avourite"], [title*="favorite"]') ? ['star', 'Favourite'] :
         b.querySelector('.icon-link-room') ? ['link', 'Link'] : ['cog', (b.textContent || b.title || 'More').trim()];
-      out.acts.push({ ic: u[0], t: u[1], on: b.classList.contains('is-active') || /_on|active/.test((b.querySelector('img') || {}).src || ''), i: ref(b), keep: u[0] === 'link' });
+      out.acts.push({ ic: u[0], t: u[1], on: b.classList.contains('is-active') || /(^|[^n])active|_on\b/.test(((b.querySelector('img') || {}).src || '').split('/').pop()), i: ref(b), keep: u[0] === 'link' });
     });
     var gear = el.querySelector('.settings-room-infoss');
     if (gear) out.acts.push({ ic: 'cog', t: 'Settings', i: ref(gear) });
