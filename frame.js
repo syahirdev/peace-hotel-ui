@@ -421,7 +421,7 @@
       if (!el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)')) {
         var id = rd && (rd.roomId || rd._roomId), b = col.querySelector('.badge');
         if (id) {
-          if (!th) { th = document.createElement('div'); th.className = 'pu-thumb room-thumbnail thumbnailsmalslsk'; el.insertBefore(th, el.firstChild); }
+          if (!th) { th = document.createElement('div'); th.className = 'pu-thumb flex-shrink-0 overflow-hidden room-thumbnail border d-flex flex-column align-items-center justify-content-end thumbnailsmalslsk'; el.insertBefore(th, el.firstChild); }
           if (th.dataset.id !== String(id)) {
             th.dataset.id = id; th.innerHTML = '<img alt="" referrerpolicy="no-referrer">';
             var im = th.firstChild; im.onerror = function () { this.style.visibility = 'hidden'; }; im.src = THUMB + id + '.png';
@@ -429,7 +429,7 @@
           var nb = th.querySelector('.badge');
           if (b) {
             if (!nb) { nb = document.createElement('div'); th.appendChild(nb); }
-            if (nb.className !== b.className) nb.className = b.className;
+            if (nb.className !== b.className + ' position-absolute w-100') nb.className = b.className + ' position-absolute w-100';
             if (nb.innerHTML !== b.innerHTML) nb.innerHTML = b.innerHTML;
           } else if (nb) nb.remove();
         } else if (th) th.remove();
@@ -439,7 +439,7 @@
       var owner = rd && (rd.ownerName || rd._ownerName) || '';
       if (!owner) { if (tag) tag.remove(); return; }
       if (!tag) { tag = document.createElement('div'); tag.className = 'pu-owner pu-lo'; col.appendChild(tag); }
-      if (tag.textContent !== 'Owner: ' + owner) tag.textContent = 'Owner: ' + owner;
+      if (tag.textContent !== 'Owner: ' + owner) tag.innerHTML = '<span>Owner:</span> ' + esc(owner);
     });
     // Room details popover ("i"): a close button. Nitro closes it on a press anywhere else.
     document.querySelectorAll('.popover .room-info').forEach(function (ri) {

@@ -905,7 +905,9 @@ html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { border-bottom: 1px 
 /* Rooms list: My World rows get the same picture + people badge on the left as Public (frame.js adds .pu-thumb) */
 html.pu-on .nitro-navigator .navigator-item { gap: 10px !important; }
 html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !important; flex: none !important; background: #0d0d0d center / cover no-repeat; overflow: hidden !important; }
-html.pu-on .nitro-navigator .navigator-item .pu-thumb img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; color: #f2f2f2; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo > span { color: #a6a6a6; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
 html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) .flex-column .badge-success,
 html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) .flex-column .badge.bg-success { display: none !important; }
 
