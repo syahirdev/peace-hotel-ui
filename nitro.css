@@ -998,7 +998,8 @@ html.pu-on .nitro-catalog .purchase-buttons .btn { height: 44px !important; }
 /* Profile: close and edit buttons the same height as the Profile / Album / Rooms / Other chips */
 html.pu-on .user-profile .profile-nav-close, html.pu-on .user-profile .profile-nav-edit,
 html.pu-on .user-profile .profile-nav-actions .btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
-html.pu-on .user-profile .profile-nav-actions { align-self: center !important; gap: 6px !important; }
+html.pu-on .user-profile .profile-nav-actions { align-self: center !important; gap: 6px !important; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { margin: 0 !important; }
 
 /* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
 html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }
