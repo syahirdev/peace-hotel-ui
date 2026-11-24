@@ -912,7 +912,7 @@ html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) .flex-column .badge
 /* Room details from the green "i": picture on the left; name, owner, people and max users on the right;
    a close button top right. The owner repeated under the picture is hidden, the group only shows when it has a name. */
 html.pu-on .popover .room-info {
-  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); column-gap: 12px; row-gap: 6px; align-items: center; align-content: start;
+  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 12px; row-gap: 6px; align-items: center; align-content: start;
   padding: 12px !important; position: static !important;
 }
 html.pu-on .popover .room-info > .room-info-bg,
