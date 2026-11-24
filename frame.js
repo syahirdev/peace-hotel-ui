@@ -417,6 +417,7 @@
       box.appendChild(b);
     });
     invGrid();
+    looksSync();
     setTabs();
   }
   // Peace's Inventory grid is virtual: rows of 40px tiles spread with space-between, so columns sit far apart
@@ -475,6 +476,160 @@
     var item = t.closest('.nitro-catalog-navigation-grid-container .layout-grid-item');
     // A branch (it has an arrow) only opens its children; a page opens full width.
     if (item && !item.querySelector('svg')) setTimeout(function () { card.classList.add('pu-page'); shopSync(); }, 0);
+  }
+
+  // ---------------------------------------------------------------- full-screen Change looks
+  // Nitro's avatar editor as one screen over the top bar and tab bar: the avatar on a stage, then one sheet
+  // with the category tabs, the item types and the items; colours are their own step. nitro.css does the
+  // layout; this sets the sizes it needs (--lk-* on <html>), adds the Colour button, and keeps the colour
+  // step, the layer actions and the wardrobe toggle. Its state is in data attributes, which React leaves alone.
+  var lkCard = null, lkQueued = false, lkVars = {}, lkSwipe = null;
+  var LK_TYPES = { hr: 'Hair', ha: 'Hats', he: 'Head acc', ea: 'Eyewear', fa: 'Face', ch: 'Shirts', cp: 'Prints', cc: 'Jackets', ca: 'Necklaces', lg: 'Pants', sh: 'Shoes', wa: 'Belts', pt: 'Pets', mc: 'Misc' };
+  function lkFind() {
+    var c = document.querySelector('.draggable-window > .nitro-avatar-editor');
+    return c && c.getClientRects().length ? c : null;
+  }
+  function lkVar(k, v) { if (lkVars[k] !== v) { lkVars[k] = v; document.documentElement.style.setProperty(k, v); } }
+  function lkAttr(el, k, v) { if (v == null) { if (el.hasAttribute(k)) el.removeAttribute(k); } else if (el.getAttribute(k) !== v) el.setAttribute(k, v); }
+  function looksQueue() { if (!lkQueued) { lkQueued = true; requestAnimationFrame(function () { lkQueued = false; looksSync(); }); } }
+  function looksSync() {
+    var card = lkFind();
+    document.documentElement.classList.toggle('pu-looks', !!card);
+    if (host) host.classList.toggle('looks', !!card);
+    lkCard = card;
+    if (!card) return;
+    if (card.classList.contains('expanded')) lkColour(card, false);
+    lkLayout(card);
+    lkBar(card);
+  }
+  // Sizes: the stage gets what is left after the tabs, the type row and three rows of items (240 to 360px).
+  // Items: Nitro's list has 4 per row in 50px rows, zoomed so the tiles are square and fill the width.
+  // Avatar: Nitro draws it at 2x; .75 of that on shorter stages. Palette: ~30px swatches, whole rows.
+  function lkLayout(card) {
+    var H = card.clientHeight, W = card.clientWidth;
+    if (!H || !W) return;
+    var head = card.querySelector(':scope > .nitro-card-header'), hh = head ? head.offsetHeight : 44;
+    var inner = W - 24, z = Math.min(2.4, Math.max(1, inner / 196));
+    var st = Math.round(Math.max(240, Math.min(360, H - hh - 114 - 150 * z)));
+    var pc = Math.max(8, Math.floor((inner + 5) / 35)), ps = (inner - 8 - (pc - 1) * 5) / pc;
+    var rows = Math.max(3, Math.floor((H - hh - st - 114 - 3) / (ps + 5)));
+    lkVar('--lk-hh', hh + 'px'); lkVar('--lk-st', st + 'px'); lkVar('--lk-fk', st >= 330 ? '1' : st >= 255 ? '.75' : '.5');
+    lkVar('--lk-z', z.toFixed(4)); lkVar('--lk-pc', String(pc)); lkVar('--lk-ps', ps.toFixed(2) + 'px');
+    lkVar('--lk-ph', Math.floor(rows * (ps + 5) + 3) + 'px');
+  }
+  function lkBar(card) {
+    var cc = card.querySelector('.choose-clothing');
+    if (!cc) return;
+    var bar = cc.querySelector(':scope > .pu-lkbar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.className = 'pu-lkbar';
+      bar.innerHTML = '<button type="button" class="pu-lkback" aria-label="Back to items"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>' +
+        '<div class="pu-lkt"><b></b><small></small></div>' +
+        '<div class="pu-lkslots"><button type="button" data-s="1"><i class="sw"></i>Colour 1</button><button type="button" data-s="2"><i class="sw"></i>Colour 2</button></div>' +
+        '<button type="button" class="pu-lkcol" aria-label="Colours"><i class="sw"></i><i class="sw"></i></button>';
+      cc.appendChild(bar);
+    }
+    // One palette, or two for two-colour items. Only palettes with colours count.
+    var views = card.querySelectorAll('.avatar-color-palette-container .avatar-editor-palette-set-view'), n = 0, cols = [];
+    for (var i = 0; i < views.length; i++) {
+      var has = n < 2 && views[i].querySelector('.color-picker-frame');
+      lkAttr(views[i], 'data-pu-pal', has ? String(++n) : null);
+      if (has) { var a = views[i].querySelector('.color-picker-frame.active'); cols.push(a ? a.style.backgroundColor : ''); }
+    }
+    lkAttr(bar, 'data-n', String(n));
+    lkAttr(bar, 'data-off', n ? null : '');
+    if (!n) lkColour(card, false);
+    var slot = card.getAttribute('data-pu-slot') === '2' && n > 1 ? '2' : '1';
+    lkAttr(card, 'data-pu-slot', slot);
+    var sws = bar.querySelectorAll('.pu-lkcol .sw'), sbs = bar.querySelectorAll('.pu-lkslots button');
+    for (var j = 0; j < 2; j++) {
+      var c = cols[j] || 'transparent';
+      sws[j].style.background = c; sws[j].hidden = j >= n;
+      sbs[j].querySelector('.sw').style.background = c;
+      sbs[j].classList.toggle('on', String(j + 1) === slot);
+    }
+    var body = !!card.querySelector('.avatar-editor-tabs .nav-link.active .hd');
+    var sel = cc.querySelector('.category-item > .selected'), type = '';
+    if (sel) Object.keys(LK_TYPES).forEach(function (k) { if (sel.classList.contains(k + '-icon')) type = LK_TYPES[k]; });
+    var layer = card.querySelector('.avatar-layer-row.active .avatar-layer-labels > :first-child');
+    var sub = [type, layer ? layer.textContent.trim() : ''].filter(Boolean).join(' · ');
+    var b = bar.querySelector('.pu-lkt b'), sm = bar.querySelector('.pu-lkt small'), title = body ? 'Skin colour' : 'Colour';
+    if (b.textContent !== title) b.textContent = title;
+    if (sm.textContent !== sub) sm.textContent = sub;
+    sm.hidden = !sub;
+  }
+  function lkColour(card, on) {
+    lkAttr(card, 'data-pu-colour', on ? '' : null);
+    if (on) requestAnimationFrame(function () { lkScrollToActive(card); });
+  }
+  // Open the palette at the chosen colour.
+  function lkScrollToActive(card) {
+    var v = card.querySelector('[data-pu-pal="' + (card.getAttribute('data-pu-slot') || '1') + '"]'), a = v && v.querySelector('.color-picker-frame.active');
+    if (!a || !v.clientHeight) return;
+    v.scrollTop += a.getBoundingClientRect().top - v.getBoundingClientRect().top - (v.clientHeight - a.offsetHeight) / 2;
+  }
+  function lkFly(card, row) {
+    card.querySelectorAll('.avatar-layer-row[data-pu-open]').forEach(function (r) { if (r !== row) r.removeAttribute('data-pu-open'); });
+    if (row) row.setAttribute('data-pu-open', '');
+  }
+  function lkHanger(card) { var h = card.querySelector('.avatar-editor-tabs .tab-wardrobe'); if (h) h.click(); return !!h; }
+  function looksClick(e) {
+    var t = e.target, card = t.closest && t.closest('.nitro-avatar-editor');
+    if (!card) return;
+    if (t.closest('.pu-lkcol')) { lkFly(card, null); lkColour(card, true); return; }
+    if (t.closest('.pu-lkback')) { lkColour(card, false); return; }
+    var sb = t.closest('.pu-lkslots button');
+    if (sb) { lkAttr(card, 'data-pu-slot', sb.getAttribute('data-s')); lkBar(card); requestAnimationFrame(function () { lkScrollToActive(card); }); return; }
+    var row = t.closest('.avatar-layer-row');
+    if (row) {
+      // Up, down and remove keep the actions open; tapping the selected layer again opens or closes them.
+      if (!t.closest('.btn-layers')) lkFly(card, row.classList.contains('active') && !row.hasAttribute('data-pu-open') ? row : null);
+      return;
+    }
+    lkFly(card, null);
+    var tab = t.closest('.avatar-editor-tabs .nav-link');
+    if (tab) {
+      lkColour(card, false);
+      // My Wardrobe is a toggle in Nitro and covers the items here, so another category closes it.
+      if (!tab.querySelector('.tab-wardrobe') && card.classList.contains('expanded')) setTimeout(function () { if (card.classList.contains('expanded')) lkHanger(card); }, 0);
+    }
+  }
+  // Swipe the stage to turn the avatar.
+  function looksDown(e) {
+    var t = e.target;
+    lkSwipe = t.closest && t.closest('.nitro-avatar-editor .figure-preview-container') && !t.closest('.arrow-container') ? { x: e.clientX, y: e.clientY, t: Date.now() } : null;
+  }
+  function looksUp(e) {
+    var s = lkSwipe; lkSwipe = null;
+    if (!s) return;
+    var dx = e.clientX - s.x, dy = e.clientY - s.y;
+    if (Math.abs(dx) < 36 || Math.abs(dx) < Math.abs(dy) * 1.5 || Date.now() - s.t > 900) return;
+    var a = document.querySelector('.nitro-avatar-editor .figure-preview-container .arrow-' + (dx < 0 ? 'left' : 'right'));
+    if (a) a.click();
+  }
+  // Back inside Change looks: layer actions, then the colour step, then My Wardrobe, then the window.
+  function looksBack() {
+    var card = lkFind();
+    if (!card || topNitroWindow() !== card.parentElement) return false;
+    var open = card.querySelector('.avatar-layer-row[data-pu-open]');
+    if (open) { open.removeAttribute('data-pu-open'); return true; }
+    if (card.hasAttribute('data-pu-colour')) { lkColour(card, false); return true; }
+    return card.classList.contains('expanded') && lkHanger(card);
+  }
+  function looksWatch() {
+    new MutationObserver(function (ms) {
+      for (var i = 0; i < ms.length; i++) {
+        var m = ms[i];
+        if (lkCard && lkCard.contains(m.target)) { looksQueue(); return; }
+        if (m.type !== 'childList') continue;
+        var lists = [m.addedNodes, m.removedNodes];
+        for (var li = 0; li < 2; li++) for (var k = 0; k < lists[li].length; k++) {
+          var n = lists[li][k];
+          if (n.nodeType === 1 && (n.matches('.draggable-window,.nitro-avatar-editor') || (lkCard && n.contains(lkCard)) || n.querySelector('.nitro-avatar-editor'))) { looksQueue(); return; }
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   }
 
   function darkQueue() { if (!darkQueued) { darkQueued = true; setTimeout(darkScan, 120); } }
@@ -931,6 +1086,7 @@
     else if (pageOpen()) closePage();
     else if (S.sheet) closeSheet();
     else if (shopPage && topNitroWindow() === shopPage.closest('.draggable-window')) shopPage.classList.remove('pu-page');
+    else if (looksBack()) { /* one step back inside Change looks */ }
     else if ((win = topNitroWindow())) {
       win.querySelector('.nitro-card-header-close').click();
       var ret = S.ret; S.ret = null;
@@ -1037,6 +1193,10 @@
       S.bp.unclaimed = Math.max(0, (e.detail && e.detail.count) || 0); changed('bp');
     });
     document.addEventListener('click', shopClick, true);
+    document.addEventListener('click', looksClick, true);
+    document.addEventListener('pointerdown', looksDown, true);
+    document.addEventListener('pointerup', looksUp, true);
+    document.addEventListener('pointercancel', function () { lkSwipe = null; }, true);
     document.addEventListener('click', function (e) {
       var z = e.target.closest && e.target.closest('.pu-zoom');
       if (z) { e.stopPropagation(); e.preventDefault(); zoomOpen(z); return; }
@@ -1049,7 +1209,9 @@
       if ($pop.classList.contains('on')) { $pop.classList.remove('on'); report(); }
       closeRoomMenu();
     }, true);
-    window.addEventListener('resize', function () { invGrid(); });
+    window.addEventListener('resize', function () { invGrid(); looksQueue(); });
+    looksWatch();
+    looksSync();
 
     if (BRIDGE) {
       BRIDGE.addEventListener('message', function (e) { if (e.data === 'back') post({ a: 'back', handled: back() }); });
