@@ -908,8 +908,7 @@ html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !impo
 html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; color: #f2f2f2; }
 html.pu-on .nitro-navigator .pu-owner.pu-lo > span { color: #a6a6a6; }
 html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
-html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) .flex-column .badge-success,
-html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) .flex-column .badge.bg-success { display: none !important; }
+html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) > .flex-column:not(.room-thumbnail) .badge { display: none !important; }
 
 /* Room details from the green "i": picture on the left; name, owner, people and max users on the right;
    a close button top right. The owner repeated under the picture is hidden, the group only shows when it has a name. */

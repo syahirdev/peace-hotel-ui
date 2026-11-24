@@ -415,7 +415,7 @@
     });
     // List rows: My World shows no owner and no picture; both are added so every list looks the same.
     document.querySelectorAll('.nitro-navigator .navigator-item').forEach(function (el) {
-      var col = el.querySelector('.flex-column'); if (!col) return;
+      var col = el.querySelector(':scope > .flex-column:not(.room-thumbnail)'); if (!col) return;
       var rd = null; try { rd = roomDataOf(el); } catch (e) {}
       var th = el.querySelector(':scope > .pu-thumb');
       if (!el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)')) {
