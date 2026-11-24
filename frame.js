@@ -398,6 +398,17 @@
       if (!tag) { tag = document.createElement('div'); tag.className = 'pu-owner'; el.appendChild(tag); }
       if (tag.textContent !== owner) tag.textContent = owner;
     });
+    // List rows: some (My World) show no owner at all.
+    document.querySelectorAll('.nitro-navigator .navigator-item').forEach(function (el) {
+      var col = el.querySelector('.flex-column'); if (!col) return;
+      var tag = col.querySelector(':scope > .pu-owner');
+      if (!tag && /Owner/i.test(el.textContent)) return;
+      var rd = null; try { rd = fiberProp(el, 'roomData'); } catch (e) {}
+      var owner = rd && (rd.ownerName || rd._ownerName) || '';
+      if (!owner) { if (tag) tag.remove(); return; }
+      if (!tag) { tag = document.createElement('div'); tag.className = 'pu-owner pu-lo'; col.appendChild(tag); }
+      if (tag.textContent !== 'Owner: ' + owner) tag.textContent = 'Owner: ' + owner;
+    });
     document.querySelectorAll('.nitro-catalog .catalog-default-image, .nitro-inventory:not(.trading) .g-col-5 > :first-child').forEach(function (box) {
       if (box.querySelector(':scope > .pu-zoom')) return;
       var b = document.createElement('div');

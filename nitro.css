@@ -543,3 +543,4 @@ html.pu-dark .user-profile .content-area { background: transparent !important; c
 html.pu-on .user-profile .profile-nav-bar { padding: 10px 12px !important; min-height: 0 !important; }
 html.pu-on .user-profile .profile-nav-actions .btn { width: 32px !important; height: 32px !important; }
 html.pu-dark .user-profile .profile-nav-bar { background: transparent !important; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { padding: 0; font-size: 12px; }
