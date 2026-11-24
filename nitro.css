@@ -874,3 +874,131 @@ html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d
 @media (prefers-reduced-motion: reduce) {
   html.pu-on .nitro-avatar-editor *, html.pu-on .nitro-avatar-editor *::before, html.pu-on .nitro-avatar-editor *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------------------------------------------------------------- v12: polish round 2 */
+/* Standard buttons in every window: blue two-tone for the main action, red two-tone for delete/report,
+   dark two-tone for the rest. Same height rules as the chips (6px corners, black edge, light top line). */
+html.pu-on .draggable-window .btn-primary:not(.btn-danger), html.pu-on .draggable-window .btn-success,
+html.pu-on .nitro-catalog .purchase-buttons .btn-success {
+  background: var(--pu-blue) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
+  box-shadow: var(--pu-bin) !important; font-family: UbuntuBold, Ubuntu, sans-serif !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-danger:not(.profile-nav-close) {
+  background: linear-gradient(#e0443f 50%, #c22f2b 50%) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
+  box-shadow: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14) !important; font-family: UbuntuBold, Ubuntu, sans-serif !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-secondary, html.pu-on .draggable-window .btn-light, html.pu-on .draggable-window .btn-dark,
+html.pu-on .draggable-window .btn-outline-secondary, html.pu-on .nitro-catalog .purchase-buttons .btn-primary {
+  background: var(--pu-hud) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; font-weight: 400 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-primary:not(.btn-danger):active, html.pu-on .draggable-window .btn-success:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
+html.pu-on .draggable-window .btn-danger:not(.profile-nav-close):active { background: linear-gradient(#c22f2b 50%, #a92724 50%) !important; }
+html.pu-on .draggable-window .btn-secondary:active, html.pu-on .nitro-catalog .purchase-buttons .btn-primary:active { background: var(--pu-hud-p) !important; }
+/* Inventory: the trash button next to the search is a square like the inputs */
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger { height: 38px !important; width: 38px !important; flex: none !important; padding: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger svg { width: 16px; height: 16px; }
+
+/* Rooms grid: a visible edge round the whole card, picture included */
+html.pu-on .nitro-navigator .nav-thumbnail { border-color: #3a3a3a !important; box-shadow: none !important; overflow: hidden !important; }
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { border-bottom: 1px solid #3a3a3a !important; border-radius: 0 !important; }
+
+/* Rooms list: My World rows get the same picture + people badge on the left as Public (frame.js adds .pu-thumb) */
+html.pu-on .nitro-navigator .navigator-item { gap: 10px !important; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !important; flex: none !important; background: #0d0d0d center / cover no-repeat; overflow: hidden !important; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; color: #f2f2f2; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo > span { color: #a6a6a6; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) > .flex-column:not(.room-thumbnail) .badge { display: none !important; }
+
+/* Room details from the green "i": picture on the left; name, owner, people and max users on the right;
+   a close button top right. The owner repeated under the picture is hidden, the group only shows when it has a name. */
+html.pu-on .popover .room-info {
+  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 12px; row-gap: 6px; align-items: center; align-content: start;
+  padding: 12px !important; position: static !important;
+}
+html.pu-on .popover .room-info > .room-info-bg,
+html.pu-on .popover .room-info > .room-info-bg > .d-flex.flex-column:not(.room-thumbnail),
+html.pu-on .popover .room-info > .d-flex.flex-column,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child { display: contents !important; }
+html.pu-on .popover .room-info .room-info-bg > :first-child { grid-column: 1; grid-row: 1 / span 5; align-self: start; margin: 0 !important; }
+html.pu-on .popover .room-info .room-thumbnail { display: block !important; width: 88px !important; height: 88px !important; margin: 0 !important; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2:has(.d-flex > .font-italic:empty) { display: none !important; }
+html.pu-on .popover .room-info .room-info-bg .font-bold { grid-column: 2; padding-right: 40px; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 700 15px/1.3 UbuntuBold, Ubuntu, sans-serif !important; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2 { grid-column: 2; gap: 6px !important; align-items: center; font-size: 13px; min-width: 0; }
+html.pu-on .popover .room-info .font-italic { font-style: normal !important; }
+html.pu-on .popover .room-info .room-info-bg .flex-grow-1:empty { display: none !important; }
+html.pu-on .popover .room-info .badge { position: static !important; grid-column: 2; justify-self: start; margin: 0 !important; padding: 3px 7px !important; font-size: 12px !important; border-radius: 5px !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:first-child { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child { grid-column: 2; width: auto !important; justify-content: flex-start !important; font-size: 13px; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child:has(> .font-bold:empty) { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { grid-column: 2; gap: 4px !important; font-size: 13px; color: #a6a6a6; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold { font: 400 13px/1.3 Ubuntu, sans-serif !important; color: #a6a6a6 !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child > :last-child { color: #f2f2f2; }
+html.pu-on .popover .pu-x {
+  position: absolute; z-index: 2; top: 10px; right: 10px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
+  border-radius: 6px; background: var(--pu-hud); border: 1px solid #000; box-shadow: var(--pu-in); color: #f2f2f2;
+}
+html.pu-on .popover .pu-x:active { background: var(--pu-hud-p); }
+
+/* Create room: full screen like the other tabs, the form on one column, the layouts in a grid,
+   Create and Cancel fixed at the bottom */
+html.pu-on .draggable-window:has(> .nitro-room-creator) { top: 52px !important; }
+html.pu-on .draggable-window > .nitro-room-creator { height: 100% !important; max-height: none !important; width: 100% !important; max-width: none !important; border-radius: 0 !important; box-shadow: none !important; }
+html.pu-on .nitro-room-creator .nitro-card-header { min-height: 44px !important; padding: 0 !important; }
+html.pu-on .nitro-room-creator .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; padding: 10px 12px 0 !important; overflow: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div:has(> .grid) { overflow: visible !important; flex: none !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid { display: flex !important; flex-direction: column !important; gap: 12px !important; height: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid > * { width: 100% !important; max-width: none !important; flex: none !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .g-col-5 { gap: 8px !important; display: flex !important; flex-direction: column !important; }
+html.pu-on .nitro-room-creator .g-col-5 label, html.pu-on .nitro-room-creator .g-col-5 .text-black, html.pu-on .nitro-room-creator .g-col-5 .font-bold { font-size: 13px !important; }
+html.pu-on .nitro-room-creator .form-control, html.pu-on .nitro-room-creator .form-select { height: 40px !important; font-size: 14px !important; border-radius: 6px !important; }
+html.pu-on .nitro-room-creator textarea.form-control { height: 72px !important; min-height: 72px !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child {
+  order: 99; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important;
+  padding: 10px 12px; background: #161616; border-top: 1px solid #000; box-shadow: 0 -1px 0 rgba(255, 255, 255, .06);
+}
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn { height: 44px !important; margin: 0 !important; font-size: 15px !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+html.pu-on .nitro-room-creator .g-col-5 input, html.pu-on .nitro-room-creator .g-col-5 textarea { height: 40px !important; padding: 0 12px !important; font: 14px Ubuntu, sans-serif !important; border-radius: 6px !important; }
+html.pu-on .nitro-room-creator .g-col-5 textarea { height: 72px !important; padding: 8px 12px !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger { order: -1; background: var(--pu-hud) !important; box-shadow: var(--pu-in) !important; font-family: Ubuntu, sans-serif !important; font-weight: 400 !important; }
+html.pu-on .nitro-room-creator .g-col-7 { padding-bottom: 76px !important; }
+html.pu-on .nitro-room-creator .room-creator-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item {
+  width: auto !important; height: auto !important; min-height: 96px; margin: 0 !important; padding: 6px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important;
+  background: #1c1c1c !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; color: #a6a6a6 !important; font-size: 12px !important;
+}
+html.pu-on .nitro-room-creator .room-creator-grid-item img { max-width: 100%; image-rendering: pixelated; }
+html.pu-on .nitro-room-creator .room-creator-grid-item.active { border-color: #000 !important; background: #1d3340 !important; box-shadow: inset 0 0 0 2px #169ccc !important; color: #fff !important; }
+
+/* Shop: category rows follow the chips (two-tone, light top line, 6px), the open one blue */
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container > .grid { gap: 4px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item {
+  border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important;
+}
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item.active { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item:active { background: var(--pu-hud-p) !important; }
+
+/* Shop: quantity and the buy buttons in one panel with room to breathe */
+html.pu-on .nitro-catalog .responsive-column-kk-height { gap: 0 !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { margin-bottom: 10px !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) {
+  flex: none !important; padding: 10px 10px 0 !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-bottom: 0 !important;
+  border-radius: 6px 6px 0 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08) !important;
+}
+html.pu-on .nitro-catalog .quanity-container { width: 100% !important; height: auto !important; min-height: 38px !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; }
+html.pu-on .nitro-catalog .quanity-container .text-muted { font-size: 14px !important; color: #a6a6a6 !important; }
+html.pu-on .nitro-catalog .quantity-input { width: 88px !important; height: 38px !important; font-size: 15px !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons {
+  padding: 10px !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-top: 0 !important; border-radius: 0 0 6px 6px !important;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08) !important;
+}
+html.pu-on .nitro-catalog .purchase-buttons .btn { height: 44px !important; }
+
+/* Profile: close and edit buttons the same height as the Profile / Album / Rooms / Other chips */
+html.pu-on .user-profile .profile-nav-close, html.pu-on .user-profile .profile-nav-edit,
+html.pu-on .user-profile .profile-nav-actions .btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+html.pu-on .user-profile .profile-nav-actions { align-self: center !important; gap: 6px !important; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { margin: 0 !important; }
+
+/* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
+html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }

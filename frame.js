@@ -390,24 +390,69 @@
     for (var i = 0; f && i < 8; i++, f = f.return) { var pr = f.memoizedProps; if (pr && pr[name]) return pr[name]; }
     return null;
   }
+  // The DOM fiber can be the stale copy (React swaps two), so both are read and the one whose room name
+  // matches the title on screen wins. A wrong owner is worse than none.
+  function roomDataOf(el) {
+    var k = Object.keys(el).find(function (x) { return x.indexOf('__reactFiber') === 0; }), f = k && el[k];
+    var t = el.querySelector('[class*="titleromddas"]'), name = t ? t.textContent.trim() : '';
+    for (var i = 0; f && i < 8; i++, f = f.return) {
+      var c = [f.memoizedProps, f.alternate && f.alternate.memoizedProps];
+      for (var j = 0; j < 2; j++) {
+        var rd = c[j] && c[j].roomData; if (!rd) continue;
+        if (!name || String(rd.roomName || rd._roomName || '').trim() === name) return rd;
+      }
+    }
+    return null;
+  }
+  var THUMB = 'https://swfs.peacehotel.my/camera/thumbnail/';
   function polishScan() {
     document.querySelectorAll('.nitro-navigator .nav-thumbnail').forEach(function (el) {
-      var rd = null; try { rd = fiberProp(el, 'roomData'); } catch (e) {}
+      var rd = null; try { rd = roomDataOf(el); } catch (e) {}
       var owner = rd && (rd.ownerName || rd._ownerName) || '', tag = el.querySelector(':scope > .pu-owner');
       if (!owner) { if (tag) tag.remove(); return; }
       if (!tag) { tag = document.createElement('div'); tag.className = 'pu-owner'; el.appendChild(tag); }
       if (tag.textContent !== owner) tag.textContent = owner;
     });
-    // List rows: some (My World) show no owner at all.
+    // List rows: My World shows no owner and no picture; both are added so every list looks the same.
     document.querySelectorAll('.nitro-navigator .navigator-item').forEach(function (el) {
-      var col = el.querySelector('.flex-column'); if (!col) return;
+      var col = el.querySelector(':scope > .flex-column:not(.room-thumbnail)'); if (!col) return;
+      var rd = null; try { rd = roomDataOf(el); } catch (e) {}
+      var th = el.querySelector(':scope > .pu-thumb');
+      if (!el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)')) {
+        var id = rd && (rd.roomId || rd._roomId), b = col.querySelector('.badge');
+        if (id) {
+          if (!th) { th = document.createElement('div'); th.className = 'pu-thumb flex-shrink-0 overflow-hidden room-thumbnail border d-flex flex-column align-items-center justify-content-end thumbnailsmalslsk'; el.insertBefore(th, el.firstChild); }
+          if (th.dataset.id !== String(id)) {
+            th.dataset.id = id; th.innerHTML = '<img alt="" referrerpolicy="no-referrer">';
+            var im = th.firstChild; im.onerror = function () { this.style.visibility = 'hidden'; }; im.src = THUMB + id + '.png';
+          }
+          var nb = th.querySelector('.badge');
+          if (b) {
+            if (!nb) { nb = document.createElement('div'); th.appendChild(nb); }
+            if (nb.className !== b.className + ' position-absolute w-100') nb.className = b.className + ' position-absolute w-100';
+            if (nb.innerHTML !== b.innerHTML) nb.innerHTML = b.innerHTML;
+          } else if (nb) nb.remove();
+        } else if (th) th.remove();
+      }
       var tag = col.querySelector(':scope > .pu-owner');
       if (!tag && /Owner/i.test(el.textContent)) return;
-      var rd = null; try { rd = fiberProp(el, 'roomData'); } catch (e) {}
       var owner = rd && (rd.ownerName || rd._ownerName) || '';
       if (!owner) { if (tag) tag.remove(); return; }
       if (!tag) { tag = document.createElement('div'); tag.className = 'pu-owner pu-lo'; col.appendChild(tag); }
-      if (tag.textContent !== 'Owner: ' + owner) tag.textContent = 'Owner: ' + owner;
+      if (tag.textContent !== 'Owner: ' + owner) tag.innerHTML = '<span>Owner:</span> ' + esc(owner);
+    });
+    // Room details popover ("i"): a close button. Nitro closes it on a press anywhere else.
+    document.querySelectorAll('.popover .room-info').forEach(function (ri) {
+      var pop = ri.closest('.popover'); if (pop.querySelector(':scope > .pu-x')) return;
+      var x = document.createElement('div');
+      x.className = 'pu-x'; x.setAttribute('role', 'button'); x.setAttribute('aria-label', 'Close');
+      x.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+      ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart', 'touchend'].forEach(function (t) { x.addEventListener(t, function (e) { e.stopPropagation(); }); });
+      x.addEventListener('click', function (e) {
+        e.stopPropagation(); e.preventDefault();
+        ['mousedown', 'mouseup', 'click'].forEach(function (t) { document.dispatchEvent(new MouseEvent(t, { bubbles: true })); });
+      });
+      pop.appendChild(x);
     });
     document.querySelectorAll('.nitro-catalog .catalog-default-image, .nitro-inventory:not(.trading) .g-col-5 > :first-child').forEach(function (box) {
       if (box.querySelector(':scope > .pu-zoom')) return;
@@ -427,6 +472,7 @@
     if (!sc) return;
     var row = sc.firstElementChild && sc.firstElementChild.firstElementChild, m = row && /repeat\((\d+),\s*(\d+)px\)/.exec(row.style.gridTemplateColumns || '');
     if (!m) return;
+    // Peace's list always has 6 columns (a constant in its virtual list), so the tiles can only grow to fill the width.
     var n = +m[1], w = (sc.parentElement.clientWidth || 0), z = w / (n * +m[2] + (n - 1) * 4);
     z = z > 1 && z < 3 ? Math.floor(z * 100) / 100 : 1;
     if (String(sc.style.zoom) !== String(z)) sc.style.zoom = z;
@@ -654,7 +700,7 @@
           var lists = [ms[i].addedNodes, ms[i].removedNodes];
           for (var li = 0; li < 2; li++) for (var k = 0; k < lists[li].length; k++) {
             var n = lists[li][k];
-            if (n.nodeType === 1 && (n.matches('.draggable-window,.nitro-card') || n.querySelector('.nitro-card'))) { darkQueue(); return; }
+            if (n.nodeType === 1 && (n.matches('.draggable-window,.nitro-card,.popover') || n.querySelector('.nitro-card,.popover'))) { darkQueue(); return; }
           }
         }
       });
@@ -705,6 +751,9 @@
     grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
     cog: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
     minus: '<path d="M5 12h14"/>',
+    hardhat: '<path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+    flag: '<path d="M4 22V4c4-3 8 3 16 0v11c-8 3-12-3-16 0"/>',
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
   };
   function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
@@ -837,38 +886,110 @@
     like: function () { return ['heart', 'Like room']; },
     voice: function (el) { return ['mic', el.classList.contains('is-live') ? 'Voice (live)' : 'Room voice', el.classList.contains('active') || voiceOpen()]; },
     youtube: function () { return ['play', 'YouTube']; },
-    builder: function () { return ['grid', 'Builder tools']; },
+    builder: function () { return ['hardhat', 'Builder tools']; },
     settings: function () { return ['cog', 'Room settings']; }
   };
+  // The Room menu: name (and the builder tools for owners) on top, four room tools in a 2x2 grid, then the
+  // room's details and actions read from Nitro's Room info window, which stays open but hidden meanwhile.
+  var RT_GRID = ['zoom', 'history', 'bubbles', 'voice'];
+  function roomInfoEl() { return document.querySelector('.draggable-window > .nitro-room-info'); }
+  function openRoomInfo() {
+    if (roomInfoEl()) return Promise.resolve(roomInfoEl());
+    var s = rtFind('settings'); if (!s) return Promise.resolve(null);
+    document.documentElement.classList.add('pu-rihide'); S.riMine = true;
+    s.click();
+    return new Promise(function (resolve) {
+      var n = 0;
+      (function poll() { var el = roomInfoEl(); if (el || ++n > 20) return resolve(el); setTimeout(poll, 50); })();
+    });
+  }
+  function closeRoomInfo(keep) {
+    if (S.riMine && !keep) { var el = roomInfoEl(), x = el && el.querySelector('.nitro-card-header-close'); if (x) x.click(); }
+    S.riMine = false;
+    setTimeout(function () { document.documentElement.classList.remove('pu-rihide'); }, keep ? 0 : 80);
+  }
   function openRoomMenu() {
     $pop.classList.remove('on');
-    $rpop.innerHTML = '<div class="rhead"><b>' + esc(S.room ? S.room.name : 'Room') + '</b></div><div class="empty sm">Loading room tools…</div>';
+    $rpop.innerHTML = '<div class="rhead"><div class="rht"><b>' + esc(S.room ? S.room.name : 'Room') + '</b></div></div><div class="empty sm">Loading room tools…</div>';
     $rpop.classList.add('on'); report();
-    openRoomTools().then(function () { if ($rpop.classList.contains('on')) renderRoomMenu(); });
+    openRoomTools().then(function () {
+      if (!$rpop.classList.contains('on')) return;
+      renderRoomMenu();
+      return openRoomInfo().then(function () { if ($rpop.classList.contains('on')) renderRoomMenu(); else closeRoomInfo(); });
+    });
   }
-  function closeRoomMenu() {
+  function closeRoomMenu(keepInfo) {
     if (!$rpop.classList.contains('on')) return;
-    $rpop.classList.remove('on'); closeRoomTools(); report();
+    $rpop.classList.remove('on'); closeRoomInfo(keepInfo); closeRoomTools(); report();
+  }
+  function roomInfoParts() {
+    var el = roomInfoEl(); S.riEls = [];
+    if (!el) return null;
+    function ref(n) { S.riEls.push(n); return S.riEls.length - 1; }
+    var ca = el.querySelector('.content-area') || el, out = { rows: [], acts: [], btns: [] };
+    ca.querySelectorAll('.text-muted.small').forEach(function (l) {
+      var row = l.parentElement, k = l.textContent.replace(/:\s*$/, '').trim(), v = row.textContent.replace(l.textContent, '').trim();
+      if (k && v) out.rows.push({ k: k, v: v, i: row.classList.contains('cursor-pointer') ? ref(row) : -1 });
+    });
+    var d = ca.querySelector('.overflow-auto.small'); out.desc = d ? d.textContent.trim() : '';
+    out.tags = Array.prototype.map.call(ca.querySelectorAll('.text-tag'), function (t) { return t.textContent.trim(); }).filter(Boolean);
+    ca.querySelectorAll('.btn-grpup > .btn').forEach(function (b) {
+      var u = b.querySelector('.icon-house-small') ? ['home', 'Home room'] : b.querySelector('[title*="avourite"], [title*="favorite"]') ? ['star', 'Favourite'] :
+        b.querySelector('.icon-link-room') ? ['link', 'Link'] : ['cog', (b.textContent || b.title || 'More').trim()];
+      out.acts.push({ ic: u[0], t: u[1], on: b.classList.contains('is-active') || /(^|[^n])active|_on\b/.test(((b.querySelector('img') || {}).src || '').split('/').pop()), i: ref(b), keep: u[0] === 'link' });
+    });
+    var gear = el.querySelector('.settings-room-infoss');
+    if (gear) out.acts.push({ ic: 'cog', t: 'Settings', i: ref(gear) });
+    ca.querySelectorAll('.btn:not(.btn-grpup > .btn):not(.settings-room-infoss)').forEach(function (b) {
+      var t = b.textContent.trim(); if (t) out.btns.push({ t: t, danger: b.classList.contains('btn-danger') || /report/i.test(t), i: ref(b) });
+    });
+    return out;
   }
   function renderRoomMenu() {
     var box = roomTools();
-    var name = box && box.querySelector('.rt-room-name'), owner = box && box.querySelector('.rt-room-name + * .mb-1');
-    var who = [owner ? owner.textContent.trim() : (S.room && S.room.owner ? 'by ' + S.room.owner : ''), S.room && S.room.users != null ? S.room.users + (S.room.max ? ' of ' + S.room.max : '') + ' people' : ''].filter(Boolean).join(' · ');
-    var head = '<div class="rhead"><b>' + esc(name ? name.textContent : (S.room ? S.room.name : 'Room')) + '</b>' + (who ? '<small>' + esc(who) + '</small>' : '') + '</div>';
+    var name = box && box.querySelector('.rt-room-name');
+    var ppl = S.room && S.room.users != null ? S.room.users + (S.room.max ? ' of ' + S.room.max : '') + ' people here' : '';
+    var bld = box && box.querySelector(RT.find(function (x) { return x[0] === 'builder'; })[1]);
+    var head = '<div class="rhead"><div class="rht"><b>' + esc(name ? name.textContent : (S.room ? S.room.name : 'Room')) + '</b>' + (ppl ? '<small>' + esc(ppl) + '</small>' : '') + '</div>' +
+      (bld ? '<button class="sqb rbld" data-rt="builder" aria-label="Builder tools">' + ic('hardhat', 18) + '</button>' : '') + '</div>';
     if (!box) { $rpop.innerHTML = head + '<div class="empty sm">Room tools are not available here</div>'; return; }
-    var btns = RT.map(function (d) {
-      var el = box.querySelector(d[1]); if (!el) return '';
-      var u = RT_UI[d[0]](el);
-      return '<button class="rt' + (u[2] ? ' on' : '') + '" data-rt="' + d[0] + '">' + ic(u[0], 22) + '<span>' + u[1] + '</span></button>';
+    var btns = RT_GRID.map(function (key) {
+      var el = rtFind(key); if (!el) return '';
+      var u = RT_UI[key](el);
+      return '<button class="rt' + (u[2] ? ' on' : '') + '" data-rt="' + key + '">' + ic(u[0], 22) + '<span>' + u[1] + '</span></button>';
     }).join('');
-    $rpop.innerHTML = head + '<div class="rts">' + btns + '</div>';
+    var info = roomInfoParts(), sec = '';
+    if (info) {
+      var acts = info.acts.slice();
+      ['like', 'youtube'].forEach(function (k) { var el = rtFind(k); if (el) { var u = RT_UI[k](el); acts.splice(k === 'like' ? 2 : acts.length, 0, { ic: u[0], t: k === 'like' ? 'Like' : u[1], rt: k }); } });
+      sec = '<div class="rinfo"><div class="rlbl">Room info</div>' +
+        info.rows.map(function (r) {
+          return '<div class="rkv"><span>' + esc(r.k) + '</span>' + (r.i >= 0 ? '<button data-ri="' + r.i + '">' + esc(r.v) + ic('chevr', 14) + '</button>' : '<b>' + esc(r.v) + '</b>') + '</div>';
+        }).join('') +
+        (info.desc ? '<p class="rdesc">' + esc(info.desc) + '</p>' : '') +
+        (info.tags.length ? '<div class="rtags">' + info.tags.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+        (acts.length ? '<div class="racts">' + acts.map(function (a) {
+          return '<button class="ra' + (a.on ? ' on' : '') + '" ' + (a.rt ? 'data-rt="' + a.rt + '"' : 'data-ri="' + a.i + '"' + (a.keep ? ' data-keep="1"' : '')) + '>' + ic(a.ic, 18) + '<span>' + esc(a.t) + '</span></button>';
+        }).join('') + '</div>' : '') +
+        info.btns.map(function (b) { return '<button class="rbtn' + (b.danger ? ' danger' : '') + '" data-ri="' + b.i + '">' + (b.danger ? ic('flag', 16) : '') + esc(b.t) + '</button>'; }).join('') +
+        '</div>';
+    }
+    $rpop.innerHTML = head + '<div class="rts">' + btns + '</div>' + sec;
+  }
+  function pressRoomInfo(i, keep, toggle) {
+    var el = S.riEls && S.riEls[+i];
+    if (!el || !el.isConnected) { toast('Not available in this room'); return; }
+    if (toggle) { el.click(); setTimeout(renderRoomMenu, 250); return; }
+    if (keep) document.documentElement.classList.remove('pu-rihide');
+    el.click();
+    closeRoomMenu(keep);
   }
   function pressRoomTool(key) {
     openRoomTools().then(function () {
       var el = rtFind(key);
       if (!el) { toast('Not available in this room'); return; }
       el.click();
-      if (key === 'zoom' || key === 'bubbles') setTimeout(renderRoomMenu, 120);
+      if (key === 'zoom' || key === 'bubbles' || key === 'like') setTimeout(renderRoomMenu, 160);
       else { closeRoomMenu(); }
     });
   }
@@ -941,7 +1062,7 @@
   function renderFriendBody() { var b = $('#fbody'); if (b) b.innerHTML = friendBody(); var c = root.querySelector('[data-a=fclr]'); if (c) c.hidden = !S.q; }
   function friendRow(f) {
     var u = S.unread[f.id] || 0;
-    return '<div class="row' + (f.online ? '' : ' off') + (u ? ' unread' : '') + '" data-f="' + f.id + '" role="button" tabindex="0">' + fbody(f) +
+    return '<div class="row' + (f.online ? '' : ' off') + (u ? ' unread' : '') + '" data-f="' + f.id + '" role="button" tabindex="0">' + avw(f) +
       '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span>' + rel(f.rel) + '</span><span class="mt">' + esc(f.motto || (f.online ? 'Online' : 'Offline')) + '</span></span>' +
       '<span class="acts">' + (f.online ? '<button class="act" data-follow="' + f.id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.follow ? '' : ' disabled') + '>' + ic('follow') + '</button>' : '') +
       '<button class="act" data-chat="' + f.id + '" aria-label="Message ' + esc(f.name) + '">' + ic('msg') + (u ? '<b class="badge">' + u + '</b>' : '') + '</button></span></div>';
@@ -953,7 +1074,7 @@
     if (S.ff === 'req') {
       if (!S.requests.length) return '<div class="empty"><p>No friend requests.</p></div>';
       return '<div class="sec"><span>Friend requests</span><button class="link" data-a="accall">Accept all</button></div>' + S.requests.map(function (r) {
-        return '<div class="row">' + fbody({ name: r.name, figure: r.figure }) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
+        return '<div class="row">' + av(r.name, r.figure) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
       }).join('');
     }
     if (S.ff === 'chats') {
@@ -962,7 +1083,7 @@
       if (!ids.length) return '<div class="empty"><p>No chats yet. Tap the message button next to a friend.</p></div>';
       return ids.map(function (id) {
         var f = S.friends[id] || { id: id, name: nameOf(id) }, l = S.conv[id][S.conv[id].length - 1], u = S.unread[id] || 0;
-        return '<div class="row' + (u ? ' unread' : '') + '" data-chat="' + id + '" role="button" tabindex="0">' + fbody(f) +
+        return '<div class="row' + (u ? ' unread' : '') + '" data-chat="' + id + '" role="button" tabindex="0">' + avw(f) +
           '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span><time>' + hhmm(l[2]) + '</time></span><span class="mt">' + (l[0] ? 'You: ' : '') + esc(l[1]) + '</span></span>' + (u ? '<span class="cnt">' + u + '</span>' : '') + '</div>';
       }).join('');
     }
@@ -982,7 +1103,7 @@
   function renderCard() {
     var f = S.friends[S.card];
     if (!f) { closeModal(); return; }
-    $card.innerHTML = '<div class="hero">' + fbody(f, true) + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div>' +
+    $card.innerHTML = '<div class="hero">' + av(f.name, f.figure, 'xl') + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div>' +
       (f.motto ? '<div class="motto">' + esc(f.motto) + '</div>' : '') + '</div><button class="sqb" data-a="cclose" aria-label="Close">' + ic('x', 16) + '</button></div>' +
       '<div class="trio"><button data-chat="' + f.id + '">' + ic('msg') + 'Message</button><button data-follow="' + f.id + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + 'Go to</button><button data-prof="' + f.id + '">' + ic('user') + 'Profile</button></div>';
   }
@@ -1042,7 +1163,7 @@
     // Wallet on a 6-column grid: rows of three, and a short last row splits the full width.
     var left = stats.length % 3, cut = stats.length - left;
     return '<div class="whead"><h3>Me</h3><button class="sqb" data-a="close" aria-label="Close">' + ic('x', 16) + '</button></div>' + '<div class="sbody">' +
-      '<div class="mehero">' + fbody({ name: S.me.name || 'Me', figure: S.me.figure }, true) + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
+      '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure, 'xl') + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
       '<div class="stats">' + stats.map(function (c, i) { var v = amount(c[0]); return '<div class="stat' + (i >= cut ? (left === 1 ? ' w6' : ' w3') : '') + '"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
       '<div class="tools">' + TILES.map(function (t) {
         var cls = 'tool', dot = '';
@@ -1131,7 +1252,7 @@
     }, true);
 
     root.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt]');
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt],[data-ri]');
       if (!el || el.disabled) return;
       var d = el.dataset;
       if (d.tab) {
@@ -1179,6 +1300,7 @@
       if (d.prof) { profile(d.prof); return; }
       if (d.f) { openCard(d.f); return; }
       if (d.rt) { if (d.rt === 'voice') { pressRoomTool('voice'); setTimeout(closeRoomMenu, 60); } else pressRoomTool(d.rt); return; }
+      if (d.ri != null) { pressRoomInfo(d.ri, !!d.keep, el.classList.contains('ra') && !d.keep && !/Settings/.test(el.textContent)); return; }
       if (d.me) {
         if (d.me === 'profile' && S.me.id) { profile(S.me.id); return; }
         if (d.me === 'prestige' && S.bp.avail === false) { toast('Peace Prestige is not open right now'); return; }
