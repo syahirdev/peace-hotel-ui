@@ -845,7 +845,32 @@ html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .butto
   color: #f2f2f2 !important; background: var(--pu-hud) !important; border: 0 !important; border-radius: 0 !important; box-shadow: var(--pu-in) !important; font-size: 12px !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > :active { background: var(--pu-hud-p) !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container svg { width: 15px !important; height: 15px !important; }
+/* Slot buttons: Nitro's arrows become Save (floppy, saves the current look into the slot) and Wear (shirt, blue,
+   loads the saved look; only on slots that have one). An empty slot's lone Save button also gets its label. */
+html.pu-on .nitro-avatar-editor {
+  --lk-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
+  --lk-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { display: flex !important; align-items: center; justify-content: center; gap: 4px; font: 700 11px/1 Ubuntu, sans-serif !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container svg { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button::before {
+  content: ''; flex: none; width: 15px; height: 15px; background: currentColor;
+  -webkit-mask: var(--lk-save) center / contain no-repeat; mask: var(--lk-save) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:only-child::after { content: 'Save'; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button::before { -webkit-mask-image: var(--lk-wear); mask-image: var(--lk-wear); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:disabled { opacity: .4; }
+/* Key for the two icons, on the right of the "My Wardrobe" title */
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child { align-self: stretch !important; justify-content: flex-start !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after {
+  order: 9; padding-left: 17px; font: 500 11px/20px Ubuntu, sans-serif; color: #8a8a8a; white-space: nowrap;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E") left center / 13px no-repeat;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before { content: 'Save current look'; margin-left: auto; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { content: 'Wear'; margin-left: 6px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E"); }
 @media (prefers-reduced-motion: reduce) {
   html.pu-on .nitro-avatar-editor *, html.pu-on .nitro-avatar-editor *::before, html.pu-on .nitro-avatar-editor *::after { animation: none !important; transition: none !important; }
 }

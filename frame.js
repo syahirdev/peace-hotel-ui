@@ -501,6 +501,16 @@
     if (card.classList.contains('expanded')) lkColour(card, false);
     lkLayout(card);
     lkBar(card);
+    lkWardrobe(card);
+  }
+  // My Wardrobe: Nitro's slot buttons are bare arrows (first = save the current look here, second = wear the
+  // saved one, only when the slot has a look). nitro.css draws Save / Wear icons; this names them.
+  function lkWardrobe(card) {
+    var b = card.querySelectorAll('.saved-outfit-container .button-container > button');
+    for (var i = 0; i < b.length; i++) {
+      var l = b[i].previousElementSibling ? 'Wear this look' : 'Save current look here';
+      if (b[i].getAttribute('aria-label') !== l) b[i].setAttribute('aria-label', l);
+    }
   }
   // Sizes: the stage gets what is left after the tabs, the type row and three rows of items (240 to 360px).
   // Items: Nitro's list has 4 per row in 50px rows, zoomed so the tiles are square and fill the width.
