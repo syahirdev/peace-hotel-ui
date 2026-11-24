@@ -140,9 +140,14 @@ html.pu-dark .user-profile .profile-nav-bar { background: var(--pw-bg) !importan
 html.pu-dark [data-pu-ink="1"] { color: var(--pw-ink) !important; }
 html.pu-dark [data-pu-ink="2"] { color: var(--pw-ink2) !important; }
 html.pu-dark [data-pu-ink="tint"] { color: var(--pu-ink) !important; }
-html.pu-dark [data-pu-bg="1"] { background: var(--pw-s1) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="2"] { background: var(--pw-s2) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="tint"] { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
+/* Only the colour changes when the element has its own picture: virtual lists (Change looks items) mark a tile
+   before Nitro gives it its image, and the background shorthand would hide that image. */
+html.pu-dark [data-pu-bg="1"]:not([style*="background-image"]) { background: var(--pw-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"]:not([style*="background-image"]) { background: var(--pw-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"]:not([style*="background-image"]) { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="1"][style*="background-image"] { background-color: var(--pw-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"][style*="background-image"] { background-color: var(--pw-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"][style*="background-image"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
 html.pu-dark [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
 
 /* ---------------------------------------------------------------- full-screen Shop and Inventory
