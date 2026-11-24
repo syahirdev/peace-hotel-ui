@@ -472,9 +472,8 @@
     if (!sc) return;
     var row = sc.firstElementChild && sc.firstElementChild.firstElementChild, m = row && /repeat\((\d+),\s*(\d+)px\)/.exec(row.style.gridTemplateColumns || '');
     if (!m) return;
-    // Aim for tiles about 76px wide (5 across on a phone): Peace picks its column count from the zoomed
-    // width, so zooming to the width of that many 40px columns gives that many bigger tiles.
-    var w = (sc.parentElement.clientWidth || 0), cols = Math.max(3, Math.round(w / 78)), z = w / (cols * (+m[2] + 4) - 2);
+    // Peace's list always has 6 columns (a constant in its virtual list), so the tiles can only grow to fill the width.
+    var n = +m[1], w = (sc.parentElement.clientWidth || 0), z = w / (n * +m[2] + (n - 1) * 4);
     z = z > 1 && z < 3 ? Math.floor(z * 100) / 100 : 1;
     if (String(sc.style.zoom) !== String(z)) sc.style.zoom = z;
   }
