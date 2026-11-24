@@ -875,7 +875,7 @@ html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d
   html.pu-on .nitro-avatar-editor *, html.pu-on .nitro-avatar-editor *::before, html.pu-on .nitro-avatar-editor *::after { animation: none !important; transition: none !important; }
 }
 
-/* ---------------------------------------------------------------- v11: polish round 2 */
+/* ---------------------------------------------------------------- v12: polish round 2 */
 /* Standard buttons in every window: blue two-tone for the main action, red two-tone for delete/report,
    dark two-tone for the rest. Same height rules as the chips (6px corners, black edge, light top line). */
 html.pu-on .draggable-window .btn-primary:not(.btn-danger), html.pu-on .draggable-window .btn-success,
