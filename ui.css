@@ -337,3 +337,8 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 /* Change looks is full screen (frame.js adds .looks while Nitro's avatar editor is open): no top bar or tab bar */
 :host(.looks) .top, :host(.looks) .tabs, :host(.looks) .pop, :host(.looks) .rpop { display: none !important; }
 :host(.looks) .toast { bottom: 50%; }
+
+/* ---- v11 ---------------------------------------------------------------- */
+/* Friends: the section header sat 2px below the top of the list, so rows showed through above it */
+.sbody { padding-top: 0; }
+.sec { top: 0; box-shadow: 0 -4px 0 #141414; }

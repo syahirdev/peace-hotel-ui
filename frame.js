@@ -941,7 +941,7 @@
   function renderFriendBody() { var b = $('#fbody'); if (b) b.innerHTML = friendBody(); var c = root.querySelector('[data-a=fclr]'); if (c) c.hidden = !S.q; }
   function friendRow(f) {
     var u = S.unread[f.id] || 0;
-    return '<div class="row' + (f.online ? '' : ' off') + (u ? ' unread' : '') + '" data-f="' + f.id + '" role="button" tabindex="0">' + fbody(f) +
+    return '<div class="row' + (f.online ? '' : ' off') + (u ? ' unread' : '') + '" data-f="' + f.id + '" role="button" tabindex="0">' + avw(f) +
       '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span>' + rel(f.rel) + '</span><span class="mt">' + esc(f.motto || (f.online ? 'Online' : 'Offline')) + '</span></span>' +
       '<span class="acts">' + (f.online ? '<button class="act" data-follow="' + f.id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.follow ? '' : ' disabled') + '>' + ic('follow') + '</button>' : '') +
       '<button class="act" data-chat="' + f.id + '" aria-label="Message ' + esc(f.name) + '">' + ic('msg') + (u ? '<b class="badge">' + u + '</b>' : '') + '</button></span></div>';
@@ -953,7 +953,7 @@
     if (S.ff === 'req') {
       if (!S.requests.length) return '<div class="empty"><p>No friend requests.</p></div>';
       return '<div class="sec"><span>Friend requests</span><button class="link" data-a="accall">Accept all</button></div>' + S.requests.map(function (r) {
-        return '<div class="row">' + fbody({ name: r.name, figure: r.figure }) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
+        return '<div class="row">' + av(r.name, r.figure) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
       }).join('');
     }
     if (S.ff === 'chats') {
@@ -962,7 +962,7 @@
       if (!ids.length) return '<div class="empty"><p>No chats yet. Tap the message button next to a friend.</p></div>';
       return ids.map(function (id) {
         var f = S.friends[id] || { id: id, name: nameOf(id) }, l = S.conv[id][S.conv[id].length - 1], u = S.unread[id] || 0;
-        return '<div class="row' + (u ? ' unread' : '') + '" data-chat="' + id + '" role="button" tabindex="0">' + fbody(f) +
+        return '<div class="row' + (u ? ' unread' : '') + '" data-chat="' + id + '" role="button" tabindex="0">' + avw(f) +
           '<span class="who"><span class="nm"><span>' + esc(f.name) + '</span><time>' + hhmm(l[2]) + '</time></span><span class="mt">' + (l[0] ? 'You: ' : '') + esc(l[1]) + '</span></span>' + (u ? '<span class="cnt">' + u + '</span>' : '') + '</div>';
       }).join('');
     }
@@ -982,7 +982,7 @@
   function renderCard() {
     var f = S.friends[S.card];
     if (!f) { closeModal(); return; }
-    $card.innerHTML = '<div class="hero">' + fbody(f, true) + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div>' +
+    $card.innerHTML = '<div class="hero">' + av(f.name, f.figure, 'xl') + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div>' +
       (f.motto ? '<div class="motto">' + esc(f.motto) + '</div>' : '') + '</div><button class="sqb" data-a="cclose" aria-label="Close">' + ic('x', 16) + '</button></div>' +
       '<div class="trio"><button data-chat="' + f.id + '">' + ic('msg') + 'Message</button><button data-follow="' + f.id + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + 'Go to</button><button data-prof="' + f.id + '">' + ic('user') + 'Profile</button></div>';
   }
@@ -1042,7 +1042,7 @@
     // Wallet on a 6-column grid: rows of three, and a short last row splits the full width.
     var left = stats.length % 3, cut = stats.length - left;
     return '<div class="whead"><h3>Me</h3><button class="sqb" data-a="close" aria-label="Close">' + ic('x', 16) + '</button></div>' + '<div class="sbody">' +
-      '<div class="mehero">' + fbody({ name: S.me.name || 'Me', figure: S.me.figure }, true) + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
+      '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure, 'xl') + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
       '<div class="stats">' + stats.map(function (c, i) { var v = amount(c[0]); return '<div class="stat' + (i >= cut ? (left === 1 ? ' w6' : ' w3') : '') + '"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
       '<div class="tools">' + TILES.map(function (t) {
         var cls = 'tool', dot = '';
