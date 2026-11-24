@@ -468,8 +468,8 @@ html.pu-on .popover:has(.room-info) {
   animation: pu-up .24s cubic-bezier(.2, .8, .2, 1);
 }
 html.pu-on .popover:has(.room-info) .popover-arrow { display: none !important; }
-html.pu-on .popover .room-info { padding: 10px !important; color: #f2f2f2 !important; font-size: 13.5px !important; }
-html.pu-on .popover .room-info .room-info-bg { padding: 0 !important; background: transparent !important; gap: 12px !important; }
+html.pu-on .popover .room-info { padding: 10px !important; width: 100% !important; color: #f2f2f2 !important; font-size: 13.5px !important; }
+html.pu-on .popover .room-info .room-info-bg { padding: 0 !important; background: transparent !important; border-image: none !important; gap: 12px !important; }
 html.pu-on .popover .room-info .room-thumbnail { width: 104px !important; height: 104px !important; border: 1px solid #000 !important; border-radius: 6px !important; margin: 0 !important; }
 html.pu-on .popover .room-info .room-thumbnail img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
 html.pu-on .popover .room-info .font-bold { max-height: none !important; font-size: 15px !important; white-space: normal !important; }
@@ -544,3 +544,5 @@ html.pu-on .user-profile .profile-nav-bar { padding: 10px 12px !important; min-h
 html.pu-on .user-profile .profile-nav-actions .btn { width: 32px !important; height: 32px !important; }
 html.pu-dark .user-profile .profile-nav-bar { background: transparent !important; }
 html.pu-on .nitro-navigator .pu-owner.pu-lo { padding: 0; font-size: 12px; }
+/* Scrolling lists built on Bootstrap's .grid: the first row was 1fr and stretched (gap under "Peace Catalogue"). */
+html.pu-on .nitro-card .overflow-auto.grid { grid-template-rows: none !important; align-content: start !important; }
