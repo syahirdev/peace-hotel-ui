@@ -333,3 +333,7 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .zstage img { display: block; max-width: none; image-rendering: pixelated; border-radius: 8px; border: var(--edge); background: radial-gradient(circle at 50% 70%, #2d3b45, #0f1418 70%); }
 .zbar { flex: none; display: flex; justify-content: center; gap: 8px; padding: 12px; }
 .zbar .sqb { width: 44px; height: 44px; }
+
+/* Change looks is full screen (frame.js adds .looks while Nitro's avatar editor is open): no top bar or tab bar */
+:host(.looks) .top, :host(.looks) .tabs, :host(.looks) .pop, :host(.looks) .rpop { display: none !important; }
+:host(.looks) .toast { bottom: 50%; }
