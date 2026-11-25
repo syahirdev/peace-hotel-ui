@@ -121,6 +121,7 @@ html.pu-on {
   --pu-ease: cubic-bezier(.2, .8, .2, 1);
 
   /* Icons. Masks (drawn in currentColor): close, turn, undo, save, wear. Backgrounds (drawn in --pu-ink-3): search, chevron, hints. */
+  --pu-i-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); /* checkbox tick (drawn, not a mask) */
   --pu-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
   --pu-i-edit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.82 2.82 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4'/%3E%3C/svg%3E"); /* edit (pencil), same stroke as the X */
   --pu-i-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
@@ -419,6 +420,23 @@ html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) textarea { 
 html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, textarea)::placeholder { color: var(--pu-ink-3) !important; font-family: var(--pu-font) !important; font-style: normal !important; opacity: 1 !important; }
 html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, select, textarea):focus,
 html.pu-on .builders-tools input:focus { border-color: var(--pu-blue) !important; }
+/* ---- Radios and checkboxes: deep well + edge; checked = Peace blue with a white dot / tick.
+   Styled by state (:checked), never by the dark pass, so a tap shows at once. ---- */
+html.pu-on .draggable-window > .nitro-card input:is([type="radio"], [type="checkbox"]) {
+  -webkit-appearance: none !important; appearance: none !important; flex: none !important;
+  width: 18px !important; height: 18px !important; cursor: pointer !important;
+  background: var(--pu-well) !important; border: 1px solid var(--pu-line-2) !important; box-shadow: var(--pu-inset) !important; outline: 0 !important;
+  border-radius: var(--pu-r-in) !important;
+}
+html.pu-on .draggable-window > .nitro-card input[type="radio"] { border-radius: var(--pu-r-pill) !important; }
+html.pu-on .draggable-window > .nitro-card input[type="radio"]:checked {
+  background: radial-gradient(circle, var(--pu-ink-on) 0 3.5px, transparent 4px), var(--pu-blue) !important; border-color: var(--pu-blue) !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window > .nitro-card input[type="checkbox"]:checked {
+  background: var(--pu-i-tick) center / 14px 14px no-repeat, var(--pu-blue) !important; border-color: var(--pu-blue) !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window > .nitro-card input:is([type="radio"], [type="checkbox"]):focus-visible { border-color: var(--pu-blue) !important; }
+html.pu-on .draggable-window > .nitro-card input:is([type="radio"], [type="checkbox"]):disabled { opacity: .45 !important; cursor: default !important; }
 /* search: the magnifier on the left (Enter or typing searches; Nitro's pencils are hidden) */
 html.pu-on .draggable-window .nitro-catalog .catalog-left input.form-control,
 html.pu-on .draggable-window > .nitro-card.nitro-navigator input.form-control,
