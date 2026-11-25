@@ -675,36 +675,38 @@ html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !
 html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
 html.pu-on .user-profile .bento { padding: 10px !important; }
 html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
-/* Relationships: heart / smile / bobba as three small tiles in one row (icon + head on top, name below) */
+/* Relationships: heart / smile / bobba as three small cards in one row.
+   Icon in the corner, the friend's head centred and never clipped, name below. */
 html.pu-on .user-profile section.identity-relationships { gap: var(--pu-gap) !important; }
 html.pu-on .user-profile section.identity-relationships .bento-header { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; margin: 0 !important; }
 html.pu-on .user-profile .relationships-list { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
 html.pu-on .user-profile .relationships-list .relationship-row {
-  position: relative !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 6px !important;
-  min-height: 0 !important; height: auto !important; padding: var(--pu-gap) !important; overflow: hidden !important;
+  position: relative !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+  min-height: 96px !important; height: auto !important; padding: 8px 6px !important; overflow: hidden !important; text-align: center !important;
   background: var(--pu-s2) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
 }
-html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) { opacity: .55; }
-html.pu-on .user-profile .relationships-list .relationship-icon { flex: none !important; margin: 0 !important; }
-html.pu-on .user-profile .relationships-list .relationship-body,
-html.pu-on .user-profile .relationships-list .relationship-body > div,
-html.pu-on .user-profile .relationships-list .relationship-body > div > div:not(.relationship-avatar) { min-width: 0 !important; width: 100% !important; }
-html.pu-on .user-profile .relationships-list .relationship-body > div { display: block !important; }
+html.pu-on .user-profile .relationships-list .relationship-icon { position: absolute !important; top: 6px !important; left: 6px !important; margin: 0 !important; z-index: 1; }
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) .relationship-icon { opacity: .55; }
+html.pu-on .user-profile .relationships-list .relationship-body { width: 100% !important; min-width: 0 !important; }
+/* head above the name: Peace puts the name block first and the head second */
+html.pu-on .user-profile .relationships-list .relationship-body > div { display: flex !important; flex-direction: column-reverse !important; align-items: center !important; justify-content: flex-end !important; gap: 4px !important; width: 100% !important; min-width: 0 !important; }
+html.pu-on .user-profile .relationships-list .relationship-body > div > div:not(.relationship-avatar) { width: 100% !important; min-width: 0 !important; }
 html.pu-on .user-profile .relationships-list :is(.relationship-name, .relationship-more, .relationship-empty) {
-  display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-decoration: none !important; line-height: 1.35 !important;
+  display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-decoration: none !important; line-height: 1.35 !important; text-align: center !important;
 }
 html.pu-on .user-profile .relationships-list .relationship-name { font: 700 var(--pu-fs-sm) var(--pu-font-bold) !important; color: var(--pu-ink) !important; }
 html.pu-on .user-profile .relationships-list .relationship-more { font: 400 var(--pu-fs-xs) var(--pu-font) !important; color: var(--pu-ink-3) !important; }
 /* the empty text ("No friends in this category") becomes a short "None" */
 html.pu-on .user-profile .relationships-list .relationship-empty { font-size: 0 !important; }
 html.pu-on .user-profile .relationships-list .relationship-empty::after { content: 'None'; font: 400 var(--pu-fs-sm) var(--pu-font); color: var(--pu-ink-3); }
-/* the friend's head: a small framed picture top right, never outside the tile */
+/* the head: Nitro draws it inside a 90x130 box, head at about x 22-70, y 20-72.
+   A 48x54 slot holds that part; tall hats may rise above it, so the slot never clips. */
 html.pu-on .user-profile .relationships-list .relationship-avatar {
-  position: absolute !important; top: 6px !important; right: 6px !important; left: auto !important; width: 28px !important; height: 28px !important; flex: none !important;
-  overflow: hidden !important; border-radius: var(--pu-r-in) !important; background: var(--pu-s3) !important; box-shadow: var(--pu-hi) !important;
+  position: relative !important; top: auto !important; right: auto !important; left: auto !important; width: 48px !important; height: 54px !important; flex: none !important;
+  overflow: visible !important; background: none !important; box-shadow: none !important; border-radius: 0 !important;
 }
 html.pu-on .user-profile .relationships-list .relationship-avatar .avatar-image {
-  position: absolute !important; left: 50% !important; top: 50% !important; margin: 0 !important; transform: translate(-50%, -50%) !important;
+  position: absolute !important; left: 50% !important; top: -18px !important; margin: 0 0 0 -45px !important; transform: none !important;
 }
 html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
 html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
