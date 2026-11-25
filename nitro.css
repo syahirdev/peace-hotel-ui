@@ -1097,3 +1097,8 @@ html.pu-on .user-profile .profile-avatar { border: 1px solid #000 !important; bo
 /* Every other tab of the profile: plain dark text on the dark card */
 html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]) { color: #a6a6a6 !important; }
 html.pu-on .user-profile .content-area :is(h1, h2, h3, h4, h5, h6, p, span, div):not(.meta-label):not(.bento-title):not(.relationship-empty) { text-shadow: none !important; }
+html.pu-on .user-profile .profile-motto.font-italic { font-style: normal !important; }
+/* Chip rows that scroll sideways: the row is as wide as its chips, so the window's 12px padding shows at both ends */
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) .nav-tabs { width: max-content !important; min-width: 0 !important; flex: none !important; flex-wrap: nowrap !important; }
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) { scrollbar-width: none !important; }
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar)::-webkit-scrollbar { display: none !important; }
