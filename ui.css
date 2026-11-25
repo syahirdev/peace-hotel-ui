@@ -374,7 +374,8 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .chip { height: 36px; }
 .sheet .search { height: 36px; }
 .search input { font-size: 14px; }
-.field { height: 40px; }
+.field { height: 36px; }
+.send { width: 36px; height: 36px; }
 /* Room chip: house and head count only */
 .roomchip { gap: 6px; }
 /* Messages open in the Friends window, not over the whole screen */
