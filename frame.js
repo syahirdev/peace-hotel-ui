@@ -1248,7 +1248,7 @@
     var on = S.sheet;
     if (!on) { var top = topNitroWindow(); Object.keys(TABWIN).forEach(function (t) { if (top && tabWindow(t) === top) on = t; }); }
     root.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.tab === on); });
-    // The online counter sits behind everything: it hides while a tab, window or page is open.
+    // The online counter sits behind everything: while a tab, window or page is open it keeps its place but isn't drawn.
     var busy = !!(S.sheet || pageOpen() || nitroWindows().length);
     if (busy !== S.busy) { S.busy = busy; root.querySelector('.top').classList.toggle('busy', busy); if (busy) closeOnline(); }
   }

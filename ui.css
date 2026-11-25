@@ -145,7 +145,9 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
   background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);
 }
 .pill:active { background: var(--pu-tone-press); }
-.top.busy .online { display: none; }
+/* while a tab, window or page is open the counter sits behind it: it keeps its place (so the room chip and
+   money bar never move) and is simply not drawn, like the window covering it */
+.top.busy .online { visibility: hidden; }
 .roomchip .ct, .online .ct { display: flex; align-items: center; gap: 3px; color: var(--pu-ink-2); flex: none; }
 .lcol > .pill { justify-content: flex-start; }
 .online > svg.i:first-child { color: var(--pu-green); }
