@@ -122,6 +122,7 @@ html.pu-on {
 
   /* Icons. Masks (drawn in currentColor): close, turn, undo, save, wear. Backgrounds (drawn in --pu-ink-3): search, chevron, hints. */
   --pu-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
+  --pu-i-edit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.82 2.82 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4'/%3E%3C/svg%3E"); /* edit (pencil), same stroke as the X */
   --pu-i-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
   --pu-i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
   --pu-i-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
@@ -239,6 +240,7 @@ html.pu-on .draggable-window .nitro-card-tabs { background: var(--pu-s0) !import
 /* ---- Close (X): one size, one drawing, everywhere. The profile's is the red variant (danger). ---- */
 html.pu-on .draggable-window .nitro-card-header-close,
 html.pu-on .user-profile .profile-nav-close,
+html.pu-on .user-profile .profile-nav-edit,
 html.pu-on .popover .pu-x,
 html.pu-on #hud-more-voice .voice-tools-toggle {
   width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; margin: 0 !important;
@@ -248,10 +250,12 @@ html.pu-on #hud-more-voice .voice-tools-toggle {
 }
 html.pu-on .draggable-window .nitro-card-header-close > *,
 html.pu-on .user-profile .profile-nav-close > *,
+html.pu-on .user-profile .profile-nav-edit > *,
 html.pu-on .popover .pu-x > *,
 html.pu-on #hud-more-voice .voice-tools-toggle > * { display: none !important; }
 html.pu-on .draggable-window .nitro-card-header-close::before,
 html.pu-on .user-profile .profile-nav-close::before,
+html.pu-on .user-profile .profile-nav-edit::before,
 html.pu-on .popover .pu-x::before,
 html.pu-on #hud-more-voice .voice-tools-toggle::before {
   content: '' !important; display: block !important; position: static !important; width: 14px !important; height: 14px !important; margin: 0 !important;
@@ -260,8 +264,12 @@ html.pu-on #hud-more-voice .voice-tools-toggle::before {
 }
 html.pu-on .draggable-window .nitro-card-header-close::after,
 html.pu-on .user-profile .profile-nav-close::after,
+html.pu-on .user-profile .profile-nav-edit::after,
 html.pu-on .popover .pu-x::after,
 html.pu-on #hud-more-voice .voice-tools-toggle::after { content: none !important; display: none !important; }
+html.pu-on .user-profile .profile-nav-edit::before { -webkit-mask-image: var(--pu-i-edit); mask-image: var(--pu-i-edit); }
+/* The profile's X is a .btn with a "×" text: the button rule's font size would show it under the drawing. */
+html.pu-on .draggable-window > .nitro-card.user-profile .profile-nav-actions .btn { font-size: 0 !important; gap: 0 !important; }
 html.pu-on .draggable-window .nitro-card-header-close:active,
 html.pu-on .popover .pu-x:active,
 html.pu-on #hud-more-voice .voice-tools-toggle:active { background: var(--pu-tone-press) !important; }
@@ -426,14 +434,12 @@ html.pu-on .nitro-navigator .nav-thumbnail,
 html.pu-on .builders-tools .builders-tools-toggle-list,
 html.pu-on .builders-tools .builders-tools-field-row,
 html.pu-on .rv-card,
-html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card),
+html.pu-on .user-profile :is(.bento, section.identity-relationships, .profile-section, .bento-card),
 html.pu-on .draggable-window .content-area .layout-grid-item:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.room-creator-grid-item):not(.nitro-catalog-navigation-grid-container .layout-grid-item) {
   background: var(--pu-s1) !important; background-image: none !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 html.pu-on .draggable-window .content-area .layout-grid-item.active:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.nitro-catalog-navigation-grid-container .layout-grid-item) { background: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; }
-/* raised panel inside a panel */
-html.pu-on .user-profile .relationship-row { background: var(--pu-s2) !important; }
 /* outlined card: a light edge round a picture card (Rooms grid) */
 html.pu-on .nitro-navigator .nav-thumbnail { border-color: var(--pu-line-solid) !important; box-shadow: none !important; overflow: hidden !important; }
 /* split panel: two stacked parts that read as one box (Shop quantity + buy buttons) */
@@ -666,7 +672,10 @@ html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !
 html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
 html.pu-on .user-profile .bento { padding: 10px !important; }
 html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
-html.pu-on .user-profile .relationship-row { padding: var(--pu-gap) 10px !important; min-height: 40px; }
+html.pu-on .user-profile section.identity-relationships { gap: 0 !important; }
+html.pu-on .user-profile .relationship-row { padding: 6px 2px !important; min-height: 36px; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+html.pu-on .user-profile .relationship-row + .relationship-row { border-top: 1px solid var(--pu-line) !important; }
+html.pu-on .user-profile section.identity-relationships .bento-header { margin-bottom: 4px !important; }
 html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
 html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
 html.pu-on .user-profile .friend-btn { display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important; }
