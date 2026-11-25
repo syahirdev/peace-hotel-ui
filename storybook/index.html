@@ -301,6 +301,8 @@ html.pu-on #hud-more-voice .voice-tool-button,
 html.pu-on #hud-more-voice .voice-icon-button,
 html.pu-on .nitro-phone-corner .phone-corner-btn,
 html.pu-on .rv-pagebtn,
+html.pu-on .chat-input-extras-close,
+html.pu-on .chat-image-upload-btn:not(.send),
 html.pu-on .user-profile .friend-btn {
   background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
   color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important; text-shadow: none !important;
@@ -316,6 +318,8 @@ html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .butto
 html.pu-on .nitro-avatar-editor .pu-lkbar > button:active,
 html.pu-on .nitro-catalog .pu-back:active,
 html.pu-on .pu-zoom:active,
+html.pu-on .chat-input-extras-close:active,
+html.pu-on .chat-image-upload-btn:not(.send):active,
 html.pu-on .rv-pagebtn:active { background: var(--pu-tone-press) !important; }
 /* primary */
 html.pu-on .draggable-window .btn-primary:not(.btn-danger),
@@ -324,6 +328,7 @@ html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn.is-active,
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button,
 html.pu-on .user-profile .profile-nav-edit,
 html.pu-on #hud-more-voice .voice-join,
+html.pu-on .chat-image-upload-btn.send,
 html.pu-on .nitro-phone-corner .phone-corner-btn.open {
   background: var(--pu-blue-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-blue-hi) !important;
   color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
@@ -331,6 +336,7 @@ html.pu-on .nitro-phone-corner .phone-corner-btn.open {
 html.pu-on .draggable-window .btn-primary:not(.btn-danger):active,
 html.pu-on .draggable-window .btn-success:active,
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active,
+html.pu-on .chat-image-upload-btn.send:active,
 html.pu-on .user-profile .profile-nav-edit:active { background: var(--pu-blue-press) !important; }
 /* the default ones listed above win over primary/danger where Nitro uses those classes for a secondary action */
 html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn.btn-primary,
@@ -357,6 +363,7 @@ html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .butto
 /* ---- Chips: window tabs, Shop category rows, Change looks category tabs. Selected = blue. ---- */
 html.pu-on .draggable-window .nitro-card-tabs .nav-link,
 html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item,
+html.pu-on .chat-input-extras-tab,
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link {
   background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
   color: var(--pu-ink-2) !important; font: 500 var(--pu-fs)/1 var(--pu-font) !important; text-shadow: none !important;
@@ -366,6 +373,7 @@ html.pu-on .draggable-window .nitro-card-tabs .nav-link:after { display: none !i
 html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item { color: var(--pu-ink) !important; }
 html.pu-on .draggable-window .nitro-card-tabs .nav-link.active,
 html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item.active,
+html.pu-on .chat-input-extras-tab.active,
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link.active,
 html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link:has(.tab-wardrobe) {
   background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; color: var(--pu-ink-on) !important;
@@ -876,6 +884,33 @@ html.pu-on .nitro-phone-corner .phone-corner-btn { width: var(--pu-ctl) !importa
 html.pu-on body:has(.draggable-window .nitro-card) .nitro-phone-corner,
 html.pu-on body:has(#hud-more-voice:not(:empty)) .nitro-phone-corner .phone-corner-card { display: none !important; }
 
+/* ---- Chat "+" menu (Emoji, Voice, GIF, Upload): a sheet over the chat bar, as wide as the screen.
+        Peace pulls it 42px left to cover its tabs toggle, which the Peace UI hides, so it was cut off. ---- */
+html.pu-on .nitro-bottom-chrome #toolbar-chat-input-container .chat-input-extras-panel {
+  left: 0 !important; right: 0 !important; width: auto !important; max-width: none !important; padding: var(--pu-pad) !important;
+  background: var(--pu-s0) !important; border: 0 !important; border-top: var(--pu-edge) !important; border-radius: 0 !important;
+  box-shadow: var(--pu-hi-line), var(--pu-sheet) !important; color: var(--pu-ink) !important; font-family: var(--pu-font) !important;
+}
+html.pu-on .chat-input-extras-header { gap: var(--pu-gap) !important; margin-bottom: var(--pu-pad) !important; }
+html.pu-on .chat-input-extras-tabs { gap: 6px !important; flex-wrap: nowrap !important; }
+html.pu-on .chat-input-extras-tab { height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; gap: 6px !important; flex: none !important; transform: none !important; filter: none !important; }
+html.pu-on .chat-input-extras-close { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; padding: 0 !important; flex: none !important; justify-content: center !important; transform: none !important; filter: none !important; }
+html.pu-on .chat-image-upload-toolbar,
+html.pu-on .chat-gif-picker-toolbar { gap: var(--pu-gap) !important; }
+html.pu-on .chat-image-upload-btn { min-height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; font-size: var(--pu-fs) !important; }
+html.pu-on .chat-image-upload-preview,
+html.pu-on .chat-gif-picker-selected { margin-top: var(--pu-gap) !important; background: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important; }
+html.pu-on .chat-image-upload-preview img { max-height: 180px !important; object-fit: contain !important; }
+html.pu-on .chat-image-upload-meta { color: var(--pu-ink-2) !important; font-size: var(--pu-fs-sm) !important; }
+html.pu-on .chat-image-upload-error,
+html.pu-on .chat-voice-note .chat-voice-note-error,
+html.pu-on .chat-voice-note .chat-voice-note-timer.recording { color: var(--pu-red) !important; font-size: var(--pu-fs-sm) !important; }
+html.pu-on .chat-gif-picker-search,
+html.pu-on .chat-voice-note { background: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important; }
+html.pu-on .chat-gif-picker-search { min-height: var(--pu-ctl) !important; }
+html.pu-on .chat-gif-picker-card { background: var(--pu-s2) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; transform: none !important; }
+html.pu-on .chat-gif-picker-card.selected { box-shadow: var(--pu-ring) !important; }
+
 /* ---- Change looks, full screen (idea B) ----
    The avatar on a stage at the top, one sheet below it: the 6 category tabs, the item types and the items, with
    colours as their own step. Nitro's columns are flattened (display: contents) so they can be reordered: header,
@@ -1231,7 +1266,7 @@ html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { displa
 
 <section class="sb-band">
   <h1>Peace UI design system</h1>
-  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version 15, so what you see here is exactly what the game draws.</p>
+  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version 16, so what you see here is exactly what the game draws.</p>
 </section>
 
 <section class="sb-band" id="screens">
