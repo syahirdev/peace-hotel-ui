@@ -1002,3 +1002,60 @@ html.pu-on .user-profile .profile-nav-bar > .nav-tabs { margin: 0 !important; }
 
 /* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
 html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }
+
+/* ---------------------------------------------------------------- v13: polish round 3 */
+/* Scroll edge fade: registered here (document) so the Peace UI shadow root can use them too */
+@property --pu-ft { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --pu-fb { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@keyframes pu-edge { 0% { --pu-ft: 0px; --pu-fb: 22px; } 6% { --pu-ft: 22px; --pu-fb: 22px; } 94% { --pu-ft: 22px; --pu-fb: 22px; } 100% { --pu-ft: 22px; --pu-fb: 0px; } }
+/* Lists fade at the top/bottom edge only while there is more to scroll that way (no effect when it all fits) */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .overflow-auto,
+html.pu-on .nitro-inventory .g-col-7 > div,
+html.pu-on .nitro-room-creator .content-area {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--pu-ft), #000 calc(100% - var(--pu-fb)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--pu-ft), #000 calc(100% - var(--pu-fb)), transparent 100%);
+  animation: pu-edge linear both; animation-timeline: scroll(self);
+}
+
+/* One small corner (6px) on every button, chip, input and box in the windows */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(.btn, .form-control, .form-select, input, select, textarea, .nav-link, .layout-grid-item) { border-radius: 6px !important; }
+
+/* Inputs: the Friends search look (deep inset field, black edge), one height with the chips (36px) */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"]) {
+  height: 36px !important; min-height: 36px !important; padding: 0 12px !important;
+  background-color: #0d0d0d !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important;
+  color: #f2f2f2 !important; font: 400 14px/1 Ubuntu, sans-serif !important; outline: 0 !important;
+}
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) textarea.form-control {
+  background-color: #0d0d0d !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important;
+  color: #f2f2f2 !important; font: 400 14px/1.35 Ubuntu, sans-serif !important;
+}
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, textarea)::placeholder { color: #6b6b6b !important; font-style: normal !important; opacity: 1 !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, select, textarea):focus { border-color: #169ccc !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) select.form-select { padding-right: 30px !important; background-position: right 10px center !important; }
+/* Search boxes get the Friends magnifier on the left; the Shop pencil is gone (it searches as you type) */
+html.pu-on .nitro-catalog .catalog-left input.form-control,
+html.pu-on .nitro-navigator input.form-control,
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input {
+  padding-left: 34px !important; background-repeat: no-repeat !important; background-position: 11px center !important; background-size: 16px 16px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7.5'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E") !important;
+}
+html.pu-on .nitro-catalog .catalog-search-button { display: none !important; }
+html.pu-on .nitro-catalog .catalog-clear-button { top: 50% !important; transform: translateY(-50%) !important; }
+html.pu-on .nitro-catalog .quantity-input { height: 36px !important; text-align: center !important; padding: 0 8px !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger { height: 36px !important; width: 36px !important; }
+
+/* Chips: one height (36px) */
+html.pu-on .draggable-window .nitro-card-tabs .nav-link { height: 36px !important; }
+html.pu-on .user-profile .profile-nav-close, html.pu-on .user-profile .profile-nav-edit,
+html.pu-on .user-profile .profile-nav-actions .btn { width: 36px !important; height: 36px !important; min-width: 36px !important; }
+/* Profile: edit (pencil) blue, close (X) red, same corner as the chips */
+html.pu-on .user-profile .profile-nav-edit {
+  background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
+}
+html.pu-on .user-profile .profile-nav-close {
+  background: linear-gradient(#e0443f 50%, #c22f2b 50%) !important; box-shadow: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
+}
+html.pu-on .user-profile .profile-nav-edit:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
+html.pu-on .user-profile .profile-nav-close:active { background: linear-gradient(#c22f2b 50%, #a92724 50%) !important; }
+html.pu-on .user-profile .profile-nav-edit svg, html.pu-on .user-profile .profile-nav-close svg { color: #fff !important; fill: currentColor; }
