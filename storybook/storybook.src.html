@@ -55,6 +55,9 @@ code { font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--pu-
 .sb-demo { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 14px; background: var(--pu-s0); border-top: 1px solid var(--pu-line); border-bottom: 1px solid var(--pu-line); }
 .sb-demo.col { flex-direction: column; align-items: stretch; }
 .sb-demo .sb-host { display: block; width: 100%; }
+.sb-ri { display: block; width: 16px; height: 16px; border-radius: 3px; background: #e0447a; }
+.sb-ri[data-k="smile"] { background: #e6c33a; } .sb-ri[data-k="bobba"] { background: #9a9a9a; }
+.sb-head { width: 54px; height: 62px; background: radial-gradient(circle at 50% 48%, #e8c39e 0 14px, transparent 15px), radial-gradient(circle at 50% 30%, #d9d4ff 0 18px, transparent 19px); }
 /* Samples sit in the page flow, not at window positions */
 html.pu-on.pu-dark .sb-card .sb-demo .draggable-window { position: relative !important; inset: auto !important; transform: none !important; width: 100% !important; height: auto !important; max-height: none !important; }
 html.pu-on.pu-dark .sb-card .sb-demo .draggable-window > .nitro-card { position: relative !important; inset: auto !important; width: 100% !important; height: auto !important; max-height: none !important; }
@@ -210,6 +213,8 @@ html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { displa
             <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
           </div>
         </div></div></div>
+        <span class="lbl">Profile relationships (Peace markup)</span>
+        <div class="draggable-window"><div class="nitro-card user-profile" style="animation:none;border:0;box-shadow:none;background:none!important"><div class="content-area" style="padding:0!important;background:none!important"><section class="identity-relationships d-flex flex-column"><div class="bento-header d-flex justify-content-between align-items-center"><span class="bento-title">Relationships</span><span class="bento-count">56 friends</span></div><div class="relationships-list d-flex flex-column"><div class="relationship-row heart d-flex align-items-center"><i class="relationship-icon sb-ri" data-k="heart"></i><div class="relationship-body d-flex flex-column flex-grow-1"><div class="relationship-empty small fst-italic">No friends in this category</div></div></div><div class="relationship-row smile d-flex align-items-center"><i class="relationship-icon sb-ri" data-k="smile"></i><div class="relationship-body d-flex flex-column flex-grow-1"><div class="d-flex align-items-center justify-content-between"><div class="d-flex flex-column"><div class="relationship-name small text-decoration-underline">mingo</div><div class="relationship-more small">and 1 others</div></div><div class="relationship-avatar"><div class="avatar-image sb-head"></div></div></div></div></div><div class="relationship-row bobba d-flex align-items-center"><i class="relationship-icon sb-ri" data-k="bobba"></i><div class="relationship-body d-flex flex-column flex-grow-1"><div class="relationship-empty small fst-italic">No friends in this category</div></div></div></div></section></div></div></div>
         <span class="lbl">Peace UI: stats panel, icon tiles</span><div class="sb-host" data-ui="tiles"></div>
       </div>
       <div class="sb-use"><b>Panels:</b> Inventory preview, room rows and cards, Builders tool rows, profile sections, Me stats and list · <b>Tiles:</b> Shop items, room layouts, Me tools, Room menu tools, room actions · <b>Light tiles:</b> Change looks items and layers</div>

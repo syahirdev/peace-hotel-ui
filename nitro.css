@@ -244,9 +244,9 @@ html.pu-on .user-profile .profile-nav-edit,
 html.pu-on .popover .pu-x,
 html.pu-on #hud-more-voice .voice-tools-toggle {
   width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; margin: 0 !important;
-  display: grid !important; place-items: center !important; cursor: pointer;
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 0 !important; cursor: pointer;
   background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
-  color: var(--pu-ink) !important; font-size: 0 !important; text-shadow: none !important;
+  color: var(--pu-ink) !important; font-size: 0 !important; line-height: 0 !important; text-shadow: none !important;
 }
 html.pu-on .draggable-window .nitro-card-header-close > *,
 html.pu-on .user-profile .profile-nav-close > *,
@@ -258,7 +258,7 @@ html.pu-on .user-profile .profile-nav-close::before,
 html.pu-on .user-profile .profile-nav-edit::before,
 html.pu-on .popover .pu-x::before,
 html.pu-on #hud-more-voice .voice-tools-toggle::before {
-  content: '' !important; display: block !important; position: static !important; width: 14px !important; height: 14px !important; margin: 0 !important;
+  content: '' !important; display: block !important; position: static !important; flex: none !important; width: 14px !important; height: 14px !important; margin: 0 !important;
   border: 0 !important; background: currentColor !important; transform: none !important; opacity: 1 !important;
   -webkit-mask: var(--pu-i-x) center / contain no-repeat; mask: var(--pu-i-x) center / contain no-repeat;
 }
@@ -664,7 +664,10 @@ html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display
 html.pu-on .user-profile .profile-nav-actions { flex: none !important; align-self: center !important; gap: 6px !important; margin: 0 !important; }
 html.pu-on .user-profile .profile-nav-close,
 html.pu-on .user-profile .profile-nav-edit,
-html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+/* the four tabs share the width left of the buttons, so "Other" isn't cut off */
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { gap: 6px !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs > .nav-link { flex: 1 1 0 !important; min-width: 0 !important; padding: 0 6px !important; justify-content: center !important; text-align: center !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
 html.pu-on .user-profile .identity-row,
 html.pu-on .user-profile .identity-relationships,
@@ -672,10 +675,37 @@ html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !
 html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
 html.pu-on .user-profile .bento { padding: 10px !important; }
 html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
-html.pu-on .user-profile section.identity-relationships { gap: 0 !important; }
-html.pu-on .user-profile .relationship-row { padding: 6px 2px !important; min-height: 36px; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
-html.pu-on .user-profile .relationship-row + .relationship-row { border-top: 1px solid var(--pu-line) !important; }
-html.pu-on .user-profile section.identity-relationships .bento-header { margin-bottom: 4px !important; }
+/* Relationships: heart / smile / bobba as three small tiles in one row (icon + head on top, name below) */
+html.pu-on .user-profile section.identity-relationships { gap: var(--pu-gap) !important; }
+html.pu-on .user-profile section.identity-relationships .bento-header { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; margin: 0 !important; }
+html.pu-on .user-profile .relationships-list { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.pu-on .user-profile .relationships-list .relationship-row {
+  position: relative !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 6px !important;
+  min-height: 0 !important; height: auto !important; padding: var(--pu-gap) !important; overflow: hidden !important;
+  background: var(--pu-s2) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) { opacity: .55; }
+html.pu-on .user-profile .relationships-list .relationship-icon { flex: none !important; margin: 0 !important; }
+html.pu-on .user-profile .relationships-list .relationship-body,
+html.pu-on .user-profile .relationships-list .relationship-body > div,
+html.pu-on .user-profile .relationships-list .relationship-body > div > div:not(.relationship-avatar) { min-width: 0 !important; width: 100% !important; }
+html.pu-on .user-profile .relationships-list .relationship-body > div { display: block !important; }
+html.pu-on .user-profile .relationships-list :is(.relationship-name, .relationship-more, .relationship-empty) {
+  display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-decoration: none !important; line-height: 1.35 !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-name { font: 700 var(--pu-fs-sm) var(--pu-font-bold) !important; color: var(--pu-ink) !important; }
+html.pu-on .user-profile .relationships-list .relationship-more { font: 400 var(--pu-fs-xs) var(--pu-font) !important; color: var(--pu-ink-3) !important; }
+/* the empty text ("No friends in this category") becomes a short "None" */
+html.pu-on .user-profile .relationships-list .relationship-empty { font-size: 0 !important; }
+html.pu-on .user-profile .relationships-list .relationship-empty::after { content: 'None'; font: 400 var(--pu-fs-sm) var(--pu-font); color: var(--pu-ink-3); }
+/* the friend's head: a small framed picture top right, never outside the tile */
+html.pu-on .user-profile .relationships-list .relationship-avatar {
+  position: absolute !important; top: 6px !important; right: 6px !important; left: auto !important; width: 28px !important; height: 28px !important; flex: none !important;
+  overflow: hidden !important; border-radius: var(--pu-r-in) !important; background: var(--pu-s3) !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-avatar .avatar-image {
+  position: absolute !important; left: 50% !important; top: 50% !important; margin: 0 !important; transform: translate(-50%, -50%) !important;
+}
 html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
 html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
 html.pu-on .user-profile .friend-btn { display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important; }
