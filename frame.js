@@ -71,6 +71,93 @@
   };
   var sock = null;
 
+  // ---------------------------------------------------------------- pinch zoom in rooms
+  // Peace's room engine can scale a room to any level (setRoomInstanceRenderingCanvasScale; its own zoom button
+  // eases between 100% and 50%). The engine isn't global, so it's caught while Nitro builds it: its constructor
+  // assigns this._roomDraggingAlwaysCenters, a name only the room engine uses. This needs to run before Nitro's
+  // bundle, which it does because the app injects this file at document start.
+  var ZOOM_MIN = 0.5, ZOOM_MAX = 2, ZOOM_SNAPS = [0.5, 1, 2], ZOOM_SNAP_NEAR = 0.12;
+  var engine = null;
+  (function () {
+    var KEY = '_roomDraggingAlwaysCenters';
+    try {
+      Object.defineProperty(Object.prototype, KEY, {
+        configurable: true,
+        get: function () { return undefined; },
+        set: function (v) {
+          Object.defineProperty(this, KEY, { value: v, writable: true, configurable: true, enumerable: true });
+          if (!engine && typeof this.setRoomInstanceRenderingCanvasScale === 'function') {
+            engine = this;
+            delete Object.prototype[KEY];
+          }
+        }
+      });
+    } catch (e) { /* no pinch zoom; the zoom button still works */ }
+  })();
+
+  // The room view is the one big canvas; Nitro feeds its touches to the engine (canvas.ontouch*).
+  function isRoomCanvas(t) { return !!t && t.tagName === 'CANVAS' && t.clientWidth >= window.innerWidth * 0.6; }
+  function roomZoomable() {
+    if (!engine || !(engine._activeRoomId >= 0)) return false;
+    var c = engine.getRoomInstanceRenderingCanvas(engine._activeRoomId, 1);
+    return !!c && !c.restrictsScaling;
+  }
+  function roomScale() { return engine.getRoomInstanceRenderingCanvasScale(engine._activeRoomId, 1) || 1; }
+  // Scales so the room point under `from` (screen px) ends up under `to`: pinching also pans.
+  function setRoomScale(s, from, to) {
+    engine.setRoomInstanceRenderingCanvasScale(engine._activeRoomId, 1, s, { x: from.x, y: from.y }, { x: to.x, y: to.y }, false, false);
+  }
+  function pinchPoints(e) {
+    var a = e.touches[0], b = e.touches[1];
+    return { d: Math.max(1, Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)), x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+  }
+  // 50%, 100% and 200% keep the pixel art crisp, so a pinch that ends close to one settles on it.
+  function snapRoomScale(at) {
+    var s = roomScale(), best = s;
+    ZOOM_SNAPS.forEach(function (z) { if (Math.abs(s - z) / z <= ZOOM_SNAP_NEAR) best = z; });
+    if (best === s) return;
+    var t0 = Date.now(), from = s;
+    (function step() {
+      if (pinch || !roomZoomable()) return;
+      var k = Math.min(1, (Date.now() - t0) / 140), z = from + (best - from) * (1 - Math.pow(1 - k, 3));
+      setRoomScale(z, at, at);
+      if (k < 1) setTimeout(step, 16); else toast(Math.round(best * 100) + '%');
+    })();
+  }
+  var pinch = null, pinchSwallow = false;
+  function onRoomTouch(e) {
+    var type = e.type;
+    if (type === 'touchstart' && !pinch && e.touches.length >= 2 && roomZoomable()) {
+      var all = true;
+      for (var i = 0; i < e.touches.length; i++) if (!isRoomCanvas(e.touches[i].target)) all = false;
+      if (all) {
+        var p = pinchPoints(e);
+        pinch = { d0: p.d, s0: roomScale(), x: p.x, y: p.y };
+        pinchSwallow = true;
+        // The first finger already started a room drag; drop it so the pinch doesn't also drag.
+        engine._activeRoomIsDragged = false; engine._activeRoomWasDragged = false;
+      }
+    }
+    if (!pinchSwallow) return;
+    // Until every finger lifts, the game sees nothing: no drag, and no walk when the last finger lifts.
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    if (type === 'touchmove' && pinch && e.touches.length >= 2 && roomZoomable()) {
+      var q = pinchPoints(e), s = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinch.s0 * q.d / pinch.d0));
+      setRoomScale(s, pinch, q);
+      pinch.x = q.x; pinch.y = q.y;
+      toast(Math.round(s * 100) + '%');
+    } else if ((type === 'touchend' || type === 'touchcancel') && pinch && e.touches.length < 2) {
+      var at = { x: pinch.x, y: pinch.y };
+      pinch = null;
+      if (roomZoomable()) snapRoomScale(at);
+    }
+    if ((type === 'touchend' || type === 'touchcancel') && e.touches.length === 0) pinchSwallow = false;
+  }
+  ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(function (t) {
+    window.addEventListener(t, onRoomTouch, { capture: true, passive: false });
+  });
+
   // ---------------------------------------------------------------- packets in
   var utf8 = new TextDecoder('utf-8');
   var enc = new TextEncoder();
