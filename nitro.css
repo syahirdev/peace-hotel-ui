@@ -687,7 +687,14 @@ html.pu-on .user-profile .relationships-list .relationship-row {
 }
 html.pu-on .user-profile .relationships-list .relationship-icon { position: absolute !important; top: 6px !important; left: 6px !important; margin: 0 !important; z-index: 1; }
 html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) .relationship-icon { opacity: .55; }
-html.pu-on .user-profile .relationships-list .relationship-body { width: 100% !important; min-width: 0 !important; }
+/* Peace marks the body flex-grow-1, which pushed "None" to the top of a tall card */
+html.pu-on .user-profile .relationships-list .relationship-body { flex: none !important; width: 100% !important; min-width: 0 !important; }
+/* an empty card next to a filled one: icon and "None" stacked in the middle */
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) { gap: 4px !important; }
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) .relationship-icon { position: static !important; }
+/* all three empty: short boxes, icon and "None" side by side in the middle */
+html.pu-on .user-profile .relationships-list:not(:has(.relationship-avatar)) .relationship-row { flex-direction: row !important; gap: 6px !important; min-height: 0 !important; padding: 8px 6px !important; }
+html.pu-on .user-profile .relationships-list:not(:has(.relationship-avatar)) .relationship-body { width: auto !important; }
 /* head above the name: Peace puts the name block first and the head second */
 html.pu-on .user-profile .relationships-list .relationship-body > div { display: flex !important; flex-direction: column-reverse !important; align-items: center !important; justify-content: flex-end !important; gap: 4px !important; width: 100% !important; min-width: 0 !important; }
 html.pu-on .user-profile .relationships-list .relationship-body > div > div:not(.relationship-avatar) { width: 100% !important; min-width: 0 !important; }
@@ -698,7 +705,8 @@ html.pu-on .user-profile .relationships-list .relationship-name { font: 700 var(
 html.pu-on .user-profile .relationships-list .relationship-more { font: 400 var(--pu-fs-xs) var(--pu-font) !important; color: var(--pu-ink-3) !important; }
 /* the empty text ("No friends in this category") becomes a short "None" */
 html.pu-on .user-profile .relationships-list .relationship-empty { font-size: 0 !important; }
-html.pu-on .user-profile .relationships-list .relationship-empty::after { content: 'None'; font: 400 var(--pu-fs-sm) var(--pu-font); color: var(--pu-ink-3); }
+html.pu-on .user-profile .relationships-list .relationship-empty { display: flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; }
+html.pu-on .user-profile .relationships-list .relationship-empty::after { content: 'None'; font: 400 var(--pu-fs-sm) var(--pu-font); line-height: 16px; color: var(--pu-ink-3); }
 /* the head: Nitro draws it inside a 90x130 box, head at about x 22-70, y 20-72.
    A 48x54 slot holds that part; tall hats may rise above it, so the slot never clips. */
 html.pu-on .user-profile .relationships-list .relationship-avatar {
