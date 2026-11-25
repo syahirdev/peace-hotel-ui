@@ -1,29 +1,150 @@
 /*
- * Added to the Nitro game document (not the Peace UI shadow root).
+ * Peace UI: added to the Nitro game document (not the Peace UI shadow root).
  * Every rule is gated on html.pu-on, which frame.js sets only after the Peace UI has mounted,
  * so if the script fails the original Nitro HUD stays visible.
+ *
+ * DESIGN SYSTEM. storybook/index.html in this repo shows every token and component, rendered with this file.
+ *   1. TOKENS      Every colour, size, corner, font, shadow and icon. The only place with raw values.
+ *                  ui.css (the Peace UI shadow root) uses the same tokens: custom properties inherit into it.
+ *   2. SHELL       Nitro's own HUD hidden, the game area above the tab bar, windows as sheets, the dark pass.
+ *   3. COMPONENTS  Each look is defined once, as a list of every element that has it: window, close (X),
+ *                  buttons (default / primary / danger), chips, segmented control, inputs, panels, tiles,
+ *                  pictures, floating panels, badges, tags, labels, text colours, switch.
+ *   4. PAGES       Layout only (size, position, order, gaps, padding) per window. No colours, corners,
+ *                  borders, shadows or fonts: for a new look, add the element to a component list above.
+ *   5. MOTION
+ * tools/check-design.js (run on every pull request) fails if a raw colour, corner or font shows up
+ * outside TOKENS, in this file or in ui.css.
  */
 
+/* ================================================================ 1. TOKENS */
+/* @tokens-start */
+html.pu-on {
+  /* Type */
+  --pu-font: Ubuntu, system-ui, -apple-system, Roboto, sans-serif;
+  --pu-font-bold: UbuntuBold, Ubuntu, system-ui, sans-serif;
+  --pu-fs-2xs: 10px;   /* micro labels on the Change looks stage */
+  --pu-fs-xs: 11px;    /* tile captions, section labels, wardrobe */
+  --pu-fs-sm: 12.5px;  /* secondary text, owners, timestamps, badges */
+  --pu-fs: 14px;       /* body text, buttons, chips, inputs */
+  --pu-fs-md: 15px;    /* names, list titles */
+  --pu-fs-lg: 16px;    /* window titles */
+  --pu-fs-xl: 19px;    /* the big name in Me and the friend card */
+
+  /* Text */
+  --pu-ink: #f2f2f2;   /* main text */
+  --pu-ink-2: #a6a6a6; /* secondary text */
+  --pu-ink-3: #7a7a7a; /* hints, placeholders, timestamps */
+  --pu-ink-on: #fff;   /* text on blue, red and green */
+
+  /* Surfaces, darkest to lightest */
+  --pu-bg: #0b0b0b;    /* behind the game */
+  --pu-well: #0d0d0d;  /* inside inputs and picture wells */
+  --pu-s0: #141414;    /* window body, floating panels */
+  --pu-s1: #1c1c1c;    /* panels, cards, list rows */
+  --pu-s2: #262626;    /* tiles and rows inside panels */
+  --pu-s3: #2e2e2e;    /* open rows */
+  --pu-scrim: rgba(0, 0, 0, .52);
+  --pu-scrim-strong: rgba(0, 0, 0, .86);
+
+  /* Lines */
+  --pu-edge-c: #000;
+  --pu-edge: 1px solid var(--pu-edge-c);               /* the black outline every control and panel has */
+  --pu-line: rgba(255, 255, 255, .07);                 /* soft divider between rows */
+  --pu-line-2: rgba(255, 255, 255, .14);               /* visible light border (chat history, tags) */
+  --pu-line-solid: #3a3a3a;                            /* light edge round picture cards (Rooms grid) */
+  --pu-hi: inset 0 0 0 1px rgba(255, 255, 255, .12);   /* inner highlight of buttons and chips */
+  --pu-hi-soft: inset 0 0 0 1px rgba(255, 255, 255, .08); /* inner highlight of panels */
+  --pu-hi-top: inset 0 1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08);
+  --pu-hi-bottom: inset 0 -1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08);
+  --pu-hi-line: inset 0 1px 0 rgba(255, 255, 255, .1); /* light line on top of a bar */
+  --pu-inset: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06); /* sunken field */
+
+  /* Duotone fills: Peace's HUD look, top half a shade lighter */
+  --pu-tone: linear-gradient(#262626 50%, #1a1a1a 50%);       /* buttons, chips */
+  --pu-tone-press: linear-gradient(#303030 50%, #222 50%);
+  --pu-tone-bar: linear-gradient(#202020 50%, #161616 50%);   /* window headers, bars */
+  --pu-tone-track: linear-gradient(#1d1d1d 50%, #171717 50%); /* segmented control track */
+
+  /* Accents: Peace blue = main action / selected, red = close-danger / delete, green = people / online */
+  --pu-blue: #169ccc;
+  --pu-blue-tone: linear-gradient(#22ade0 50%, #1591c0 50%);
+  --pu-blue-press: linear-gradient(#1591c0 50%, #127fa9 50%);
+  --pu-blue-hi: inset 0 1px 0 #7eeaff, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-blue-soft: #1d3340;                                     /* selected tile */
+  --pu-ring: inset 0 0 0 2px #169ccc;                          /* selected tile outline */
+  --pu-red: #e5383b;
+  --pu-red-tone: linear-gradient(#e0443f 50%, #c22f2b 50%);
+  --pu-red-press: linear-gradient(#c22f2b 50%, #a92724 50%);
+  --pu-red-hi: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-green: #3fd26b;
+  --pu-green-tone: linear-gradient(#35b85c 50%, #2a9b4c 50%);
+  --pu-green-hi: inset 0 1px 0 #8af0a8, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-gold: #f5c542;
+
+  /* Light tiles: avatar items and layers read better on a light tile */
+  --pu-lt: #c9cdd2;
+  --pu-lt-on: #d9eef7;
+  --pu-lt-hi: inset 0 1px 0 rgba(255, 255, 255, .55);
+  --pu-lt-shine: rgba(255, 255, 255, .6);
+  --pu-lt-dash: #7d838a;
+  /* Change looks stage: Peace's teal spotlight */
+  --pu-stage: radial-gradient(60% 46% at 50% 0%, rgba(120, 225, 255, .2), transparent 70%), linear-gradient(#11394a, #0c2a37 45%, #08171f);
+  --pu-stage-beam: linear-gradient(rgba(150, 235, 255, .17), rgba(150, 235, 255, .03) 85%, transparent);
+  --pu-stage-ink: rgba(200, 240, 255, .72);
+  --pu-stage-card: linear-gradient(#1c3a48, #0e2029);          /* wardrobe slots */
+  --pu-stage-dash: rgba(255, 255, 255, .2);
+  --pu-stage-float: rgba(12, 14, 16, .94);                     /* layer actions over the stage */
+  --pu-swatch-hi: inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 -3px 0 rgba(0, 0, 0, .14);
+  --pu-swatch-on: 0 0 0 2px #141414, 0 0 0 4px #fff;
+
+  /* Shape and size */
+  --pu-r: 6px;         /* one corner for every button, chip, input, panel, tile and window */
+  --pu-r-in: 4px;      /* parts inside a padded control (segments, badges, swatches) */
+  --pu-r-pill: 999px;  /* counters and dots */
+  --pu-ctl: 36px;      /* height of every button, chip, input, select and square icon button */
+  --pu-ctl-lg: 44px;   /* bottom action bars only (Buy, Create room) */
+  --pu-head: 48px;     /* window header */
+  --pu-tile: 64px;     /* icon tiles with a caption (Me tools, Room menu) */
+  --pu-tile-sm: 50px;  /* small icon tiles (room actions) */
+  --pu-ic: 16px;       /* icon inside a control */
+  --pu-gap: 8px;
+  --pu-pad: 12px;      /* window gutter */
+  --pu-top: 52px;      /* top of the windows, under the top bar */
+  --pu-tabs: 60px;     /* tab bar */
+  --pu-bottom: var(--pu-tabs);
+
+  /* Depth */
+  --pu-float: 0 12px 28px rgba(0, 0, 0, .55);
+  --pu-sheet: 0 -10px 30px rgba(0, 0, 0, .55);
+  --pu-lift: 0 -1px 0 rgba(255, 255, 255, .1), 0 -8px 18px rgba(0, 0, 0, .35);
+  --pu-ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* Icons. Masks (drawn in currentColor): close, turn, undo, save, wear. Backgrounds (drawn in --pu-ink-3): search, chevron, hints. */
+  --pu-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
+  --pu-i-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
+  --pu-i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
+  --pu-i-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
+  --pu-i-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
+  --pu-bg-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7.5'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E");
+  --pu-bg-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --pu-bg-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
+  --pu-bg-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
+}
+html.pu-looks { --pu-bottom: 0px; }
+/* @tokens-end */
+
+
+/* ================================================================ 2. SHELL */
 /* Keep all of Nitro (room, windows, chat input) above the Peace tab bar.
    The transform makes Nitro's position:fixed children use #root as their box. */
 html.pu-on #root {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: var(--pu-bottom, 60px) !important;
-  width: auto !important;
-  height: auto !important;
-  overflow: hidden !important;
-  transform: translateZ(0);
+  position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: var(--pu-bottom) !important;
+  width: auto !important; height: auto !important; overflow: hidden !important; transform: translateZ(0);
 }
-
-html.pu-on body {
-  background: #0b0b0b !important;
-}
+html.pu-on body { background: var(--pu-bg) !important; }
 
 /* Nitro's own navigation, replaced by the Peace tab bar, Friends and Me.
-   Peace's phone layout has its own tab bar (.nitro-hud-tabbar), a toggle for it and a More sheet.
    Hidden elements can still be clicked from script, which is how the tabs open Nitro windows. */
 html.pu-on .nitro-hud-tabbar,
 html.pu-on .nitro-hud-tabs-toggle,
@@ -32,260 +153,7 @@ html.pu-on .toolbar-collapse-toggle,
 html.pu-on .nitro-toolbar-me,
 html.pu-on .hud-more-friends,
 html.pu-on .toolbar-friend-bar-container,
-html.pu-on .nitro-purse-container {
-  display: none !important;
-}
-
-/* ---------------------------------------------------------------- Nitro windows
-   Every Nitro window becomes a full-width sheet at the bottom of the game area, so none is wider
-   than the screen. Colours below are gated on html.pu-dark (the "Dark game windows" switch). */
-html.pu-on .draggable-window {
-  left: 0 !important;
-  right: 0 !important;
-  top: auto !important;
-  bottom: 0 !important;
-  transform: none !important;
-  width: 100% !important;
-}
-html.pu-on .draggable-window > .nitro-card {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  max-height: calc(100vh - var(--pu-bottom, 60px) - 60px) !important;
-  border-radius: 8px 8px 0 0 !important;
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, .45) !important;
-  overflow: hidden !important;
-}
-html.pu-on .draggable-window .nitro-card-header { min-height: 48px !important; }
-html.pu-on .draggable-window .nitro-card-header-close { width: 32px !important; height: 32px !important; border-radius: 10px !important; }
-html.pu-on .draggable-window .nitro-card-tabs { padding: 0 12px 8px !important; overflow-x: auto !important; scrollbar-width: none; }
-html.pu-on .draggable-window .nitro-card-tabs::-webkit-scrollbar { display: none; }
-html.pu-on .draggable-window .nitro-card-tabs .nav-tabs { flex-wrap: nowrap !important; gap: 6px !important; border: 0 !important; }
-html.pu-on .draggable-window .nitro-card-tabs .nav-link {
-  flex: none !important;
-  height: 32px !important;
-  padding: 0 12px !important;
-  border-radius: 16px !important;
-  margin: 0 !important;
-}
-html.pu-on .draggable-window .nitro-card-tabs .nav-link:before,
-html.pu-on .draggable-window .nitro-card-tabs .nav-link:after { display: none !important; }
-
-/* Profile: stack the identity card instead of squeezing two columns side by side. */
-html.pu-on .user-profile .profile-nav-bar { min-height: 52px !important; padding: 8px 10px 8px 12px !important; }
-html.pu-on .user-profile .profile-nav-bar .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; }
-html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
-html.pu-on .user-profile .profile-nav-actions { flex: none !important; gap: 8px !important; }
-html.pu-on .user-profile .profile-nav-actions .btn { width: 32px !important; height: 32px !important; border-radius: 10px !important; }
-html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: 12px !important; height: auto !important; }
-html.pu-on .user-profile .identity-row,
-html.pu-on .user-profile .identity-relationships,
-html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !important; }
-html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
-
-
-/* ---------------------------------------------------------------- dark game windows */
-html.pu-dark {
-  --pw-bg: #141414;
-  --pw-s1: #1c1c1c;
-  --pw-s2: #262626;
-  --pw-line: rgba(255, 255, 255, .08);
-  --pw-ink: #f2f2f2;
-  --pw-ink2: #a6a6a6;
-  --pw-acc: #169ccc;
-  --pw-font: Ubuntu, system-ui, -apple-system, Roboto, sans-serif;
-}
-html.pu-dark .draggable-window > .nitro-card { border: 1px solid #000 !important; background: var(--pw-bg) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1) !important; }
-html.pu-dark .draggable-window .nitro-card-header { background: linear-gradient(#202020 50%, #161616 50%) !important; border: 0 !important; border-bottom: 1px solid #000 !important; box-shadow: none !important; }
-html.pu-dark .draggable-window .nitro-card-header-text { color: var(--pw-ink) !important; font: 700 16px/1.2 UbuntuBold, var(--pw-font) !important; text-shadow: none !important; }
-html.pu-dark .draggable-window .nitro-card-header-close { background: var(--pw-s2) !important; border: 0 !important; box-shadow: none !important; color: var(--pw-ink) !important; }
-html.pu-dark .draggable-window .nitro-card-tabs { background: var(--pw-bg) !important; border: 0 !important; box-shadow: none !important; }
-html.pu-dark .draggable-window .nitro-card-tabs .nav-link {
-  background: var(--pw-s1) !important;
-  border: 1px solid var(--pw-line) !important;
-  box-shadow: none !important;
-  color: var(--pw-ink2) !important;
-  font: 550 13px/1 var(--pw-font) !important;
-  text-shadow: none !important;
-}
-html.pu-dark .draggable-window .nitro-card-tabs .nav-link.active { background: var(--pw-ink) !important; color: #111 !important; border-color: transparent !important; }
-html.pu-dark .draggable-window .nitro-card .content-area { background: var(--pw-bg) !important; color: var(--pw-ink) !important; }
-html.pu-dark .draggable-window .content-area .layout-grid-item:not([style*="background"]) {
-  background-color: var(--pw-s1) !important;
-  border: 1px solid var(--pw-line) !important;
-  border-radius: 10px !important;
-  box-shadow: none !important;
-}
-html.pu-dark .draggable-window .content-area .layout-grid-item.active:not([style*="background"]) { border-color: var(--pw-acc) !important; background-color: var(--pw-s2) !important; }
-html.pu-dark .draggable-window .content-area .form-control,
-html.pu-dark .draggable-window .content-area input[type=text],
-html.pu-dark .draggable-window .content-area select {
-  background: var(--pw-s1) !important;
-  color: var(--pw-ink) !important;
-  border: 1px solid var(--pw-line) !important;
-  border-radius: 10px !important;
-  box-shadow: none !important;
-  min-height: 34px;
-}
-html.pu-dark .draggable-window .content-area ::placeholder { color: var(--pw-ink2) !important; }
-html.pu-dark .draggable-window .content-area .btn { border-radius: 10px !important; box-shadow: none !important; text-shadow: none !important; }
-html.pu-dark .draggable-window .content-area .btn-primary,
-html.pu-dark .draggable-window .content-area .btn-success { background: var(--pw-acc) !important; border-color: transparent !important; color: #fff !important; font-weight: 700 !important; }
-html.pu-dark .draggable-window .content-area .btn-secondary,
-html.pu-dark .draggable-window .content-area .btn-dark,
-html.pu-dark .draggable-window .content-area .btn-light { background: var(--pw-s2) !important; border-color: var(--pw-line) !important; color: var(--pw-ink) !important; }
-html.pu-dark .user-profile .profile-nav-bar { background: var(--pw-bg) !important; box-shadow: none !important; border: 0 !important; }
-
-/* Marks set by the dark-windows pass in frame.js. */
-html.pu-dark [data-pu-ink="1"] { color: var(--pw-ink) !important; }
-html.pu-dark [data-pu-ink="2"] { color: var(--pw-ink2) !important; }
-html.pu-dark [data-pu-ink="tint"] { color: var(--pu-ink) !important; }
-/* Only the colour changes when the element has its own picture: virtual lists (Change looks items) mark a tile
-   before Nitro gives it its image, and the background shorthand would hide that image. */
-html.pu-dark [data-pu-bg="1"]:not([style*="background-image"]) { background: var(--pw-s1) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="2"]:not([style*="background-image"]) { background: var(--pw-s2) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="tint"]:not([style*="background-image"]) { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="1"][style*="background-image"] { background-color: var(--pw-s1) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="2"][style*="background-image"] { background-color: var(--pw-s2) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bg="tint"][style*="background-image"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pw-s1)) !important; box-shadow: none !important; }
-html.pu-dark [data-pu-bd="1"] { border-color: var(--pw-line) !important; }
-
-/* ---------------------------------------------------------------- full-screen Shop and Inventory
-   Both take the whole game area. The Shop works in two steps on a phone: a full-width category list,
-   then the chosen page full width with a back bar (frame.js toggles .pu-page on the card). */
-html.pu-on .draggable-window:has(> .nitro-catalog),
-html.pu-on .draggable-window:has(> .nitro-inventory:not(.trading)) { top: 52px !important; }
-html.pu-on .draggable-window > .nitro-catalog,
-html.pu-on .draggable-window > .nitro-inventory:not(.trading) {
-  height: 100% !important; max-height: none !important; border-radius: 0 !important; box-shadow: none !important;
-}
-html.pu-on .nitro-catalog .nitro-card-header,
-html.pu-on .nitro-inventory .nitro-card-header { min-height: 44px !important; padding: 0 !important; }
-html.pu-on .nitro-catalog .content-area,
-html.pu-on .nitro-inventory .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; padding: 8px 10px 10px !important; }
-
-/* Shop: one pane at a time */
-html.pu-on .nitro-catalog .content-area > .grid { display: flex !important; height: 100% !important; gap: 0 !important; }
-html.pu-on .nitro-catalog .catalog-left { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; }
-html.pu-on .nitro-catalog .catalog-left + .g-col-8 { display: none !important; }
-html.pu-on .nitro-catalog.pu-page .catalog-left { display: none !important; }
-html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { display: flex !important; }
-html.pu-on .nitro-catalog .content-area > .grid > .g-col-8 { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; margin: 0 !important; min-height: 0 !important; }
-html.pu-on .nitro-catalog .catalog-left input.form-control { height: 40px !important; font-size: 15px !important; padding-left: 12px !important; }
-html.pu-on .nitro-catalog .catalog-search-button,
-html.pu-on .nitro-catalog .catalog-clear-button { right: 12px !important; top: 11px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container { padding: 4px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container > .grid { height: 100% !important; gap: 2px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item {
-  width: auto !important; min-height: 40px !important; padding: 0 12px !important; gap: 10px !important;
-  font-size: 14px !important; border-radius: 5px !important; border-width: 1px !important; justify-content: flex-start !important;
-}
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 10px"] { margin-left: 18px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 20px"] { margin-left: 36px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .catalog-icon { width: 24px !important; height: 24px !important; object-fit: contain; }
-
-/* Shop page: preview on top, the furni grid fills the middle, buy bar at the bottom */
-html.pu-on .nitro-catalog .g-col-8 > div:not(.pu-back) { display: flex !important; flex-direction: column !important; gap: 8px !important; flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
-html.pu-on .nitro-catalog .catalog-default-image { flex: 0 0 auto !important; height: 168px !important; max-height: 30vh !important; border-radius: 6px !important; }
-html.pu-on .nitro-catalog .catalog-default-image:empty { display: none !important; }
-html.pu-on .nitro-catalog .catalog-image-column { max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
-html.pu-on .nitro-catalog .responsive-column-kk-height { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; gap: 8px !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { flex: 1 1 auto !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 > .grid {
-  height: 100% !important; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)) !important; grid-auto-rows: 58px !important; gap: 6px !important; align-content: start !important;
-}
-html.pu-on .nitro-catalog .catalog-grid-active { width: 100% !important; height: 100% !important; }
-html.pu-on .nitro-catalog .layout-catalog-grid-item {
-  width: 100% !important; height: 100% !important; background-color: #262626 !important; background-repeat: no-repeat !important; background-position: center !important;
-  border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
-}
-html.pu-on .nitro-catalog .catalog-grid-active.active .layout-catalog-grid-item { border-color: #169ccc !important; box-shadow: inset 0 0 0 2px #169ccc !important; background-color: #1d3340 !important; }
-html.pu-on .nitro-catalog .quanity-container { align-items: center !important; }
-html.pu-on .nitro-catalog .quantity-input { width: 64px !important; height: 36px !important; text-align: center !important; }
-html.pu-on .nitro-catalog .purchase-buttons { flex: none !important; gap: 8px !important; }
-html.pu-on .nitro-catalog .purchase-buttons .btn { flex: 1 1 0 !important; height: 44px !important; font-size: 15px !important; border-radius: 6px !important; }
-html.pu-on .nitro-catalog .item-not-picker { flex: none !important; justify-content: center !important; padding: 12px !important; }
-html.pu-on .nitro-catalog .pu-back {
-  flex: none; display: flex; align-items: center; gap: 8px; height: 40px; margin-bottom: 8px; padding: 0 12px 0 8px;
-  border-radius: 6px; border: 1px solid #000; background: linear-gradient(#202020 50%, #161616 50%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
-  color: #f2f2f2; font: 700 14px/1 UbuntuBold, Ubuntu, sans-serif; cursor: pointer;
-}
-html.pu-on .nitro-catalog .pu-back svg { flex: none; }
-html.pu-on .nitro-catalog .pu-back span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-html.pu-on .nitro-catalog:not(.pu-page) .pu-back { display: none; }
-
-/* Inventory: the chosen item and "Place in room" on top, the item grid fills the rest */
-html.pu-on .nitro-inventory:not(.trading) .content-area > .grid { display: flex !important; flex-direction: column !important; gap: 8px !important; height: auto !important; flex: 1 1 auto !important; min-height: 0 !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-7 { order: 2; flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5 {
-  order: 1; flex: 0 0 auto !important; width: 100% !important; height: 124px !important; flex-direction: row !important; gap: 10px !important; overflow: hidden !important;
-  padding: 6px !important; border-radius: 6px !important; border: 1px solid #000 !important; background: #1c1c1c !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
-}
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child { flex: 0 0 132px !important; height: 100% !important; border-radius: 5px !important; }
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :nth-child(2) { flex: 1 1 auto !important; min-width: 0 !important; justify-content: center !important; }
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 .font-bold { font-size: 15px !important; white-space: normal !important; }
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 .btn { height: 40px !important; font-size: 14px !important; border-radius: 6px !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input,
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child select { height: 38px !important; font-size: 14px !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn { height: 38px !important; width: 38px !important; }
-html.pu-on .nitro-catalog .purchase-buttons .btn-primary { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important; }
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 .btn-primary { background: #169ccc !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #47e3fc !important; font-weight: 700 !important; }
-
-/* ---------------------------------------------------------------- Phase 3
-   Rooms full screen too; dark buttons everywhere; Rare values fixes. */
-html.pu-on .draggable-window:has(> .nitro-navigator),
-html.pu-on .draggable-window:has(> .nitro-rarevalues-window) { top: 52px !important; }
-html.pu-on .draggable-window > .nitro-navigator,
-html.pu-on .draggable-window > .nitro-rarevalues-window { height: 100% !important; max-height: none !important; border-radius: 0 !important; box-shadow: none !important; }
-html.pu-on .nitro-navigator .nitro-card-header,
-html.pu-on .nitro-rarevalues-window .nitro-card-header { min-height: 44px !important; padding: 0 !important; }
-html.pu-on .nitro-navigator .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; padding: 8px 10px 10px !important; }
-
-/* Rooms: pencil centred in the search box; equal space left and right of the room list */
-html.pu-on .nitro-navigator .navigator-search-button { top: 50% !important; right: 10px !important; transform: translateY(-50%) !important; margin: 0 !important; }
-html.pu-on .nitro-navigator input.form-control, html.pu-on .nitro-navigator select.form-select { height: 38px !important; font-size: 14px !important; }
-html.pu-on .nitro-navigator .content-area .overflow-auto { scrollbar-width: none !important; }
-html.pu-on .nitro-navigator .content-area .overflow-auto::-webkit-scrollbar { display: none !important; }
-html.pu-on .nitro-navigator .containernew-kvjd { width: 100% !important; }
-html.pu-on .nitro-navigator .navigator-item { border-radius: 6px !important; padding: 4px !important; }
-html.pu-on .nitro-navigator .nav-category { font-family: UbuntuBold, Ubuntu, sans-serif !important; }
-
-
-/* Buttons in every window: Peace dark buttons, blue for the main action */
-html.pu-dark .draggable-window .btn-secondary, html.pu-dark .draggable-window .btn-light,
-html.pu-dark .draggable-window .btn-dark, html.pu-dark .draggable-window .btn-outline-secondary {
-  background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important;
-}
-html.pu-dark .draggable-window .btn-primary, html.pu-dark .draggable-window .btn-success {
-  background: #169ccc !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #47e3fc !important; font-weight: 700 !important;
-}
-html.pu-dark .draggable-window .btn-danger { background: #c62f32 !important; color: #fff !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #ff7b7d !important; }
-html.pu-dark .draggable-window .btn.disabled, html.pu-dark .draggable-window .btn:disabled { opacity: .45 !important; }
-html.pu-on .nitro-catalog .purchase-buttons .btn-primary { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12) !important; font-weight: 400 !important; }
-
-/* Rare values: search on its own row, readable cards and paging */
-html.pu-on .rv-bar { flex-wrap: wrap !important; gap: 8px !important; }
-html.pu-on .rv-bar-search { flex: 1 1 100% !important; }
-html.pu-on .rv-bar-input { flex: 1 1 auto !important; width: auto !important; }
-html.pu-on .rv-bar-select { flex: 1 1 0 !important; min-width: 0 !important; }
-html.pu-dark .rv-card { background: #1c1c1c !important; border: 1px solid #000 !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important; }
-html.pu-dark .rv-card-tag { background: rgba(0,0,0,.7) !important; color: #fff !important; }
-html.pu-dark .rv-card-name { color: #f2f2f2 !important; }
-html.pu-dark .rv-pill, html.pu-dark .rv-pagelabel { color: #d0d0d0 !important; }
-html.pu-dark .rv-pagebtn { background: linear-gradient(#2a2a2a 50%, #1f1f1f 50%) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; }
-html.pu-on .nitro-navigator .d-flex:has(> .navigator-search-button) { position: relative !important; }
-
-/* ---------------------------------------------------------------- v8: one button style, fuller windows
-   Every square button and chip uses the look of Peace's "+" button next to the chat box: two-tone grey,
-   black outline, faint inner line, 6px corners; Peace blue (two-tone) when selected. */
-html.pu-on {
-  --pu-hud: linear-gradient(#262626 50%, #1a1a1a 50%);
-  --pu-hud-p: linear-gradient(#303030 50%, #222 50%);
-  --pu-blue: linear-gradient(#22ade0 50%, #1591c0 50%);
-  --pu-in: inset 0 0 0 1px rgba(255, 255, 255, .12);
-  --pu-bin: inset 0 1px 0 #7eeaff, inset 0 0 0 1px rgba(255, 255, 255, .14);
-  --pu-panel: 0 12px 28px rgba(0, 0, 0, .55);
-}
+html.pu-on .nitro-purse-container { display: none !important; }
 
 /* Peace's More sheet stays in the page (hidden, no height) so its room tools and voice panel can render. */
 html.pu-on .nitro-hud-more-sheet {
@@ -294,256 +162,738 @@ html.pu-on .nitro-hud-more-sheet {
   transform: none !important; animation: none !important; pointer-events: none !important;
 }
 html.pu-on .nitro-hud-more-sheet > :not(#hud-more-voice):not(#hud-more-room) { display: none !important; }
-/* Room voice: Peace's own panel, shown under the top bar while it is open. */
-html.pu-on #hud-more-voice:not(:empty) {
-  visibility: visible !important; pointer-events: auto !important; display: block !important;
-  position: fixed !important; z-index: 460 !important; top: 52px !important; left: 8px !important; right: 8px !important;
-  max-height: calc(100% - 120px) !important; overflow: auto !important; padding: 0 !important;
-  background: #161616 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in), var(--pu-panel) !important;
-  animation: pu-fade .18s;
-}
-html.pu-on #hud-more-voice .nitro-voice-tools-container,
-html.pu-on #hud-more-voice .nitro-voice-tools { width: 100% !important; max-width: none !important; margin: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; position: relative !important; inset: auto !important; transform: none !important; }
-html.pu-on #hud-more-voice .voice-tools-header { padding: 8px 52px 8px 10px !important; background: linear-gradient(#202020 50%, #161616 50%) !important; border-bottom: 1px solid #000 !important; }
-html.pu-on #hud-more-voice .voice-tools-body { padding: 8px 10px 10px !important; }
-html.pu-on #hud-more-voice .voice-tools-toggle {
-  display: grid !important; place-items: center !important; position: absolute !important; z-index: 2; top: 8px !important; right: 8px !important; left: auto !important;
-  width: 36px !important; height: 36px !important; padding: 0 !important; margin: 0 !important;
-  border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important;
-}
-html.pu-on #hud-more-voice .voice-tools-toggle > * { display: none !important; }
-html.pu-on #hud-more-voice .voice-tools-toggle::after { content: '\00d7'; font: 400 22px/1 Ubuntu, sans-serif; }
-html.pu-on #hud-more-voice button:not(.voice-tools-toggle):not(.voice-participant-main) { border-radius: 6px !important; }
-html.pu-on #hud-more-voice .voice-tool-button,
-html.pu-on #hud-more-voice .voice-icon-button { background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important; }
-html.pu-on #hud-more-voice .voice-join { background: var(--pu-blue) !important; border: 1px solid #000 !important; box-shadow: var(--pu-bin) !important; color: #fff !important; }
 
-/* Room music: Peace's own music button and card, under the wallet. Hidden while a window is open,
-   so it never covers a window's close button. */
-html.pu-on .nitro-phone-corner { display: flex !important; position: fixed !important; z-index: 450 !important; top: 52px !important; right: 10px !important; }
-html.pu-on .nitro-phone-corner .phone-corner-wallet,
-html.pu-on .nitro-phone-corner .phone-corner-purse { display: none !important; }
-html.pu-on .nitro-phone-corner .phone-corner-btn { width: 36px !important; min-width: 36px !important; height: 36px !important; border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; }
-html.pu-on .nitro-phone-corner .phone-corner-btn.open { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; }
-html.pu-on .nitro-phone-corner .phone-corner-card { background: #161616 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in), var(--pu-panel) !important; animation: pu-fade .18s; }
-html.pu-on body:has(.draggable-window .nitro-card) .nitro-phone-corner,
-html.pu-on body:has(#hud-more-voice:not(:empty)) .nitro-phone-corner .phone-corner-card { display: none !important; }
-
-/* Windows: no dead space at the bottom (Nitro caps the content at 80% of the card) */
+/* Every Nitro window is a full-width sheet at the bottom of the game area, so none is wider than the screen. */
+html.pu-on .draggable-window { left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; transform: none !important; width: 100% !important; }
+html.pu-on .draggable-window > .nitro-card {
+  width: 100% !important; min-width: 0 !important; max-width: none !important; max-height: calc(100vh - var(--pu-bottom) - 60px) !important; overflow: hidden !important;
+}
+/* No dead space at the bottom (Nitro caps the content at 80% of the card) */
 html.pu-on .draggable-window > .nitro-card > .content-area { max-height: none !important; min-height: 0 !important; }
+/* Big windows take the whole game area under the top bar */
+html.pu-on .draggable-window:has(> .nitro-catalog),
+html.pu-on .draggable-window:has(> .nitro-inventory:not(.trading)),
+html.pu-on .draggable-window:has(> .nitro-navigator),
+html.pu-on .draggable-window:has(> .nitro-rarevalues-window),
+html.pu-on .draggable-window:has(> .nitro-room-creator) { top: var(--pu-top) !important; }
+html.pu-on .draggable-window > :is(.nitro-catalog, .nitro-inventory:not(.trading), .nitro-navigator, .nitro-rarevalues-window, .nitro-room-creator) {
+  height: 100% !important; max-height: none !important;
+}
+html.pu-on :is(.nitro-catalog, .nitro-inventory, .nitro-navigator, .nitro-room-creator) .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
+/* Change looks covers the top bar and the tab bar too (frame.js sets html.pu-looks and hides the Peace UI bars) */
+html.pu-on .draggable-window:has(> .nitro-avatar-editor) { top: 0 !important; bottom: 0 !important; height: auto !important; }
+html.pu-on .draggable-window > .nitro-avatar-editor { height: 100% !important; min-height: 0 !important; max-height: none !important; }
+html.pu-looks #hud-more-voice:not(:empty) { visibility: hidden !important; pointer-events: none !important; }
+/* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
+html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }
+/* Scrolling lists built on Bootstrap's .grid: the first row was 1fr and stretched. */
+html.pu-on .nitro-card .overflow-auto.grid { grid-template-rows: none !important; align-content: start !important; }
 
-/* Standard close button */
+/* Dark pass: frame.js marks elements by their computed colour (Nitro's windows are drawn for a light theme).
+   Near-black text turns light, light neutral backgrounds become dark surfaces, pastels keep a faint tint. */
+html.pu-dark [data-pu-ink="1"] { color: var(--pu-ink) !important; }
+html.pu-dark [data-pu-ink="2"] { color: var(--pu-ink-2) !important; }
+html.pu-dark [data-pu-ink="tint"] { color: var(--pu-tink) !important; }
+/* Only the colour changes when the element has its own picture: virtual lists (Change looks items) mark a tile
+   before Nitro gives it its image, and the background shorthand would hide that image. */
+html.pu-dark [data-pu-bg="1"]:not([style*="background-image"]) { background: var(--pu-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"]:not([style*="background-image"]) { background: var(--pu-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"]:not([style*="background-image"]) { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pu-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="1"][style*="background-image"] { background-color: var(--pu-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"][style*="background-image"] { background-color: var(--pu-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"][style*="background-image"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pu-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bd="1"] { border-color: var(--pu-line) !important; }
+
+/* Scroll edge fade: registered here (document) so the Peace UI shadow root can use them too.
+   Lists fade at the top/bottom edge only while there is more to scroll that way. */
+@property --pu-ft { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --pu-fb { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@keyframes pu-edge { 0% { --pu-ft: 0px; --pu-fb: 22px; } 6% { --pu-ft: 22px; --pu-fb: 22px; } 94% { --pu-ft: 22px; --pu-fb: 22px; } 100% { --pu-ft: 22px; --pu-fb: 0px; } }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .overflow-auto,
+html.pu-on .nitro-inventory .g-col-7 > div,
+html.pu-on .nitro-room-creator .content-area {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);
+  animation: pu-edge linear both; animation-timeline: scroll(self);
+}
+
+
+/* ================================================================ 3. COMPONENTS */
+
+/* ---- Window: card, header, title ---- */
+html.pu-on .draggable-window > .nitro-card {
+  background: var(--pu-s0) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-hi), var(--pu-sheet) !important;
+}
+html.pu-on .draggable-window > :is(.nitro-catalog, .nitro-inventory:not(.trading), .nitro-navigator, .nitro-rarevalues-window, .nitro-room-creator, .nitro-avatar-editor) {
+  border-radius: 0 !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .draggable-window > .nitro-avatar-editor { border: 0 !important; box-shadow: none !important; }
+html.pu-on .draggable-window .nitro-card-header {
+  min-height: var(--pu-head) !important; padding: 0 !important;
+  background: var(--pu-tone-bar) !important; border: 0 !important; border-bottom: var(--pu-edge) !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-card-header-text { color: var(--pu-ink) !important; font: 700 var(--pu-fs-lg)/1.2 var(--pu-font-bold) !important; text-shadow: none !important; }
+html.pu-on .draggable-window .nitro-card .content-area { background: var(--pu-s0) !important; color: var(--pu-ink) !important; }
+html.pu-on .draggable-window .nitro-card-tabs { background: var(--pu-s0) !important; border: 0 !important; box-shadow: none !important; }
+
+/* ---- Close (X): one size, one drawing, everywhere. The profile's is the red variant (danger). ---- */
 html.pu-on .draggable-window .nitro-card-header-close,
 html.pu-on .user-profile .profile-nav-close,
-html.pu-on .user-profile .profile-nav-edit {
-  width: 32px !important; height: 32px !important; right: 8px !important; padding: 0 !important;
-  display: grid !important; place-items: center !important; border-radius: 6px !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important;
-  font: 400 20px/1 Ubuntu, sans-serif !important; text-shadow: none !important;
+html.pu-on .popover .pu-x,
+html.pu-on #hud-more-voice .voice-tools-toggle {
+  width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; margin: 0 !important;
+  display: grid !important; place-items: center !important; cursor: pointer;
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font-size: 0 !important; text-shadow: none !important;
 }
-html.pu-on .draggable-window .nitro-card-header-close svg { width: 12px !important; height: 12px !important; }
+html.pu-on .draggable-window .nitro-card-header-close > *,
+html.pu-on .user-profile .profile-nav-close > *,
+html.pu-on .popover .pu-x > *,
+html.pu-on #hud-more-voice .voice-tools-toggle > * { display: none !important; }
+html.pu-on .draggable-window .nitro-card-header-close::before,
+html.pu-on .user-profile .profile-nav-close::before,
+html.pu-on .popover .pu-x::before,
+html.pu-on #hud-more-voice .voice-tools-toggle::before {
+  content: '' !important; display: block !important; position: static !important; width: 14px !important; height: 14px !important; margin: 0 !important;
+  border: 0 !important; background: currentColor !important; transform: none !important; opacity: 1 !important;
+  -webkit-mask: var(--pu-i-x) center / contain no-repeat; mask: var(--pu-i-x) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-card-header-close::after,
+html.pu-on .user-profile .profile-nav-close::after,
+html.pu-on .popover .pu-x::after,
+html.pu-on #hud-more-voice .voice-tools-toggle::after { content: none !important; display: none !important; }
 html.pu-on .draggable-window .nitro-card-header-close:active,
-html.pu-on .user-profile .profile-nav-close:active { background: var(--pu-hud-p) !important; }
+html.pu-on .popover .pu-x:active,
+html.pu-on #hud-more-voice .voice-tools-toggle:active { background: var(--pu-tone-press) !important; }
 
-/* Chips: window tabs, with space above and below */
-html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) { padding: 10px 12px !important; min-height: 0 !important; height: auto !important; flex: none !important; }
+/* ---- Buttons. Every button in a window is one height (--pu-ctl) and one of three looks:
+        default (dark two-tone), primary (Peace blue), danger (red). ---- */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn {
+  min-height: var(--pu-ctl); padding-top: 0; padding-bottom: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: var(--pu-r) !important; font-size: var(--pu-fs) !important; line-height: 1.2 !important; text-shadow: none !important;
+}
+/* every clickable box in a window gets the one corner */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(.form-control, .form-select, .nav-link, .layout-grid-item) { border-radius: var(--pu-r) !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn.btn-sm { min-height: var(--pu-ctl); }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn svg { flex: none; }
+/* default */
+html.pu-on .draggable-window :is(.btn-secondary, .btn-light, .btn-dark, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light),
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn-primary,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn-primary,
+html.pu-on .draggable-window .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger,
+html.pu-on .draggable-window .nitro-room-info .settings-room-infoss,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn,
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon,
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > *,
+html.pu-on .nitro-avatar-editor .pu-lkbar > button,
+html.pu-on .nitro-catalog .pu-back,
+html.pu-on .pu-zoom,
+html.pu-on #hud-more-voice .voice-tool-button,
+html.pu-on #hud-more-voice .voice-icon-button,
+html.pu-on .nitro-phone-corner .phone-corner-btn,
+html.pu-on .rv-pagebtn,
+html.pu-on .user-profile .friend-btn {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window :is(.btn-secondary, .btn-light, .btn-dark, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light):active,
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn-primary:active,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn-primary:active,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn:active,
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon:active,
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:active,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers:active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > :active,
+html.pu-on .nitro-avatar-editor .pu-lkbar > button:active,
+html.pu-on .nitro-catalog .pu-back:active,
+html.pu-on .pu-zoom:active,
+html.pu-on .rv-pagebtn:active { background: var(--pu-tone-press) !important; }
+/* primary */
+html.pu-on .draggable-window .btn-primary:not(.btn-danger),
+html.pu-on .draggable-window .btn-success,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn.is-active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button,
+html.pu-on .user-profile .profile-nav-edit,
+html.pu-on #hud-more-voice .voice-join,
+html.pu-on .nitro-phone-corner .phone-corner-btn.open {
+  background: var(--pu-blue-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-blue-hi) !important;
+  color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-primary:not(.btn-danger):active,
+html.pu-on .draggable-window .btn-success:active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active,
+html.pu-on .user-profile .profile-nav-edit:active { background: var(--pu-blue-press) !important; }
+/* the default ones listed above win over primary/danger where Nitro uses those classes for a secondary action */
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn.btn-primary,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn.btn-primary,
+html.pu-on .draggable-window .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn.btn-danger {
+  background: var(--pu-tone) !important; box-shadow: var(--pu-hi) !important; color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important;
+}
+/* danger */
+html.pu-on .draggable-window .btn-danger,
+html.pu-on .user-profile .profile-nav-close,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-danger {
+  background: var(--pu-red-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-red-hi) !important;
+  color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-danger:active,
+html.pu-on .user-profile .profile-nav-close:active { background: var(--pu-red-press) !important; }
+html.pu-on .user-profile :is(.profile-nav-edit, .profile-nav-close) svg { color: var(--pu-ink-on) !important; fill: currentColor; }
+html.pu-on .draggable-window .btn.disabled, html.pu-on .draggable-window .btn:disabled { opacity: .45 !important; }
+/* joined buttons (wardrobe slot: Save | Wear share one edge) */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container { background: var(--pu-edge-c); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > *,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button { border: 0 !important; border-radius: 0 !important; }
+
+/* ---- Chips: window tabs, Shop category rows, Change looks category tabs. Selected = blue. ---- */
+html.pu-on .draggable-window .nitro-card-tabs .nav-link,
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink-2) !important; font: 500 var(--pu-fs)/1 var(--pu-font) !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:before,
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:after { display: none !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item { color: var(--pu-ink) !important; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-link.active,
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item.active,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link.active,
+html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link:has(.tab-wardrobe) {
+  background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; color: var(--pu-ink-on) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link.active:not(:has(.tab-wardrobe)) { background: var(--pu-tone) !important; box-shadow: var(--pu-hi) !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item:not(.active):active { background: var(--pu-tone-press) !important; }
+
+/* ---- Segmented control: a track with options inside; the chosen one is blue (item types, Colour 1 / 2) ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item),
+html.pu-on .nitro-avatar-editor .pu-lkslots {
+  background: var(--pu-tone-track) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .category-item,
+html.pu-on .nitro-avatar-editor .pu-lkslots button {
+  background: transparent !important; border: 0 !important; border-radius: var(--pu-r-in) !important; box-shadow: none !important;
+  color: var(--pu-ink-2) !important; font: 500 var(--pu-fs-sm)/1 var(--pu-font) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .category-item * { color: inherit !important; font: inherit !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .category-item:has(> .selected),
+html.pu-on .nitro-avatar-editor .pu-lkslots button.on {
+  background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; color: var(--pu-ink-on) !important; font-weight: 700 !important;
+}
+
+/* ---- Inputs: the Friends search look (deep field, black edge), one height with the chips ---- */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"], select, textarea),
+html.pu-on .nitro-chat-history-window .ch-search input,
+html.pu-on .builders-tools input {
+  min-height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; outline: 0 !important;
+  background-color: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important;
+  color: var(--pu-ink) !important; font: 400 var(--pu-fs)/1 var(--pu-font) !important;
+}
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"], select),
+html.pu-on .nitro-chat-history-window .ch-search input,
+html.pu-on .builders-tools input { height: var(--pu-ctl) !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) textarea { padding: 8px var(--pu-pad) !important; line-height: 1.35 !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, textarea)::placeholder { color: var(--pu-ink-3) !important; font-family: var(--pu-font) !important; font-style: normal !important; opacity: 1 !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, select, textarea):focus,
+html.pu-on .builders-tools input:focus { border-color: var(--pu-blue) !important; }
+/* search: the magnifier on the left (Enter or typing searches; Nitro's pencils are hidden) */
+html.pu-on .draggable-window .nitro-catalog .catalog-left input.form-control,
+html.pu-on .draggable-window > .nitro-card.nitro-navigator input.form-control,
+html.pu-on .draggable-window .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input,
+html.pu-on .draggable-window .nitro-chat-history-window .ch-search input {
+  padding-left: 34px !important; background-image: var(--pu-bg-search) !important; background-repeat: no-repeat !important; background-position: 11px center !important; background-size: var(--pu-ic) var(--pu-ic) !important;
+}
+html.pu-on .nitro-catalog .catalog-search-button, html.pu-on .nitro-navigator .navigator-search-button { display: none !important; }
+/* select: one small chevron */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(select, select.form-select) {
+  padding: 0 30px 0 var(--pu-pad) !important; -webkit-appearance: none !important; appearance: none !important;
+  background-image: var(--pu-bg-chev) !important; background-repeat: no-repeat !important; background-position: right 10px center !important; background-size: 14px 14px !important;
+}
+
+/* ---- Panels: a box on the window (dark grey, black edge, faint inner line) ---- */
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5,
+html.pu-on .nitro-navigator .navigator-item,
+html.pu-on .nitro-navigator .nav-thumbnail,
+html.pu-on .builders-tools .builders-tools-toggle-list,
+html.pu-on .builders-tools .builders-tools-field-row,
+html.pu-on .rv-card,
+html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card),
+html.pu-on .draggable-window .content-area .layout-grid-item:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.room-creator-grid-item):not(.nitro-catalog-navigation-grid-container .layout-grid-item) {
+  background: var(--pu-s1) !important; background-image: none !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html.pu-on .draggable-window .content-area .layout-grid-item.active:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.nitro-catalog-navigation-grid-container .layout-grid-item) { background: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; }
+/* raised panel inside a panel */
+html.pu-on .user-profile .relationship-row { background: var(--pu-s2) !important; }
+/* outlined card: a light edge round a picture card (Rooms grid) */
+html.pu-on .nitro-navigator .nav-thumbnail { border-color: var(--pu-line-solid) !important; box-shadow: none !important; overflow: hidden !important; }
+/* split panel: two stacked parts that read as one box (Shop quantity + buy buttons) */
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) {
+  background: var(--pu-s1) !important; border: var(--pu-edge) !important; border-bottom: 0 !important; border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-hi-top) !important;
+}
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons {
+  background: var(--pu-s1) !important; border: var(--pu-edge) !important; border-top: 0 !important; border-radius: 0 0 var(--pu-r) var(--pu-r) !important; box-shadow: var(--pu-hi-bottom) !important;
+}
+/* light panel: lighter groups with visible light borders (Chat history) */
+html.pu-on .nitro-chat-history-window .nitro-chat-history-content { background: var(--pu-s1) !important; color: var(--pu-ink) !important; }
+html.pu-on .nitro-chat-history-window .ch-search,
+html.pu-on .nitro-chat-history-window .ch-results { background: transparent !important; border: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion { border: 1px solid var(--pu-line-2) !important; border-radius: var(--pu-r) !important; background: var(--pu-s2) !important; box-shadow: none !important; overflow: hidden !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header { background: var(--pu-s2) !important; color: var(--pu-ink) !important; border: 0 !important; border-radius: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header.expanded { background: var(--pu-s3) !important; border-bottom: 1px solid var(--pu-line-2) !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-body { background: var(--pu-s1) !important; border: 0 !important; }
+/* bars: a strip at the bottom or top of a window (Create room actions) */
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child { background: var(--pu-s0); border-top: var(--pu-edge); box-shadow: var(--pu-hi-line); }
+
+/* ---- Tiles: square picture tiles you pick; selected = blue ring (Shop items, room layouts) ---- */
+html.pu-on .nitro-catalog .layout-catalog-grid-item,
+html.pu-on .nitro-room-creator .room-creator-grid-item {
+  background-color: var(--pu-s2) !important; background-repeat: no-repeat !important; background-position: center !important;
+  border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important; color: var(--pu-ink-2) !important;
+}
+html.pu-on .nitro-catalog .catalog-grid-active.active .layout-catalog-grid-item,
+html.pu-on .nitro-room-creator .room-creator-grid-item.active { background-color: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; color: var(--pu-ink-on) !important; }
+/* light tiles (Change looks items and layers) */
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts {
+  background-color: var(--pu-lt) !important; border: 0 !important; border-radius: var(--pu-r-in) !important;
+  box-shadow: 0 0 0 calc(1px / var(--lk-z, 1.6)) var(--pu-edge-c), inset 0 calc(1px / var(--lk-z, 1.6)) 0 var(--pu-lt-shine) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts.part-selected {
+  background-color: var(--pu-lt-on) !important; box-shadow: 0 0 0 calc(2px / var(--lk-z, 1.6)) var(--pu-blue), 0 0 0 calc(3px / var(--lk-z, 1.6)) var(--pu-edge-c) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb { background-color: var(--pu-lt) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-lt-hi) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb { background-color: var(--pu-lt-on) !important; box-shadow: 0 0 0 2px var(--pu-blue), var(--pu-lt-hi) !important; }
+/* colour swatches */
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame {
+  border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r-in) !important; background-image: none !important; box-shadow: var(--pu-swatch-hi) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active { box-shadow: var(--pu-swatch-on) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkbar .sw { border: var(--pu-edge); border-radius: var(--pu-r-in); box-shadow: var(--pu-swatch-hi); }
+
+/* ---- Pictures: a well for room thumbnails, item previews and avatars ---- */
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail,
+html.pu-on .nitro-navigator .navigator-item .pu-thumb,
+html.pu-on .nitro-catalog .catalog-default-image,
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child,
+html.pu-on .popover .room-info .room-thumbnail,
+html.pu-on .nitro-room-info .room-thumbnail,
+html.pu-on .user-profile .profile-avatar {
+  background-color: var(--pu-well); border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+}
+/* picture at the top of an outlined card */
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { background-color: var(--pu-well); border: 0 !important; border-bottom: 1px solid var(--pu-line-solid) !important; border-radius: 0 !important; }
+html.pu-on .nitro-catalog .catalog-default-image:empty { display: none !important; }
+
+/* ---- Floating panels: room details, voice, music card, layer actions ---- */
+html.pu-on .popover:has(.room-info),
+html.pu-on #hud-more-voice:not(:empty),
+html.pu-on .nitro-phone-corner .phone-corner-card {
+  background: var(--pu-s0) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi), var(--pu-float) !important; color: var(--pu-ink) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] {
+  background: var(--pu-stage-float) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi), var(--pu-float) !important;
+}
+html.pu-on #hud-more-voice .voice-tools-header { background: var(--pu-tone-bar) !important; border-bottom: var(--pu-edge) !important; }
+html.pu-on #hud-more-voice .nitro-voice-tools-container,
+html.pu-on #hud-more-voice .nitro-voice-tools,
+html.pu-on .popover .room-info .room-info-bg { background: transparent !important; border: 0 !important; border-image: none !important; box-shadow: none !important; }
+html.pu-on #hud-more-voice button:not(.voice-tools-toggle):not(.voice-participant-main) { border-radius: var(--pu-r) !important; }
+
+/* ---- Badges: people in a room. Grey = empty, green = people inside, red = full (frame.js sets data-pu-ppl
+        from the count, so the list, the grid and the details all agree) ---- */
+html.pu-on .nitro-navigator .badge,
+html.pu-on .popover .room-info .badge {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r-in) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font: 700 var(--pu-fs-sm)/1.1 var(--pu-font-bold) !important; text-shadow: none !important;
+}
+html.pu-on .nitro-navigator .badge[data-pu-ppl="1"], html.pu-on .popover .room-info .badge[data-pu-ppl="1"] { background: var(--pu-green-tone) !important; box-shadow: var(--pu-green-hi) !important; color: var(--pu-ink-on) !important; }
+html.pu-on .nitro-navigator .badge[data-pu-ppl="full"], html.pu-on .popover .room-info .badge[data-pu-ppl="full"] { background: var(--pu-red-tone) !important; box-shadow: var(--pu-red-hi) !important; color: var(--pu-ink-on) !important; }
+/* the full-width strip under a list thumbnail keeps square bottom corners against the picture */
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail .badge.w-100,
+html.pu-on .nitro-navigator .navigator-item .pu-thumb .badge { border-width: 1px 0 0 !important; border-radius: 0 !important; }
+
+/* ---- Tags: small labels (room tags, counts) ---- */
+html.pu-on .nitro-room-info .text-tag,
+html.pu-on .user-profile .bento-count {
+  padding: 2px 7px !important; background: var(--pu-s2) !important; border: 1px solid var(--pu-line-2) !important; border-radius: var(--pu-r-in) !important;
+  color: var(--pu-ink-2) !important; font-size: var(--pu-fs-sm) !important;
+}
+/* tag on a picture */
+html.pu-on .rv-card-tag { background: var(--pu-scrim-strong) !important; color: var(--pu-ink-on) !important; border-radius: var(--pu-r-in) !important; }
+
+/* ---- Section labels: small caps over a group ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfits-title,
+html.pu-on .user-profile .bento-title {
+  color: var(--pu-ink-3) !important; font: 700 var(--pu-fs-xs)/20px var(--pu-font-bold) !important; letter-spacing: .06em; text-transform: uppercase;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel::before { color: var(--pu-stage-ink); font: 700 var(--pu-fs-2xs)/14px var(--pu-font); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---- Text colours ---- */
+/* secondary */
+html.pu-on .nitro-catalog .quanity-container .text-muted,
+html.pu-on .nitro-navigator .pu-owner,
+html.pu-on .nitro-navigator .pu-owner.pu-lo > span,
+html.pu-on .popover .room-info .text-muted,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold,
+html.pu-on .builders-tools .builders-tools-furni-count,
+html.pu-on .user-profile .profile-motto,
+html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]),
+html.pu-on .nitro-avatar-editor .pu-lkt small { color: var(--pu-ink-2) !important; }
+/* hint */
+html.pu-on .nitro-chat-history-window .ch-chevron,
+html.pu-on .nitro-chat-history-window .ch-ts,
+html.pu-on .user-profile .meta-label,
+html.pu-on .user-profile .relationship-empty,
+html.pu-on .user-profile .relationship-row .small,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { color: var(--pu-ink-3) !important; }
+/* main */
+html.pu-on .nitro-navigator .pu-owner.pu-lo,
+html.pu-on .popover .room-info,
+html.pu-on .popover .room-info .text-decoration-underline,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child > :last-child,
+html.pu-on .nitro-chat-history-window .ch-room-name,
+html.pu-on .builders-tools .builders-tools-content,
+html.pu-on .builders-tools .builders-tools-check-row,
+html.pu-on .builders-tools .builders-tools-field-row,
+html.pu-on .rv-card-name,
+html.pu-on .user-profile .meta-value,
+html.pu-on .user-profile .relationship-row :is(a, .text-decoration-underline, b, strong),
+html.pu-on .nitro-avatar-editor .pu-lkt { color: var(--pu-ink) !important; }
+html.pu-on .rv-pill, html.pu-on .rv-pagelabel { color: var(--pu-ink-2) !important; }
+/* names: plain white bold (profiles ignore name styles and gradients) */
+html.pu-on .user-profile .name-profile-kk :is(strong, span, b) { background: none !important; -webkit-text-fill-color: var(--pu-ink) !important; color: var(--pu-ink) !important; text-shadow: none !important; filter: none !important; animation: none !important; }
+html.pu-on .user-profile .name-profile-kk strong { font: 700 var(--pu-fs-lg)/1.2 var(--pu-font-bold) !important; }
+/* titles in windows */
+html.pu-on .nitro-navigator .nav-category { font-family: var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .navigator-item .titleromddas { font: 700 var(--pu-fs)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .navigator-item .ekkcikdbawahsd { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 > .text-truncate { font: 700 var(--pu-fs)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .pu-owner { font-size: var(--pu-fs-sm); line-height: 1.3; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; }
+html.pu-on .popover .room-info { font-size: var(--pu-fs) !important; }
+html.pu-on .popover .room-info .room-info-bg .font-bold { font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { font-size: var(--pu-fs-sm); }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold { font: 400 var(--pu-fs-sm)/1.3 var(--pu-font) !important; }
+html.pu-on .popover .room-info .font-italic { font-style: normal !important; }
+html.pu-on .nitro-chat-history-window .ch-room-name { font-size: var(--pu-fs) !important; }
+html.pu-on .nitro-room-info .content-area .font-bold { font: 700 var(--pu-fs-lg)/1.25 var(--pu-font-bold) !important; white-space: normal !important; }
+html.pu-on .nitro-room-info .content-area .small { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 .font-bold { font-size: var(--pu-fs-md) !important; white-space: normal !important; }
+html.pu-on .nitro-catalog .quanity-container .text-muted { font-size: var(--pu-fs) !important; }
+html.pu-on .builders-tools .builders-tools-check-row,
+html.pu-on .builders-tools .builders-tools-field-row { font-size: var(--pu-fs-md) !important; }
+html.pu-on .builders-tools .builders-tools-furni-count { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-room-creator .g-col-5 :is(label, .text-black, .font-bold) { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .user-profile .profile-motto, html.pu-on .user-profile .profile-motto.font-italic,
+html.pu-on .user-profile .relationship-empty, html.pu-on .user-profile .relationship-row .small { font-style: normal !important; }
+html.pu-on .user-profile .meta-value { font-weight: 700 !important; }
+html.pu-on .user-profile .content-area :is(h1, h2, h3, h4, h5, h6, p, span, div):not(.meta-label):not(.bento-title):not(.relationship-empty) { text-shadow: none !important; }
+html.pu-on .user-profile .friend-btn { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-catalog .pu-back { font: 700 var(--pu-fs)/1 var(--pu-font-bold) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkbar > button { font: 600 var(--pu-fs)/1 var(--pu-font) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkt b { font: 700 var(--pu-fs-md)/1.1 var(--pu-font-bold); }
+html.pu-on .nitro-avatar-editor .pu-lkt small { font: 400 var(--pu-fs-sm)/1.2 var(--pu-font); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { font: 700 var(--pu-fs-xs)/1 var(--pu-font) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { font: 500 var(--pu-fs-xs)/20px var(--pu-font); }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after { font: 700 var(--pu-fs-2xs)/15px var(--pu-font); }
+
+/* ---- Switch (Builders tool) ---- */
+html.pu-on .builders-tools .is-ticked,
+html.pu-on .builders-tools .is-not-ticked {
+  width: 44px !important; height: 26px !important; background: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important;
+}
+html.pu-on .builders-tools .is-ticked { background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; }
+html.pu-on .builders-tools .is-ticked::after,
+html.pu-on .builders-tools .is-not-ticked::after {
+  content: '' !important; position: absolute !important; top: 2px !important; left: 2px !important; width: 20px !important; height: 20px !important; transform: none !important;
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r-in) !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .builders-tools .is-ticked::after { left: 20px !important; }
+
+/* ---- Tooltips / small marks ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after {
+  background: var(--pu-well); border: var(--pu-edge); border-radius: var(--pu-r-in); box-shadow: var(--pu-hi); color: var(--pu-ink-2);
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb::after { background: var(--pu-blue); color: var(--pu-ink-on); box-shadow: var(--pu-blue-hi); }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb.is-empty::before { border: 2px dashed var(--pu-lt-dash); border-radius: var(--pu-r-in); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container:empty::before { border: 2px dashed var(--pu-stage-dash); border-radius: var(--pu-r-in); }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active::after { border-left: 2.5px solid var(--pu-ink-on); border-bottom: 2.5px solid var(--pu-ink-on); filter: drop-shadow(0 0 1px var(--pu-edge-c)); }
+html.pu-on .profile-stickers-layer, html.pu-on .user-profile .profile-sticker { display: none !important; }
+
+
+/* ================================================================ 4. PAGES (layout only) */
+
+/* ---- Window header and tabs (every window) ---- */
+html.pu-on .draggable-window .nitro-card-header-close { right: 6px !important; }
+html.pu-on .draggable-window .nitro-card-tabs { padding: 0 var(--pu-pad) var(--pu-gap) !important; overflow-x: auto !important; scrollbar-width: none; }
+html.pu-on .draggable-window .nitro-card-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-tabs { flex-wrap: nowrap !important; gap: 6px !important; border: 0 !important; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-link { flex: none !important; height: var(--pu-ctl) !important; padding: 0 13px !important; margin: 0 !important; }
+/* Chip rows: space above and below; the row is as wide as its chips so the 12px gutter shows at both ends */
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) { padding: 10px var(--pu-pad) !important; min-height: 0 !important; height: auto !important; flex: none !important; }
 html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) + .content-area { padding-top: 0 !important; }
-html.pu-on .draggable-window .nitro-card-tabs .nav-link {
-  height: 34px !important; padding: 0 13px !important; border-radius: 6px !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important;
-  color: #a6a6a6 !important; font: 500 13.5px/1 Ubuntu, system-ui, sans-serif !important; text-shadow: none !important;
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) .nav-tabs { width: max-content !important; min-width: 0 !important; flex: none !important; }
+
+/* ---- Profile ---- */
+html.pu-on .draggable-window > .nitro-card.user-profile { --profile-surface: var(--pu-s0) !important; --profile-fg: var(--pu-ink) !important; --profile-tab-fg: var(--pu-ink) !important; }
+html.pu-on .user-profile .content-area { background-image: none !important; --profile-bento-bg: var(--pu-s1) !important; --profile-bento-blur: 0px !important; --profile-fg: var(--pu-ink) !important; padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .user-profile .profile-nav-bar { padding: 10px var(--pu-pad) !important; min-height: 0 !important; background: transparent !important; box-shadow: none !important; border: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .user-profile .profile-nav-actions { flex: none !important; align-self: center !important; gap: 6px !important; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-close,
+html.pu-on .user-profile .profile-nav-edit,
+html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
+html.pu-on .user-profile .identity-row,
+html.pu-on .user-profile .identity-relationships,
+html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !important; }
+html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
+html.pu-on .user-profile .bento { padding: 10px !important; }
+html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
+html.pu-on .user-profile .relationship-row { padding: var(--pu-gap) 10px !important; min-height: 40px; }
+html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
+html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
+html.pu-on .user-profile .friend-btn { display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important; }
+
+/* ---- Shop: one pane at a time (frame.js toggles .pu-page): the category list, then the page with a back bar ---- */
+html.pu-on .nitro-catalog .content-area,
+html.pu-on .nitro-inventory .content-area,
+html.pu-on .nitro-navigator .content-area { padding: var(--pu-gap) 10px 10px !important; }
+html.pu-on .nitro-catalog .content-area > .grid { display: flex !important; height: 100% !important; gap: 0 !important; }
+html.pu-on .nitro-catalog .catalog-left { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; }
+html.pu-on .nitro-catalog .catalog-left + .g-col-8 { display: none !important; }
+html.pu-on .nitro-catalog.pu-page .catalog-left { display: none !important; }
+html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { display: flex !important; }
+html.pu-on .nitro-catalog .content-area > .grid > .g-col-8 { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; margin: 0 !important; min-height: 0 !important; }
+html.pu-on .nitro-catalog .catalog-clear-button { right: var(--pu-pad) !important; top: 50% !important; transform: translateY(-50%) !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container { padding: 4px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container > .grid { height: 100% !important; gap: 4px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item { width: auto !important; min-height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; gap: 10px !important; justify-content: flex-start !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 10px"] { margin-left: 18px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 20px"] { margin-left: 36px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .catalog-icon { width: 24px !important; height: 24px !important; object-fit: contain; }
+/* page: preview on top, the furni grid fills the middle, quantity + buy at the bottom */
+html.pu-on .nitro-catalog .g-col-8 > div:not(.pu-back) { display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
+html.pu-on .nitro-catalog .catalog-default-image { position: relative !important; flex: 0 0 auto !important; height: 168px !important; max-height: 30vh !important; overflow: hidden !important; }
+html.pu-on .nitro-catalog .catalog-default-image > .overflow-hidden { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-catalog .catalog-default-image .item-title { position: absolute !important; left: 10px; top: var(--pu-gap); z-index: 2; max-width: calc(100% - 60px); }
+html.pu-on .nitro-catalog .catalog-image-column { max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
+html.pu-on .nitro-catalog .responsive-column-kk-height { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; gap: 0 !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { flex: 1 1 auto !important; height: auto !important; min-height: 0 !important; max-height: none !important; padding: var(--pu-gap) !important; margin-bottom: 10px !important; border-radius: var(--pu-r) !important; }
+/* Bootstrap's .grid makes the first row 1fr, which squashed or stretched the top row: square tiles instead */
+html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 > .grid {
+  grid-template-rows: none !important; grid-auto-rows: auto !important; height: auto !important; max-height: 100% !important;
+  grid-template-columns: repeat(auto-fill, minmax(var(--pu-tile), 1fr)) !important; gap: var(--pu-gap) !important; align-content: start !important;
 }
-html.pu-on .draggable-window .nitro-card-tabs .nav-link.active { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; border-color: #000 !important; }
+html.pu-on .nitro-catalog .catalog-grid-active { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+html.pu-on .nitro-catalog .layout-catalog-grid-item { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) { flex: none !important; padding: 10px 10px 0 !important; }
+html.pu-on .nitro-catalog .quanity-container { width: 100% !important; height: auto !important; min-height: var(--pu-ctl) !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; }
+html.pu-on .nitro-catalog .quantity-input { width: 88px !important; text-align: center !important; padding: 0 var(--pu-gap) !important; }
+html.pu-on .nitro-catalog .purchase-buttons { flex: none !important; gap: var(--pu-gap) !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons { padding: 10px !important; }
+html.pu-on .nitro-catalog .purchase-buttons .btn { flex: 1 1 0 !important; height: var(--pu-ctl-lg) !important; }
+html.pu-on .nitro-catalog .item-not-picker { flex: none !important; justify-content: center !important; padding: var(--pu-pad) !important; }
+html.pu-on .nitro-catalog .pu-back { flex: none; display: flex; align-items: center; gap: var(--pu-gap); height: var(--pu-ctl); margin-bottom: var(--pu-gap); padding: 0 var(--pu-pad) 0 var(--pu-gap); cursor: pointer; }
+html.pu-on .nitro-catalog .pu-back svg { flex: none; }
+html.pu-on .nitro-catalog .pu-back span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html.pu-on .nitro-catalog:not(.pu-page) .pu-back { display: none; }
 
-/* Window open and page changes slide, so it is clear where you came from */
-@keyframes pu-up { from { transform: translateY(28px); opacity: 0; } }
-@keyframes pu-in-r { from { transform: translateX(36px); opacity: 0; } }
-@keyframes pu-in-l { from { transform: translateX(-36px); opacity: 0; } }
-@keyframes pu-fade { from { opacity: 0; } }
-html.pu-on .draggable-window > .nitro-card { animation: pu-up .24s cubic-bezier(.2, .8, .2, 1); }
-html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { animation: pu-in-r .24s cubic-bezier(.2, .8, .2, 1); }
-html.pu-on .nitro-catalog:not(.pu-page) .catalog-left { animation: pu-in-l .24s cubic-bezier(.2, .8, .2, 1); }
-@media (prefers-reduced-motion: reduce) { html.pu-on .draggable-window > .nitro-card, html.pu-on .nitro-catalog .catalog-left, html.pu-on .nitro-catalog .g-col-8 { animation: none !important; } }
-
-/* Zoom button on item previews (frame.js adds it) */
-html.pu-on .pu-zoom {
-  position: absolute; z-index: 3; top: 6px; right: 6px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
-  border-radius: 6px; background: var(--pu-hud); border: 1px solid #000; box-shadow: var(--pu-in); color: #f2f2f2;
-}
-html.pu-on .pu-zoom:active { background: var(--pu-hud-p); }
-html.pu-on .catalog-default-image:not(:has(.room-preview-image)) > .pu-zoom { display: none; }
-
-/* Item previews: whole item, centred (Nitro draws a 390x235 picture into a shorter box) */
+/* Item previews: the whole item, centred; a zoom button top right (frame.js adds it) */
 html.pu-on .room-preview-container,
 html.pu-on .room-preview-image { width: 100% !important; height: 100% !important; }
 html.pu-on .room-preview-image { background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; image-rendering: pixelated; }
-html.pu-on .nitro-catalog .catalog-default-image { position: relative !important; border: 1px solid #000 !important; border-radius: 6px !important; overflow: hidden !important; }
-html.pu-on .nitro-catalog .catalog-default-image > .overflow-hidden { width: 100% !important; height: 100% !important; }
-html.pu-on .nitro-catalog .catalog-default-image .item-title { position: absolute !important; left: 10px; top: 8px; z-index: 2; max-width: calc(100% - 60px); }
+html.pu-on .pu-zoom { position: absolute; z-index: 3; top: 6px; right: 6px; width: var(--pu-ctl); height: var(--pu-ctl); display: grid; place-items: center; cursor: pointer; }
+html.pu-on .catalog-default-image:not(:has(.room-preview-image)) > .pu-zoom { display: none; }
 
-/* Shop grid: square tiles. Bootstrap's .grid makes the first row 1fr, which squashed the top row into
-   thin black lines on long pages and stretched tiles on short ones. */
-html.pu-on .nitro-catalog .responsive-column-kk-height { gap: 10px !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { padding: 8px !important; border-radius: 6px !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 > .grid {
-  grid-template-rows: none !important; grid-auto-rows: auto !important; height: auto !important; max-height: 100% !important;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important; gap: 8px !important; align-content: start !important;
-}
-html.pu-on .nitro-catalog .catalog-grid-active { height: auto !important; aspect-ratio: 1; }
-html.pu-on .nitro-catalog .layout-catalog-grid-item { border-radius: 6px !important; }
-html.pu-on .nitro-catalog .purchase-buttons .btn,
-html.pu-on .nitro-catalog .quantity-input { border-radius: 6px !important; }
+/* ---- Inventory: the chosen item and "Place in room" on top, the item grid fills the rest ---- */
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid { display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; height: auto !important; flex: 1 1 auto !important; min-height: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-7 { order: 2; flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5 { order: 1; flex: 0 0 auto !important; width: 100% !important; height: 144px !important; flex-direction: row !important; gap: 10px !important; overflow: hidden !important; padding: var(--pu-gap) !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child { flex: 0 0 126px !important; height: 100% !important; position: relative !important; overflow: hidden !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :nth-child(2) { flex: 1 1 auto !important; min-width: 0 !important; justify-content: center !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; flex: none !important; padding: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn svg { width: var(--pu-ic); height: var(--pu-ic); }
 
-/* Inventory: bigger preview */
-html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5 { height: 144px !important; padding: 8px !important; }
-html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child { flex: 0 0 126px !important; position: relative !important; border: 1px solid #000 !important; border-radius: 5px !important; overflow: hidden !important; }
-
-/* Rooms: list rows as small cards, the grid as two columns of pictures with name and owner */
-html.pu-on .nitro-navigator .navigator-item { min-height: 58px !important; padding: 6px 8px 6px 6px !important; background: #1c1c1c !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; border-radius: 6px !important; }
-html.pu-on .nitro-navigator .navigator-item .room-thumbnail { width: 46px !important; height: 46px !important; border-radius: 5px !important; border: 1px solid #000 !important; }
-html.pu-on .nitro-navigator .navigator-item .titleromddas { font: 700 14px/1.3 UbuntuBold, Ubuntu, sans-serif !important; }
-html.pu-on .nitro-navigator .navigator-item .ekkcikdbawahsd { font-size: 12.5px !important; }
+/* ---- Rooms (Navigator) ---- */
+html.pu-on .nitro-navigator .d-flex:has(> .navigator-search-button) { position: relative !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto { scrollbar-width: none !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto::-webkit-scrollbar { display: none !important; }
+html.pu-on .nitro-navigator .containernew-kvjd { width: 100% !important; }
 html.pu-on .nitro-navigator .icon-navigator-info { flex: none; }
+/* list: rows as small cards with a picture and a people badge on the left (frame.js adds .pu-thumb to My World) */
+html.pu-on .nitro-navigator .navigator-item { min-height: 58px !important; padding: 6px var(--pu-gap) 6px 6px !important; gap: 10px !important; }
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail { width: 46px !important; height: 46px !important; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !important; flex: none !important; background-position: center; background-size: cover; background-repeat: no-repeat; overflow: hidden !important; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) > .flex-column:not(.room-thumbnail) .badge { display: none !important; }
+html.pu-on .nitro-navigator .pu-owner { padding: 1px var(--pu-gap) var(--pu-gap); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { padding: 0; }
+/* grid: two columns of pictures with name and owner */
 html.pu-on .nitro-navigator .containernew-kvjd > .grid:not(.navigator-grid) {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: none !important; grid-auto-rows: auto !important;
-  gap: 8px !important; height: auto !important; overflow: visible !important;
+  gap: var(--pu-gap) !important; height: auto !important; overflow: visible !important;
 }
-html.pu-on .nitro-navigator .nav-thumbnail {
-  position: relative !important; width: auto !important; margin: 0 !important; padding: 0 !important; align-items: stretch !important; gap: 0 !important;
-  border-radius: 6px !important; background: #1c1c1c !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important;
-}
-html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail {
-  position: relative !important; width: 100% !important; height: auto !important; aspect-ratio: 4 / 3; margin: 0 !important;
-  border: 0 !important; border-bottom: 1px solid #000 !important; border-radius: 5px 5px 0 0 !important; background-color: #0d0d0d;
-}
+html.pu-on .nitro-navigator .nav-thumbnail { position: relative !important; width: auto !important; margin: 0 !important; padding: 0 !important; align-items: stretch !important; gap: 0 !important; }
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { position: relative !important; width: 100% !important; height: auto !important; aspect-ratio: 4 / 3; margin: 0 !important; }
 html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail img { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; image-rendering: pixelated; }
 html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail .badge { left: 6px !important; bottom: 6px !important; top: auto !important; right: auto !important; width: auto !important; margin: 0 !important; z-index: 1; }
-html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 { padding: 7px 8px 0 !important; gap: 6px !important; align-items: center !important; }
-html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 > .text-truncate { font: 700 13.5px/1.3 UbuntuBold, Ubuntu, sans-serif !important; }
-html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100:last-child { padding-bottom: 8px !important; }
-html.pu-on .nitro-navigator .pu-owner { padding: 1px 8px 8px; font-size: 12px; line-height: 1.3; color: #a6a6a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 { padding: 7px var(--pu-gap) 0 !important; gap: 6px !important; align-items: center !important; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100:last-child { padding-bottom: var(--pu-gap) !important; }
 
-/* Room details from the green "i": a card at the bottom instead of a tooltip, so the screen edge never cuts it */
+/* Room details from the green "i": a card at the bottom instead of a tooltip, so the screen edge never cuts it.
+   Picture on the left; name, owner, people and max users on the right; a close button top right. */
 html.pu-on .popover:has(.room-info) {
-  position: fixed !important; inset: auto 8px calc(var(--pu-bottom, 60px) + 8px) 8px !important; transform: none !important;
+  position: fixed !important; inset: auto var(--pu-gap) calc(var(--pu-bottom) + var(--pu-gap)) var(--pu-gap) !important; transform: none !important;
   width: auto !important; max-width: none !important; z-index: 1200 !important; padding: 0 !important;
-  background: #161616 !important; border: 1px solid #000 !important; border-radius: 8px !important; box-shadow: var(--pu-in), 0 -10px 30px rgba(0, 0, 0, .55) !important;
-  animation: pu-up .24s cubic-bezier(.2, .8, .2, 1);
 }
 html.pu-on .popover:has(.room-info) .popover-arrow { display: none !important; }
-html.pu-on .popover .room-info { padding: 10px !important; width: 100% !important; color: #f2f2f2 !important; font-size: 13.5px !important; }
-html.pu-on .popover .room-info .room-info-bg { padding: 0 !important; background: transparent !important; border-image: none !important; gap: 12px !important; }
-html.pu-on .popover .room-info .room-thumbnail { width: 104px !important; height: 104px !important; border: 1px solid #000 !important; border-radius: 6px !important; margin: 0 !important; }
+html.pu-on .popover .room-info {
+  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; column-gap: var(--pu-pad); row-gap: 6px; align-items: center; align-content: start;
+  padding: var(--pu-pad) !important; width: 100% !important; position: static !important;
+}
+html.pu-on .popover .room-info .room-info-bg { padding: 0 !important; gap: var(--pu-pad) !important; }
+html.pu-on .popover .room-info > .room-info-bg,
+html.pu-on .popover .room-info > .room-info-bg > .d-flex.flex-column:not(.room-thumbnail),
+html.pu-on .popover .room-info > .d-flex.flex-column,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child { display: contents !important; }
+html.pu-on .popover .room-info .room-info-bg > :first-child { grid-column: 1; grid-row: 1 / span 5; align-self: start; margin: 0 !important; }
+html.pu-on .popover .room-info .room-thumbnail { display: block !important; width: 88px !important; height: 88px !important; margin: 0 !important; }
 html.pu-on .popover .room-info .room-thumbnail img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
-html.pu-on .popover .room-info .font-bold { max-height: none !important; font-size: 15px !important; white-space: normal !important; }
-html.pu-on .popover .room-info .text-muted { color: #a6a6a6 !important; }
-html.pu-on .popover .room-info .text-decoration-underline { color: #f2f2f2 !important; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2:has(.d-flex > .font-italic:empty) { display: none !important; }
+html.pu-on .popover .room-info .room-info-bg .font-bold { grid-column: 2; padding-right: 40px; max-height: none !important; white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2 { grid-column: 2; gap: 6px !important; align-items: center; min-width: 0; }
+html.pu-on .popover .room-info .room-info-bg .flex-grow-1:empty { display: none !important; }
+html.pu-on .popover .room-info .badge { position: static !important; grid-column: 2; justify-self: start; margin: 0 !important; padding: 3px 7px !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:first-child { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child { grid-column: 2; width: auto !important; justify-content: flex-start !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child:has(> .font-bold:empty) { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { grid-column: 2; gap: 4px !important; }
+html.pu-on .popover .pu-x { position: absolute; z-index: 2; top: 10px; right: 10px; }
 
-/* Chat history: lighter panels with light borders */
-html.pu-on .nitro-chat-history-window .nitro-chat-history-content { background: #1a1a1a !important; color: #f2f2f2 !important; }
-html.pu-on .nitro-chat-history-window .ch-search { padding: 10px 12px !important; background: transparent !important; border: 0 !important; }
-html.pu-on .nitro-chat-history-window .ch-search input { height: 40px !important; font-size: 14px !important; background: #0d0d0d !important; color: #f2f2f2 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important; }
-html.pu-on .nitro-chat-history-window .ch-results { padding: 0 12px 12px !important; background: transparent !important; }
-html.pu-on .nitro-chat-history-window .ch-accordion { margin: 0 0 6px !important; border: 1px solid rgba(255, 255, 255, .14) !important; border-radius: 6px !important; background: #262626 !important; overflow: hidden !important; box-shadow: none !important; }
-html.pu-on .nitro-chat-history-window .ch-accordion-header { min-height: 44px !important; margin: 0 !important; background: #262626 !important; color: #f2f2f2 !important; border: 0 !important; border-radius: 0 !important; }
-html.pu-on .nitro-chat-history-window .ch-accordion-header.expanded { background: #2e2e2e !important; border-bottom: 1px solid rgba(255, 255, 255, .1) !important; }
-html.pu-on .nitro-chat-history-window .ch-room-name { color: #f2f2f2 !important; font-size: 14px !important; }
-html.pu-on .nitro-chat-history-window .ch-chevron { color: #8a8a8a !important; }
-html.pu-on .nitro-chat-history-window .ch-accordion-body { margin: 0 !important; background: #1d1d1d !important; border: 0 !important; }
-html.pu-on .nitro-chat-history-window .ch-ts { color: #8a8a8a !important; }
-
-/* Builders tool: full width, bigger text and 40px controls, switches instead of tiny ticks */
-html.pu-on .builders-tools { width: 100% !important; }
-html.pu-on .builders-tools .builders-tools-content { background: #141414 !important; color: #f2f2f2 !important; padding: 12px !important; gap: 10px !important; }
-html.pu-on .builders-tools .builders-tools-toggle-list { gap: 0 !important; padding: 0 12px !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; }
-html.pu-on .builders-tools .builders-tools-check-row { grid-template-columns: 1fr auto !important; min-height: 48px !important; font-size: 15px !important; color: #f2f2f2 !important; }
-html.pu-on .builders-tools .builders-tools-check-row + .builders-tools-check-row { border-top: 1px solid rgba(255, 255, 255, .07) !important; }
-html.pu-on .builders-tools .builders-tools-check-row > button { order: 2; }
-html.pu-on .builders-tools .builders-tools-field-row {
-  grid-template-columns: auto 1fr 112px !important; gap: 12px !important; min-height: 56px !important; padding: 0 8px 0 12px !important;
-  font-size: 15px !important; color: #f2f2f2 !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important;
+/* ---- Create room: full screen, the form on one column, layouts in a grid, Create and Cancel fixed at the bottom ---- */
+html.pu-on .draggable-window > .nitro-room-creator { width: 100% !important; max-width: none !important; }
+html.pu-on .nitro-room-creator .content-area { padding: 10px var(--pu-pad) 0 !important; overflow: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div:has(> .grid) { overflow: visible !important; flex: none !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid { display: flex !important; flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid > * { width: 100% !important; max-width: none !important; flex: none !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .g-col-5 { gap: var(--pu-gap) !important; display: flex !important; flex-direction: column !important; }
+html.pu-on .nitro-room-creator textarea.form-control { height: 72px !important; min-height: 72px !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child {
+  order: 99; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; display: grid !important; grid-template-columns: 1fr 1fr; gap: var(--pu-gap) !important; padding: 10px var(--pu-pad);
 }
-html.pu-on .builders-tools .is-ticked,
-html.pu-on .builders-tools .is-not-ticked { width: 44px !important; height: 26px !important; border-radius: 6px !important; background: #0d0d0d !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6) !important; }
-html.pu-on .builders-tools .is-ticked { background: #169ccc !important; }
-html.pu-on .builders-tools .is-ticked::after,
-html.pu-on .builders-tools .is-not-ticked::after {
-  content: '' !important; position: absolute !important; top: 2px !important; left: 2px !important; width: 20px !important; height: 20px !important;
-  border: 1px solid #000 !important; border-radius: 4px !important; background: var(--pu-hud) !important; box-shadow: var(--pu-in) !important; transform: none !important;
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn { height: var(--pu-ctl-lg) !important; margin: 0 !important; width: 100% !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger { order: -1; }
+html.pu-on .nitro-room-creator .g-col-7 { padding-bottom: 76px !important; }
+html.pu-on .nitro-room-creator .room-creator-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: var(--pu-gap) !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item {
+  width: auto !important; height: auto !important; min-height: 96px; margin: 0 !important; padding: 6px !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important;
 }
-html.pu-on .builders-tools .is-ticked::after { left: 20px !important; }
-html.pu-on .builders-tools input { width: 112px !important; height: 40px !important; font: 700 16px Ubuntu, sans-serif !important; color: #f2f2f2 !important; background: #0d0d0d !important; border: 1px solid #000 !important; border-radius: 6px !important; }
-html.pu-on .builders-tools .builders-tools-actions { gap: 8px !important; padding-top: 2px !important; border: 0 !important; }
-html.pu-on .builders-tools .builders-tools-actions .btn { min-height: 42px !important; font-size: 14px !important; border-radius: 6px !important; }
-html.pu-on .builders-tools .builders-tools-furni-count { color: #a6a6a6 !important; font-size: 13px !important; padding: 0 !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item img { max-width: 100%; image-rendering: pixelated; }
 
-/* Room info: tidy header picture and buttons, the owner's gear as a square button left of the title */
-html.pu-on .nitro-room-info .content-area { position: static !important; padding: 12px !important; gap: 12px !important; }
+/* ---- Room info (Nitro's window; the Room menu reads it hidden): tidy picture and buttons, the owner's gear left of the title ---- */
+html.pu-on .nitro-room-info .content-area { position: static !important; padding: var(--pu-pad) !important; gap: var(--pu-pad) !important; }
 html.pu-on .nitro-room-info .settings-room-infoss {
-  position: absolute !important; z-index: 3; top: 7px !important; left: 8px !important; right: auto !important; margin: 0 !important;
-  width: 32px !important; height: 32px !important; min-height: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important;
-  border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important;
+  position: absolute !important; z-index: 3; top: 6px !important; left: 6px !important; right: auto !important; margin: 0 !important;
+  width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-height: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important;
 }
-html.pu-on .nitro-room-info .room-thumbnail { width: 104px !important; height: 104px !important; border: 1px solid #000 !important; border-radius: 6px !important; }
+html.pu-on .nitro-room-info .room-thumbnail { width: 104px !important; height: 104px !important; }
 html.pu-on .nitro-room-info .room-thumbnail img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
 html.pu-on .nitro-room-info .btn-grpup { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; margin-top: 4px; }
-html.pu-on .nitro-room-info .btn-grpup .btn {
-  height: 32px !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important;
-  border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important;
-}
-html.pu-on .nitro-room-info .btn-grpup .btn.is-active { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; }
-html.pu-on .nitro-room-info .content-area .font-bold { font: 700 16px/1.25 UbuntuBold, Ubuntu, sans-serif !important; white-space: normal !important; }
-html.pu-on .nitro-room-info .content-area .small { font-size: 13px !important; }
-html.pu-on .nitro-room-info .text-tag { padding: 3px 8px !important; border-radius: 5px !important; background: #202020 !important; border: 1px solid rgba(255, 255, 255, .1) !important; color: #a6a6a6 !important; font-size: 12.5px !important; }
-html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important; }
-html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn { height: 40px !important; margin: 0 !important; font-size: 14px !important; border-radius: 6px !important; }
+html.pu-on .nitro-room-info .btn-grpup .btn { padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child { display: grid !important; grid-template-columns: 1fr 1fr; gap: var(--pu-gap) !important; }
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn { margin: 0 !important; }
 html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn:only-child,
 html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
-/* Profile: Peace's own card (colours, gradient, stickers) stays; only the window chrome follows the HUD */
-html.pu-dark .draggable-window > .nitro-card.user-profile { background: var(--profile-surface, #fefefe) !important; }
-html.pu-dark .user-profile .content-area { background: transparent !important; color: var(--profile-fg, #141414) !important; }
-html.pu-on .user-profile .profile-nav-bar { padding: 10px 12px !important; min-height: 0 !important; }
-html.pu-on .user-profile .profile-nav-actions .btn { width: 32px !important; height: 32px !important; }
-html.pu-dark .user-profile .profile-nav-bar { background: transparent !important; }
-html.pu-on .nitro-navigator .pu-owner.pu-lo { padding: 0; font-size: 12px; }
-/* Scrolling lists built on Bootstrap's .grid: the first row was 1fr and stretched (gap under "Peace Catalogue"). */
-html.pu-on .nitro-card .overflow-auto.grid { grid-template-rows: none !important; align-content: start !important; }
+/* ---- Chat history ---- */
+html.pu-on .nitro-chat-history-window .ch-search { padding: 10px var(--pu-pad) !important; }
+html.pu-on .nitro-chat-history-window .ch-results { padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion { margin: 0 0 6px !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header { min-height: var(--pu-ctl-lg) !important; margin: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-body { margin: 0 !important; }
 
-/* ---------------------------------------------------------------- v9: Change looks, full screen (idea B)
-   The avatar on a stage at the top, one sheet below it: the 6 category tabs, the item types and the items,
-   with colours as their own step. It covers the top bar and the tab bar (frame.js sets html.pu-looks and
-   hides the Peace UI bars). Nitro's columns are flattened (display: contents) so they can be reordered:
-   header, stage (the preview column), tabs, sheet (the items column). Stage parts are placed against the
-   card. frame.js keeps these in --lk-*: header height, stage height, avatar zoom, item grid zoom, palette. */
-html.pu-looks { --pu-bottom: 0px; }
-html.pu-looks #hud-more-voice:not(:empty) { visibility: hidden !important; pointer-events: none !important; }
-html.pu-on .draggable-window:has(> .nitro-avatar-editor) { top: 0 !important; bottom: 0 !important; height: auto !important; }
-html.pu-on .draggable-window > .nitro-avatar-editor {
-  height: 100% !important; min-height: 0 !important; max-height: none !important; border-radius: 0 !important; box-shadow: none !important;
-  border: 0 !important; background: #141414 !important;
+/* ---- Builders tool: full width, switches instead of tiny ticks ---- */
+html.pu-on .builders-tools { width: 100% !important; }
+html.pu-on .builders-tools .builders-tools-content { background: var(--pu-s0) !important; padding: var(--pu-pad) !important; gap: 10px !important; }
+html.pu-on .builders-tools .builders-tools-toggle-list { gap: 0 !important; padding: 0 var(--pu-pad) !important; }
+html.pu-on .builders-tools .builders-tools-check-row { grid-template-columns: 1fr auto !important; min-height: var(--pu-head) !important; }
+html.pu-on .builders-tools .builders-tools-check-row + .builders-tools-check-row { border-top: 1px solid var(--pu-line) !important; }
+html.pu-on .builders-tools .builders-tools-check-row > button { order: 2; }
+html.pu-on .builders-tools .builders-tools-field-row { grid-template-columns: auto 1fr 112px !important; gap: var(--pu-pad) !important; min-height: 56px !important; padding: 0 var(--pu-gap) 0 var(--pu-pad) !important; }
+html.pu-on .builders-tools input { width: 112px !important; font-weight: 700 !important; }
+html.pu-on .builders-tools .builders-tools-actions { gap: var(--pu-gap) !important; padding-top: 2px !important; border: 0 !important; }
+html.pu-on .builders-tools .builders-tools-actions .btn { min-height: var(--pu-ctl) !important; }
+html.pu-on .builders-tools .builders-tools-furni-count { padding: 0 !important; }
+
+/* ---- Rare values: search on its own row, readable cards and paging ---- */
+html.pu-on .nitro-rarevalues-window .nitro-card-header { padding: 0 !important; }
+html.pu-on .rv-bar { flex-wrap: wrap !important; gap: var(--pu-gap) !important; }
+html.pu-on .rv-bar-search { flex: 1 1 100% !important; }
+html.pu-on .rv-bar-input { flex: 1 1 auto !important; width: auto !important; }
+html.pu-on .rv-bar-select { flex: 1 1 0 !important; min-width: 0 !important; }
+
+/* ---- Mentions: same gutter, select like the other inputs, square trash button ---- */
+html.pu-on .nitro-mentions .content-area { padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .nitro-mentions .nitro-mention-search-type { width: 110px !important; flex: none !important; }
+html.pu-on .nitro-mentions .nitro-mention-search-type select { width: 100% !important; }
+html.pu-on .nitro-mentions .nitro-mention-search > .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; flex: none !important; }
+html.pu-on .nitro-mentions .nitro-mention-search > .btn svg { width: 15px !important; height: 15px !important; }
+
+/* ---- Room voice: Peace's own panel, under the top bar while it is open ---- */
+html.pu-on #hud-more-voice:not(:empty) {
+  visibility: visible !important; pointer-events: auto !important; display: block !important;
+  position: fixed !important; z-index: 460 !important; top: var(--pu-top) !important; left: var(--pu-gap) !important; right: var(--pu-gap) !important;
+  max-height: calc(100% - 120px) !important; overflow: auto !important; padding: 0 !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor > .nitro-card-header { order: 0; flex: none !important; min-height: 44px !important; padding: 0 !important; }
+html.pu-on #hud-more-voice .nitro-voice-tools-container,
+html.pu-on #hud-more-voice .nitro-voice-tools { width: 100% !important; max-width: none !important; margin: 0 !important; position: relative !important; inset: auto !important; transform: none !important; }
+html.pu-on #hud-more-voice .voice-tools-header { padding: var(--pu-gap) 52px var(--pu-gap) 10px !important; }
+html.pu-on #hud-more-voice .voice-tools-body { padding: var(--pu-gap) 10px 10px !important; }
+html.pu-on #hud-more-voice .voice-tools-toggle { position: absolute !important; z-index: 2; top: 6px !important; right: 6px !important; left: auto !important; }
+
+/* ---- Room music: Peace's own button and card under the wallet; hidden while a window is open ---- */
+html.pu-on .nitro-phone-corner { display: flex !important; position: fixed !important; z-index: 450 !important; top: var(--pu-top) !important; right: 10px !important; }
+html.pu-on .nitro-phone-corner .phone-corner-wallet,
+html.pu-on .nitro-phone-corner .phone-corner-purse { display: none !important; }
+html.pu-on .nitro-phone-corner .phone-corner-btn { width: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; }
+html.pu-on body:has(.draggable-window .nitro-card) .nitro-phone-corner,
+html.pu-on body:has(#hud-more-voice:not(:empty)) .nitro-phone-corner .phone-corner-card { display: none !important; }
+
+/* ---- Change looks, full screen (idea B) ----
+   The avatar on a stage at the top, one sheet below it: the 6 category tabs, the item types and the items, with
+   colours as their own step. Nitro's columns are flattened (display: contents) so they can be reordered: header,
+   stage (the preview column), tabs, sheet (the items column). Stage parts are placed against the card. frame.js
+   keeps these in --lk-*: header height, stage height, avatar zoom, item grid zoom, palette. */
+html.pu-on .draggable-window > .nitro-avatar-editor { background: var(--pu-s0) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor > .nitro-card-header { order: 0; flex: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .content-area,
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid { display: contents !important; }
-
-/* Stage: Peace's teal spotlight, the avatar on Peace's own podium, tools at the sides */
+/* stage */
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) {
   order: 1; flex: 0 0 var(--lk-st, 300px) !important; height: var(--lk-st, 300px) !important; width: 100% !important; min-height: 0 !important;
-  position: static !important; overflow: visible !important; padding: 0 !important; gap: 0 !important;
-  background: radial-gradient(60% 46% at 50% 0%, rgba(120, 225, 255, .2), transparent 70%), linear-gradient(#11394a, #0c2a37 45%, #08171f) !important;
+  position: static !important; overflow: visible !important; padding: 0 !important; gap: 0 !important; background: var(--pu-stage) !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) > .d-flex,
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) > .d-flex > .d-flex:has(> .figure-preview-container),
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) .d-flex:has(> .action-buttons) { display: contents !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container {
-  position: absolute !important; z-index: 1; top: var(--lk-hh, 44px) !important; left: 0 !important; right: 0 !important; bottom: auto !important;
+  position: absolute !important; z-index: 1; top: var(--lk-hh, 48px) !important; left: 0 !important; right: 0 !important; bottom: auto !important;
   width: auto !important; height: calc(var(--lk-st, 300px) - 12px) !important; margin: 0 !important; padding: 0 !important; zoom: 1 !important;
   background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important; touch-action: none;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container::before {
   content: '' !important; position: absolute; z-index: 0; left: 50%; top: 0; bottom: 30px; width: 290px; margin-left: -145px; pointer-events: none;
-  background: linear-gradient(rgba(150, 235, 255, .17), rgba(150, 235, 255, .03) 85%, transparent); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  background: var(--pu-stage-beam); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
   border: 0 !important; border-radius: 0 !important; box-shadow: none !important; transform: none !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container::after { content: none !important; display: none !important; }
@@ -553,72 +903,47 @@ html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .ava
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-shadow { zoom: var(--lk-fk, .75) !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-image { position: absolute !important; z-index: 4 !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 125px !important; width: 90px !important; height: 130px !important; margin: 0 auto !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-shadow { position: absolute !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 12px !important; margin: 0 auto !important; }
-/* Turn buttons beside the podium */
+/* turn buttons beside the podium */
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container {
   position: absolute !important; z-index: 5 !important; left: 50% !important; right: auto !important; top: auto !important;
   bottom: calc(12px + 58px * var(--lk-fk, .75)) !important; width: calc(140px * var(--lk-fk, .75) + 100px) !important; margin: 0 !important; padding: 0 !important;
   transform: translateX(-50%) !important; display: flex !important; justify-content: space-between !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon {
-  width: 40px !important; height: 40px !important; margin: 0 !important; display: grid !important; place-items: center !important; cursor: pointer;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon:active { background: var(--pu-hud-p) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon { width: 40px !important; height: 40px !important; margin: 0 !important; display: grid !important; place-items: center !important; cursor: pointer; }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon::before {
-  content: ''; width: 18px; height: 18px; background: #f2f2f2;
-  -webkit-mask: var(--lk-turn) center / contain no-repeat; mask: var(--lk-turn) center / contain no-repeat;
+  content: ''; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--pu-i-turn) center / contain no-repeat; mask: var(--pu-i-turn) center / contain no-repeat;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .arrow-right::before { transform: scaleX(-1); }
-html.pu-on .nitro-avatar-editor {
-  --lk-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
-  --lk-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
-}
 /* Save (top right) and Undo / Random / Clear under it */
 html.pu-on .draggable-window .nitro-avatar-editor .btn-success {
-  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 44px) + 10px) !important; right: 10px !important; left: auto !important;
+  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 48px) + 10px) !important; right: 10px !important; left: auto !important;
   width: auto !important; height: 38px !important; min-height: 0 !important; margin: 0 !important; padding: 0 14px !important;
-  display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap;
-  font: 700 14px/1 UbuntuBold, Ubuntu, sans-serif !important; color: #fff !important;
-  background: var(--pu-blue) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-bin) !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap; font-size: var(--pu-fs) !important; line-height: 1 !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .btn-success:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons {
-  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 44px) + 58px) !important; right: 10px !important; width: auto !important;
-  display: flex !important; flex-direction: column !important; gap: 8px !important; margin: 0 !important;
+  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 48px) + 58px) !important; right: 10px !important; width: auto !important;
+  display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; margin: 0 !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn {
-  flex: none !important; width: 40px !important; height: 40px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
-  display: grid !important; place-items: center !important; color: #f2f2f2 !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:active { background: var(--pu-hud-p) !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn svg { width: 16px !important; height: 16px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn { flex: none !important; width: 40px !important; height: 40px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn svg { width: var(--pu-ic) !important; height: var(--pu-ic) !important; }
 /* Reset (Nitro's redo arrow) reads as "undo my changes"; random before clear, so the one that wipes is last */
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"]) { order: 1; }
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"]) > svg { display: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"])::before {
-  content: ''; width: 18px; height: 18px; background: #f2f2f2; -webkit-mask: var(--lk-undo) center / contain no-repeat; mask: var(--lk-undo) center / contain no-repeat;
+  content: ''; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--pu-i-undo) center / contain no-repeat; mask: var(--pu-i-undo) center / contain no-repeat;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 640 512"]) { order: 2; }
 html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 448 512"]) { order: 3; }
-
-/* Layers: a rail on the left of the stage. Tap the selected layer again for move up / down / remove. */
+/* layers: a rail on the left of the stage; tap the selected layer again for move up / down / remove */
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel {
-  position: absolute !important; z-index: 6; top: calc(var(--lk-hh, 44px) + 8px) !important; left: 10px !important; width: 44px !important;
+  position: absolute !important; z-index: 6; top: calc(var(--lk-hh, 48px) + 8px) !important; left: 10px !important; width: 44px !important;
   display: flex !important; flex-direction: column !important; align-items: center !important; gap: 6px !important;
   margin: 0 !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel::before {
-  content: 'Layers'; height: 14px; font: 700 10px/14px Ubuntu, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(200, 240, 255, .72);
-}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel::before { content: 'Layers'; height: 14px; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex:not(.flex-column) { display: contents !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex:not(.flex-column) > .avatar-layer-main { display: none !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers {
-  flex: none !important; width: 42px !important; height: 42px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important;
-  display: grid !important; place-items: center !important; color: #f2f2f2 !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers:active { background: var(--pu-hud-p) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers { flex: none !important; width: 42px !important; height: 42px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers svg { width: 14px !important; height: 14px !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column {
   max-height: none !important; overflow: visible !important; display: flex !important; flex-direction: column !important;
@@ -626,82 +951,49 @@ html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.
 }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row {
   position: relative !important; flex: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; gap: 6px !important;
-  background: none !important; border: 0 !important; border-radius: 8px !important; box-shadow: none !important; cursor: pointer !important; counter-increment: pu-lyr;
+  background: none !important; border: 0 !important; box-shadow: none !important; cursor: pointer !important; counter-increment: pu-lyr;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .avatar-layer-main { flex: none !important; gap: 0 !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row .avatar-layer-grip,
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row .avatar-layer-labels { display: none !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb {
-  position: relative !important; width: 42px !important; height: 42px !important; overflow: visible !important; image-rendering: pixelated;
-  background-color: #c9cdd2 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55) !important;
-  font-size: 0 !important; color: transparent !important;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb { position: relative !important; width: 42px !important; height: 42px !important; overflow: visible !important; image-rendering: pixelated; font-size: 0 !important; color: transparent !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb > * { display: none !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb.is-empty::before {
-  content: ''; position: absolute; inset: 11px; border: 2px dashed #7d838a; border-radius: 4px;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after {
-  content: counter(pu-lyr); position: absolute; left: -6px; top: -6px; min-width: 17px; height: 17px; padding: 0 3px; border-radius: 4px;
-  background: #111; border: 1px solid #000; box-shadow: var(--pu-in); font: 700 10px/15px Ubuntu, sans-serif; text-align: center; color: #d0d0d0;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb { background-color: #d9eef7 !important; box-shadow: 0 0 0 2px #169ccc, inset 0 1px 0 rgba(255, 255, 255, .6) !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb::after { background: #169ccc; color: #fff; box-shadow: inset 0 1px 0 #47e3fc; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-layers { display: none !important; width: 36px !important; height: 36px !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] {
-  z-index: 2; margin: -4px !important; padding: 4px !important; background: rgba(12, 14, 16, .94) !important; border: 1px solid #000 !important;
-  box-shadow: var(--pu-in), 0 8px 20px rgba(0, 0, 0, .45) !important; animation: pu-fade .16s;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb.is-empty::before { content: ''; position: absolute; inset: 11px; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after { content: counter(pu-lyr); position: absolute; left: -6px; top: -6px; min-width: 17px; height: 17px; padding: 0 3px; text-align: center; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-layers { display: none !important; width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] { z-index: 2; margin: -4px !important; padding: 4px !important; animation: pu-fade .16s; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] > .btn-layers { display: grid !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-danger { background: linear-gradient(#cf3437 50%, #b52a2d 50%) !important; box-shadow: inset 0 1px 0 #ff7b7d !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column:has(> :nth-child(5)) { gap: 4px !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column:has(> :nth-child(5)) .avatar-layer-thumb { width: 34px !important; height: 34px !important; }
-
-/* Category tabs: the top of the sheet, six equal squares */
+/* category tabs: the top of the sheet, six equal squares */
 html.pu-on .draggable-window .nitro-avatar-editor > .nitro-card-tabs.avatar-editor-tabs {
   order: 2; position: relative !important; z-index: 3; flex: none !important; height: auto !important; min-height: 0 !important;
-  margin: -12px 0 0 !important; padding: 12px 12px 10px !important; overflow: visible !important;
-  background: #141414 !important; border: 0 !important; border-radius: 12px 12px 0 0 !important;
-  box-shadow: 0 -1px 0 rgba(255, 255, 255, .1), 0 -8px 18px rgba(0, 0, 0, .35) !important;
+  margin: -12px 0 0 !important; padding: var(--pu-pad) var(--pu-pad) 10px !important; overflow: visible !important;
+  border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-lift) !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-tabs { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 6px !important; width: 100% !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link {
-  width: auto !important; height: 44px !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; border-image: none !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link.active,
-html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link:has(.tab-wardrobe) { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; }
-html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link.active:not(:has(.tab-wardrobe)) { background: var(--pu-hud) !important; box-shadow: var(--pu-in) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link { width: auto !important; height: var(--pu-ctl-lg) !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link > div { display: grid !important; place-items: center !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link:active { transform: translateY(1px); }
-
-/* Sheet: item types and the Colour button on one row, then the items */
+/* sheet: item types and the Colour button on one row, then the items */
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.choose-clothing) {
   order: 3; flex: 1 1 0 !important; min-height: 0 !important; width: 100% !important; height: auto !important; position: static !important;
-  display: flex !important; flex-direction: column !important; padding: 0 12px 10px !important; margin: 0 !important; gap: 0 !important; overflow: hidden !important; background: #141414 !important;
+  display: flex !important; flex-direction: column !important; padding: 0 var(--pu-pad) 10px !important; margin: 0 !important; gap: 0 !important; overflow: hidden !important; background: var(--pu-s0) !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.choose-clothing) > .grid { display: flex !important; flex-direction: column !important; flex: 1 1 0 !important; min-height: 0 !important; height: auto !important; gap: 0 !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing {
-  display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: 40px minmax(0, 1fr) !important; gap: 10px 8px !important;
+  display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: 40px minmax(0, 1fr) !important; gap: 10px var(--pu-gap) !important;
   flex: 1 1 0 !important; min-height: 0 !important; height: auto !important; overflow: visible !important; position: static !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item) {
-  grid-row: 1; grid-column: 1; width: auto !important; height: 40px !important; min-width: 0 !important; display: flex !important; gap: 3px !important; padding: 3px !important;
-  background: linear-gradient(#1d1d1d 50%, #171717 50%) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item) { grid-row: 1; grid-column: 1; width: auto !important; height: 40px !important; min-width: 0 !important; display: flex !important; gap: 3px !important; padding: 3px !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing:not(:has(.pu-lkbar)) > .d-flex:has(> .category-item),
 html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing:has(.pu-lkbar[data-off]) > .d-flex:has(> .category-item) { grid-column: 1 / -1; }
-html.pu-on .draggable-window .nitro-avatar-editor .category-item {
-  flex: 1 1 0 !important; min-width: 0 !important; height: 100% !important; padding: 0 4px !important; gap: 6px !important; margin: 0 !important;
-  background: transparent !important; border: 0 !important; border-radius: 4px !important; box-shadow: none !important; overflow: hidden;
-  color: #a6a6a6 !important; font: 500 13px/1 Ubuntu, sans-serif !important; letter-spacing: -.01em; white-space: nowrap;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .category-item * { color: inherit !important; font: inherit !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(4)) > .category-item { padding: 0 2px !important; font-size: 12px !important; letter-spacing: -.02em; }
+html.pu-on .draggable-window .nitro-avatar-editor .category-item { flex: 1 1 0 !important; min-width: 0 !important; height: 100% !important; padding: 0 4px !important; gap: 6px !important; margin: 0 !important; overflow: hidden; letter-spacing: -.01em; white-space: nowrap; }
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(4)) > .category-item { padding: 0 2px !important; font-size: calc(var(--pu-fs-sm) - .5px) !important; letter-spacing: -.02em; }
 @media (max-width: 380px) {
-  html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(5)) > .category-item { font-size: 11px !important; letter-spacing: -.03em; }
-  html.pu-on .nitro-avatar-editor .pu-lkcol { padding: 0 8px !important; }
+  html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(5)) > .category-item { font-size: var(--pu-fs-xs) !important; letter-spacing: -.03em; }
+  html.pu-on .nitro-avatar-editor .pu-lkcol { padding: 0 var(--pu-gap) !important; }
 }
-html.pu-on .draggable-window .nitro-avatar-editor .category-item:has(> .selected) { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; font-weight: 700 !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .category-item > .nitro-avatar-editor-spritesheet:is(.male-icon, .female-icon, .hr-icon, .ha-icon, .he-icon, .ea-icon, .fa-icon, .ch-icon, .cp-icon, .cc-icon, .ca-icon, .lg-icon, .sh-icon, .wa-icon, .pt-icon, .mc-icon) { display: none !important; }
 html.pu-on .nitro-avatar-editor .category-item:has(> .hr-icon)::after { content: 'Hair'; }
 html.pu-on .nitro-avatar-editor .category-item:has(> .ha-icon)::after { content: 'Hats'; }
@@ -718,28 +1010,20 @@ html.pu-on .nitro-avatar-editor .category-item:has(> .wa-icon)::after { content:
 html.pu-on .nitro-avatar-editor .category-item:has(> .pt-icon)::after { content: 'Pets'; }
 html.pu-on .nitro-avatar-editor .category-item:has(> .mc-icon)::after { content: 'Misc'; }
 html.pu-on .nitro-avatar-editor .category-item::after { overflow: hidden; text-overflow: ellipsis; }
-
 /* Colour button (frame.js adds it) and, in the colour step, the bar with Back, the title and Colour 1 / 2 */
-html.pu-on .nitro-avatar-editor .pu-lkbar { grid-row: 1; grid-column: 2; display: flex; align-items: center; gap: 8px; min-width: 0; height: 40px; }
+html.pu-on .nitro-avatar-editor .pu-lkbar { grid-row: 1; grid-column: 2; display: flex; align-items: center; gap: var(--pu-gap); min-width: 0; height: 40px; }
 html.pu-on .nitro-avatar-editor .pu-lkbar[data-off] { display: none; }
-html.pu-on .nitro-avatar-editor .pu-lkbar button {
-  flex: none; height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 9px; margin: 0; cursor: pointer;
-  font: 600 13.5px/1 Ubuntu, sans-serif; color: #f2f2f2; background: var(--pu-hud); border: 1px solid #000; border-radius: 6px; box-shadow: var(--pu-in);
-  -webkit-tap-highlight-color: transparent;
-}
-html.pu-on .nitro-avatar-editor .pu-lkbar button:active { background: var(--pu-hud-p); }
-html.pu-on .nitro-avatar-editor .pu-lkbar svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
-html.pu-on .nitro-avatar-editor .pu-lkbar .sw { display: block; width: 22px; height: 22px; border-radius: 4px; border: 1px solid #000; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); background: #555; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkbar button { flex: none; height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 9px; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html.pu-on .nitro-avatar-editor .pu-lkbar svg { width: var(--pu-ic); height: var(--pu-ic); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkbar .sw { display: block; width: 22px; height: 22px; flex: none; }
 html.pu-on .nitro-avatar-editor .pu-lkcol .sw + .sw { margin-left: -13px; }
 html.pu-on .nitro-avatar-editor .pu-lkcol { min-width: 44px; padding: 0 10px !important; }
-html.pu-on .nitro-avatar-editor .pu-lkcol .sw { width: 22px; height: 22px; }
 html.pu-on .nitro-avatar-editor .pu-lkback { width: 40px; padding: 0 !important; }
-html.pu-on .nitro-avatar-editor .pu-lkt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #f2f2f2; }
-html.pu-on .nitro-avatar-editor .pu-lkt b { font: 700 15px/1.1 UbuntuBold, Ubuntu, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html.pu-on .nitro-avatar-editor .pu-lkt small { font: 400 12px/1.2 Ubuntu, sans-serif; color: #a6a6a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-html.pu-on .nitro-avatar-editor .pu-lkslots { display: flex; gap: 3px; padding: 3px; height: 40px; flex: none; background: linear-gradient(#1d1d1d 50%, #171717 50%); border: 1px solid #000; border-radius: 6px; box-shadow: var(--pu-in); }
-html.pu-on .nitro-avatar-editor .pu-lkslots button { height: 32px; padding: 0 8px 0 5px; gap: 6px; border: 0; border-radius: 4px; background: transparent; box-shadow: none; color: #a6a6a6; font-weight: 500; }
-html.pu-on .nitro-avatar-editor .pu-lkslots button.on { background: var(--pu-blue); box-shadow: var(--pu-bin); color: #fff; font-weight: 700; }
+html.pu-on .nitro-avatar-editor .pu-lkt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+html.pu-on .nitro-avatar-editor .pu-lkt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-avatar-editor .pu-lkt small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-avatar-editor .pu-lkslots { display: flex; gap: 3px; padding: 3px; height: 40px; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkslots button { height: 32px; padding: 0 var(--pu-gap) 0 5px; gap: 6px; }
 html.pu-on .nitro-avatar-editor .pu-lkslots .sw { width: 20px; height: 20px; }
 html.pu-on .nitro-avatar-editor .pu-lkbar .sw[hidden],
 html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkback,
@@ -747,42 +1031,27 @@ html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkt,
 html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkslots,
 html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkcol,
 html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar:not([data-n="2"]) > .pu-lkslots { display: none; }
-html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar { grid-column: 1 / -1; animation: pu-in-r .22s cubic-bezier(.2, .8, .2, 1); }
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar { grid-column: 1 / -1; animation: pu-in-r .22s var(--pu-ease); }
 html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkback,
 html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkt,
 html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar[data-n="2"] > .pu-lkslots { display: flex; }
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .choose-clothing > .d-flex:has(> .category-item) { display: none !important; }
-
-/* Items: Nitro's list keeps 4 per row in 50px rows, so the list is zoomed to make square tiles that fill the width */
-html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex.overflow-hidden {
-  grid-row: 2; grid-column: 1 / -1; display: flex !important; flex-direction: column !important; gap: 0 !important; min-height: 0 !important; height: auto !important; width: auto !important;
-}
+/* items: Nitro's list keeps 4 per row in 50px rows, so the list is zoomed to make square tiles that fill the width */
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex.overflow-hidden { grid-row: 2; grid-column: 1 / -1; display: flex !important; flex-direction: column !important; gap: 0 !important; min-height: 0 !important; height: auto !important; width: auto !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-parts-container {
   flex: 1 1 0 !important; min-height: 0 !important; width: auto !important; max-width: none !important; height: auto !important; padding: 0 !important;
-  margin: 0 calc(-2px * var(--lk-z, 1.6)) !important; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
-  animation: pu-fade .2s;
+  margin: 0 calc(-2px * var(--lk-z, 1.6)) !important; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: pu-fade .2s;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .clothing-container {
-  zoom: var(--lk-z, 1.6) !important; padding: 0 !important; height: 100% !important; overflow-x: hidden !important; overflow-y: auto !important;
-  overscroll-behavior: contain; scrollbar-width: none;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container { zoom: var(--lk-z, 1.6) !important; padding: 0 !important; height: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: none; }
 html.pu-on .draggable-window .nitro-avatar-editor .clothing-container::-webkit-scrollbar { display: none; }
-html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts {
-  width: 46px !important; height: 46px !important; margin: 0 !important; overflow: visible !important; image-rendering: pixelated;
-  background-color: #c9cdd2 !important; border: 0 !important; border-radius: 5px !important;
-  box-shadow: 0 0 0 calc(1px / var(--lk-z, 1.6)) #000, inset 0 calc(1px / var(--lk-z, 1.6)) 0 rgba(255, 255, 255, .6) !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts.part-selected {
-  background-color: #d9eef7 !important; box-shadow: 0 0 0 calc(2px / var(--lk-z, 1.6)) #169ccc, 0 0 0 calc(3px / var(--lk-z, 1.6)) #000 !important;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts { width: 46px !important; height: 46px !important; margin: 0 !important; overflow: visible !important; image-rendering: pixelated; }
 html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts:active { transform: scale(.95); }
-
-/* Colour step: the palette takes the items' place, sized to whole rows */
+/* colour step: the palette takes the items' place, sized to whole rows */
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-color-palette-container { display: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-parts-container { display: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-color-palette-container {
   display: flex !important; flex-direction: column !important; flex: 1 1 0 !important; min-height: 0 !important; width: auto !important; max-width: none !important; height: auto !important;
-  margin: 0 !important; padding: 0 !important; gap: 0 !important; background: none !important; border: 0 !important; animation: pu-in-r .22s cubic-bezier(.2, .8, .2, 1);
+  margin: 0 !important; padding: 0 !important; gap: 0 !important; background: none !important; border: 0 !important; animation: pu-in-r .22s var(--pu-ease);
 }
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-color-palette-container .insidething { display: contents !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-palette-set-view {
@@ -794,37 +1063,30 @@ html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-palette-set-vie
 html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-palette-set-view::-webkit-scrollbar { display: none; }
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-slot="1"] [data-pu-pal="2"],
 html.pu-on .draggable-window .nitro-avatar-editor[data-pu-slot="2"] [data-pu-pal="1"] { display: none !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame {
-  width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0 !important; scroll-snap-align: start; overflow: visible !important;
-  border: 1px solid #000 !important; border-image: none !important; border-radius: 5px !important; background-image: none !important; transition: transform .08s !important;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 -3px 0 rgba(0, 0, 0, .14) !important;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame { width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0 !important; scroll-snap-align: start; overflow: visible !important; transition: transform .08s !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame:active { transform: scale(.92); }
-html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active { z-index: 1; box-shadow: 0 0 0 2px #141414, 0 0 0 4px #fff !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active { z-index: 1; }
 html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame::before { content: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active::after {
-  content: '' !important; position: absolute; left: 50%; top: 46%; width: 30%; height: 15%; border: 0; background: none !important;
-  border-left: 2.5px solid #fff; border-bottom: 2.5px solid #fff; transform: translate(-50%, -50%) rotate(-45deg); filter: drop-shadow(0 0 1px #000);
+  content: '' !important; position: absolute; left: 50%; top: 46%; width: 30%; height: 15%; border-top: 0; border-right: 0; background: none !important; transform: translate(-50%, -50%) rotate(-45deg);
 }
-
 /* My Wardrobe (the hanger tab): Nitro shows it beside the preview; here it fills the sheet */
 html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel {
-  position: absolute !important; z-index: 8; top: calc(var(--lk-hh, 44px) + var(--lk-st, 300px) + 54px) !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-  width: auto !important; height: auto !important; margin: 0 !important; padding: 0 12px 12px !important; overflow-y: auto !important;
-  background: #141414 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: pu-fade .2s;
+  position: absolute !important; z-index: 8; top: calc(var(--lk-hh, 48px) + var(--lk-st, 300px) + 54px) !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: auto !important; height: auto !important; margin: 0 !important; padding: 0 var(--pu-pad) var(--pu-pad) !important; overflow-y: auto !important;
+  background: var(--pu-s0) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: pu-fade .2s;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex { height: auto !important; align-items: stretch !important; gap: 8px !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child { height: 20px; gap: 6px !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfits-title { font: 700 12px/20px Ubuntu, sans-serif !important; letter-spacing: .06em; text-transform: uppercase; color: #8a8a8a !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex { height: auto !important; align-items: stretch !important; gap: var(--pu-gap) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child { height: 20px; gap: 6px !important; align-self: stretch !important; justify-content: flex-start !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container { height: auto !important; display: block !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .nitro-avatar-editor-wardrobe-container {
-  display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 8px !important; width: 100% !important; height: auto !important;
+  display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: var(--pu-gap) !important; width: 100% !important; height: auto !important;
   overflow: visible !important; padding: 0 !important; background: none !important; border: 0 !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .nitro-avatar-editor-wardrobe-container > * {
   position: relative !important; display: flex !important; flex-direction: column-reverse !important; align-items: stretch !important; justify-content: flex-start !important;
-  gap: 0 !important; aspect-ratio: .62; min-width: 0; overflow: hidden !important; border: 1px solid #000 !important; border-radius: 6px !important;
-  background: linear-gradient(#1c3a48, #0e2029) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09) !important;
+  gap: 0 !important; aspect-ratio: .62; min-width: 0; overflow: hidden !important;
+  background: var(--pu-stage-card) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container {
   flex: 1 1 auto !important; width: auto !important; height: auto !important; min-height: 0 !important; position: relative !important;
@@ -834,284 +1096,37 @@ html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avata
   position: absolute !important; left: 50% !important; right: auto !important; top: auto !important; bottom: 4px !important; width: 90px !important; height: 130px !important;
   margin: 0 0 0 -45px !important; transform: none !important; zoom: .7; image-rendering: pixelated !important; background-position: center -8px !important;
 }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container:empty::before {
-  content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 2px dashed rgba(255, 255, 255, .2); border-radius: 4px;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container {
-  position: static !important; flex: none !important; width: 100% !important; flex-direction: row !important; gap: 1px !important; background: #000;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > * {
-  flex: 1 1 0 !important; height: 28px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important;
-  color: #f2f2f2 !important; background: var(--pu-hud) !important; border: 0 !important; border-radius: 0 !important; box-shadow: var(--pu-in) !important; font-size: 12px !important;
-}
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > :active { background: var(--pu-hud-p) !important; }
-/* Slot buttons: Nitro's arrows become Save (floppy, saves the current look into the slot) and Wear (shirt, blue,
-   loads the saved look; only on slots that have one). An empty slot's lone Save button also gets its label. */
-html.pu-on .nitro-avatar-editor {
-  --lk-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
-  --lk-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
-}
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { display: flex !important; align-items: center; justify-content: center; gap: 4px; font: 700 11px/1 Ubuntu, sans-serif !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container:empty::before { content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container { position: static !important; flex: none !important; width: 100% !important; flex-direction: row !important; gap: 1px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > * { flex: 1 1 0 !important; height: 28px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+/* slot buttons: Nitro's arrows become Save (floppy, saves the current look into the slot) and Wear (shirt, blue, loads the
+   saved look; only on slots that have one). An empty slot's lone Save button also gets its label. */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { display: flex !important; align-items: center; justify-content: center; gap: 4px; }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container svg { display: none !important; }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button::before {
-  content: ''; flex: none; width: 15px; height: 15px; background: currentColor;
-  -webkit-mask: var(--lk-save) center / contain no-repeat; mask: var(--lk-save) center / contain no-repeat;
+  content: ''; flex: none; width: 15px; height: 15px; background: currentColor; -webkit-mask: var(--pu-i-save) center / contain no-repeat; mask: var(--pu-i-save) center / contain no-repeat;
 }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:only-child::after { content: 'Save'; }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
-html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button::before { -webkit-mask-image: var(--lk-wear); mask-image: var(--lk-wear); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button::before { -webkit-mask-image: var(--pu-i-wear); mask-image: var(--pu-i-wear); }
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:disabled { opacity: .4; }
-/* Key for the two icons, on the right of the "My Wardrobe" title */
-html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child { align-self: stretch !important; justify-content: flex-start !important; }
+/* key for the two icons, on the right of the "My Wardrobe" title */
 html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
-html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after {
-  order: 9; padding-left: 17px; font: 500 11px/20px Ubuntu, sans-serif; color: #8a8a8a; white-space: nowrap;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E") left center / 13px no-repeat;
-}
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { order: 9; padding-left: 17px; white-space: nowrap; background: var(--pu-bg-save) left center / 13px no-repeat; }
 html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before { content: 'Save current look'; margin-left: auto; }
-html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { content: 'Wear'; margin-left: 6px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E"); }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { content: 'Wear'; margin-left: 6px; background-image: var(--pu-bg-wear); }
+
+
+/* ================================================================ 5. MOTION */
+@keyframes pu-up { from { transform: translateY(28px); opacity: 0; } }
+@keyframes pu-in-r { from { transform: translateX(36px); opacity: 0; } }
+@keyframes pu-in-l { from { transform: translateX(-36px); opacity: 0; } }
+@keyframes pu-fade { from { opacity: 0; } }
+html.pu-on .draggable-window > .nitro-card { animation: pu-up .24s var(--pu-ease); }
+html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { animation: pu-in-r .24s var(--pu-ease); }
+html.pu-on .nitro-catalog:not(.pu-page) .catalog-left { animation: pu-in-l .24s var(--pu-ease); }
+html.pu-on .popover:has(.room-info) { animation: pu-up .24s var(--pu-ease); }
+html.pu-on #hud-more-voice:not(:empty), html.pu-on .nitro-phone-corner .phone-corner-card { animation: pu-fade .18s; }
 @media (prefers-reduced-motion: reduce) {
+  html.pu-on .draggable-window > .nitro-card, html.pu-on .nitro-catalog .catalog-left, html.pu-on .nitro-catalog .g-col-8 { animation: none !important; }
   html.pu-on .nitro-avatar-editor *, html.pu-on .nitro-avatar-editor *::before, html.pu-on .nitro-avatar-editor *::after { animation: none !important; transition: none !important; }
 }
-
-/* ---------------------------------------------------------------- v12: polish round 2 */
-/* Standard buttons in every window: blue two-tone for the main action, red two-tone for delete/report,
-   dark two-tone for the rest. Same height rules as the chips (6px corners, black edge, light top line). */
-html.pu-on .draggable-window .btn-primary:not(.btn-danger), html.pu-on .draggable-window .btn-success,
-html.pu-on .nitro-catalog .purchase-buttons .btn-success {
-  background: var(--pu-blue) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
-  box-shadow: var(--pu-bin) !important; font-family: UbuntuBold, Ubuntu, sans-serif !important; font-weight: 700 !important; text-shadow: none !important;
-}
-html.pu-on .draggable-window .btn-danger:not(.profile-nav-close) {
-  background: linear-gradient(#e0443f 50%, #c22f2b 50%) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
-  box-shadow: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14) !important; font-family: UbuntuBold, Ubuntu, sans-serif !important; font-weight: 700 !important; text-shadow: none !important;
-}
-html.pu-on .draggable-window .btn-secondary, html.pu-on .draggable-window .btn-light, html.pu-on .draggable-window .btn-dark,
-html.pu-on .draggable-window .btn-outline-secondary, html.pu-on .nitro-catalog .purchase-buttons .btn-primary {
-  background: var(--pu-hud) !important; color: #f2f2f2 !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; font-weight: 400 !important; text-shadow: none !important;
-}
-html.pu-on .draggable-window .btn-primary:not(.btn-danger):active, html.pu-on .draggable-window .btn-success:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
-html.pu-on .draggable-window .btn-danger:not(.profile-nav-close):active { background: linear-gradient(#c22f2b 50%, #a92724 50%) !important; }
-html.pu-on .draggable-window .btn-secondary:active, html.pu-on .nitro-catalog .purchase-buttons .btn-primary:active { background: var(--pu-hud-p) !important; }
-/* Inventory: the trash button next to the search is a square like the inputs */
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger { height: 38px !important; width: 38px !important; flex: none !important; padding: 0 !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger svg { width: 16px; height: 16px; }
-
-/* Rooms grid: a visible edge round the whole card, picture included */
-html.pu-on .nitro-navigator .nav-thumbnail { border-color: #3a3a3a !important; box-shadow: none !important; overflow: hidden !important; }
-html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { border-bottom: 1px solid #3a3a3a !important; border-radius: 0 !important; }
-
-/* Rooms list: My World rows get the same picture + people badge on the left as Public (frame.js adds .pu-thumb) */
-html.pu-on .nitro-navigator .navigator-item { gap: 10px !important; }
-html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !important; flex: none !important; background: #0d0d0d center / cover no-repeat; overflow: hidden !important; }
-html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; color: #f2f2f2; }
-html.pu-on .nitro-navigator .pu-owner.pu-lo > span { color: #a6a6a6; }
-html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
-html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) > .flex-column:not(.room-thumbnail) .badge { display: none !important; }
-
-/* Room details from the green "i": picture on the left; name, owner, people and max users on the right;
-   a close button top right. The owner repeated under the picture is hidden, the group only shows when it has a name. */
-html.pu-on .popover .room-info {
-  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; column-gap: 12px; row-gap: 6px; align-items: center; align-content: start;
-  padding: 12px !important; position: static !important;
-}
-html.pu-on .popover .room-info > .room-info-bg,
-html.pu-on .popover .room-info > .room-info-bg > .d-flex.flex-column:not(.room-thumbnail),
-html.pu-on .popover .room-info > .d-flex.flex-column,
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child { display: contents !important; }
-html.pu-on .popover .room-info .room-info-bg > :first-child { grid-column: 1; grid-row: 1 / span 5; align-self: start; margin: 0 !important; }
-html.pu-on .popover .room-info .room-thumbnail { display: block !important; width: 88px !important; height: 88px !important; margin: 0 !important; }
-html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2:has(.d-flex > .font-italic:empty) { display: none !important; }
-html.pu-on .popover .room-info .room-info-bg .font-bold { grid-column: 2; padding-right: 40px; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font: 700 15px/1.3 UbuntuBold, Ubuntu, sans-serif !important; }
-html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2 { grid-column: 2; gap: 6px !important; align-items: center; font-size: 13px; min-width: 0; }
-html.pu-on .popover .room-info .font-italic { font-style: normal !important; }
-html.pu-on .popover .room-info .room-info-bg .flex-grow-1:empty { display: none !important; }
-html.pu-on .popover .room-info .badge { position: static !important; grid-column: 2; justify-self: start; margin: 0 !important; padding: 3px 7px !important; font-size: 12px !important; border-radius: 5px !important; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:first-child { display: none !important; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child { grid-column: 2; width: auto !important; justify-content: flex-start !important; font-size: 13px; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child:has(> .font-bold:empty) { display: none !important; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { grid-column: 2; gap: 4px !important; font-size: 13px; color: #a6a6a6; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold { font: 400 13px/1.3 Ubuntu, sans-serif !important; color: #a6a6a6 !important; }
-html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child > :last-child { color: #f2f2f2; }
-html.pu-on .popover .pu-x {
-  position: absolute; z-index: 2; top: 10px; right: 10px; width: 32px; height: 32px; display: grid; place-items: center; cursor: pointer;
-  border-radius: 6px; background: var(--pu-hud); border: 1px solid #000; box-shadow: var(--pu-in); color: #f2f2f2;
-}
-html.pu-on .popover .pu-x:active { background: var(--pu-hud-p); }
-
-/* Create room: full screen like the other tabs, the form on one column, the layouts in a grid,
-   Create and Cancel fixed at the bottom */
-html.pu-on .draggable-window:has(> .nitro-room-creator) { top: 52px !important; }
-html.pu-on .draggable-window > .nitro-room-creator { height: 100% !important; max-height: none !important; width: 100% !important; max-width: none !important; border-radius: 0 !important; box-shadow: none !important; }
-html.pu-on .nitro-room-creator .nitro-card-header { min-height: 44px !important; padding: 0 !important; }
-html.pu-on .nitro-room-creator .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; padding: 10px 12px 0 !important; overflow: auto !important; }
-html.pu-on .nitro-room-creator .content-area > div:has(> .grid) { overflow: visible !important; flex: none !important; }
-html.pu-on .nitro-room-creator .content-area > div > .grid { display: flex !important; flex-direction: column !important; gap: 12px !important; height: auto !important; }
-html.pu-on .nitro-room-creator .content-area > div > .grid > * { width: 100% !important; max-width: none !important; flex: none !important; height: auto !important; overflow: visible !important; }
-html.pu-on .nitro-room-creator .g-col-5 { gap: 8px !important; display: flex !important; flex-direction: column !important; }
-html.pu-on .nitro-room-creator .g-col-5 label, html.pu-on .nitro-room-creator .g-col-5 .text-black, html.pu-on .nitro-room-creator .g-col-5 .font-bold { font-size: 13px !important; }
-html.pu-on .nitro-room-creator .form-control, html.pu-on .nitro-room-creator .form-select { height: 40px !important; font-size: 14px !important; border-radius: 6px !important; }
-html.pu-on .nitro-room-creator textarea.form-control { height: 72px !important; min-height: 72px !important; }
-html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child {
-  order: 99; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important;
-  padding: 10px 12px; background: #161616; border-top: 1px solid #000; box-shadow: 0 -1px 0 rgba(255, 255, 255, .06);
-}
-html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn { height: 44px !important; margin: 0 !important; font-size: 15px !important; width: 100% !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-html.pu-on .nitro-room-creator .g-col-5 input, html.pu-on .nitro-room-creator .g-col-5 textarea { height: 40px !important; padding: 0 12px !important; font: 14px Ubuntu, sans-serif !important; border-radius: 6px !important; }
-html.pu-on .nitro-room-creator .g-col-5 textarea { height: 72px !important; padding: 8px 12px !important; }
-html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger { order: -1; background: var(--pu-hud) !important; box-shadow: var(--pu-in) !important; font-family: Ubuntu, sans-serif !important; font-weight: 400 !important; }
-html.pu-on .nitro-room-creator .g-col-7 { padding-bottom: 76px !important; }
-html.pu-on .nitro-room-creator .room-creator-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 8px !important; height: auto !important; overflow: visible !important; }
-html.pu-on .nitro-room-creator .room-creator-grid-item {
-  width: auto !important; height: auto !important; min-height: 96px; margin: 0 !important; padding: 6px !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important;
-  background: #1c1c1c !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; color: #a6a6a6 !important; font-size: 12px !important;
-}
-html.pu-on .nitro-room-creator .room-creator-grid-item img { max-width: 100%; image-rendering: pixelated; }
-html.pu-on .nitro-room-creator .room-creator-grid-item.active { border-color: #000 !important; background: #1d3340 !important; box-shadow: inset 0 0 0 2px #169ccc !important; color: #fff !important; }
-
-/* Shop: category rows follow the chips (two-tone, light top line, 6px), the open one blue */
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container > .grid { gap: 4px !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item {
-  border-radius: 6px !important; background: var(--pu-hud) !important; border: 1px solid #000 !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important;
-}
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item.active { background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; }
-html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item:active { background: var(--pu-hud-p) !important; }
-
-/* Shop: quantity and the buy buttons in one panel with room to breathe */
-html.pu-on .nitro-catalog .responsive-column-kk-height { gap: 0 !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { margin-bottom: 10px !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) {
-  flex: none !important; padding: 10px 10px 0 !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-bottom: 0 !important;
-  border-radius: 6px 6px 0 0 !important; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08) !important;
-}
-html.pu-on .nitro-catalog .quanity-container { width: 100% !important; height: auto !important; min-height: 38px !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; }
-html.pu-on .nitro-catalog .quanity-container .text-muted { font-size: 14px !important; color: #a6a6a6 !important; }
-html.pu-on .nitro-catalog .quantity-input { width: 88px !important; height: 38px !important; font-size: 15px !important; }
-html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons {
-  padding: 10px !important; background: #1c1c1c !important; border: 1px solid #000 !important; border-top: 0 !important; border-radius: 0 0 6px 6px !important;
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08) !important;
-}
-html.pu-on .nitro-catalog .purchase-buttons .btn { height: 44px !important; }
-
-/* Profile: close and edit buttons the same height as the Profile / Album / Rooms / Other chips */
-html.pu-on .user-profile .profile-nav-close, html.pu-on .user-profile .profile-nav-edit,
-html.pu-on .user-profile .profile-nav-actions .btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
-html.pu-on .user-profile .profile-nav-actions { align-self: center !important; gap: 6px !important; margin: 0 !important; }
-html.pu-on .user-profile .profile-nav-bar > .nav-tabs { margin: 0 !important; }
-
-/* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
-html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }
-
-/* ---------------------------------------------------------------- v13: polish round 3 */
-/* Scroll edge fade: registered here (document) so the Peace UI shadow root can use them too */
-@property --pu-ft { syntax: '<length>'; inherits: false; initial-value: 0px; }
-@property --pu-fb { syntax: '<length>'; inherits: false; initial-value: 0px; }
-@keyframes pu-edge { 0% { --pu-ft: 0px; --pu-fb: 22px; } 6% { --pu-ft: 22px; --pu-fb: 22px; } 94% { --pu-ft: 22px; --pu-fb: 22px; } 100% { --pu-ft: 22px; --pu-fb: 0px; } }
-/* Lists fade at the top/bottom edge only while there is more to scroll that way (no effect when it all fits) */
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .overflow-auto,
-html.pu-on .nitro-inventory .g-col-7 > div,
-html.pu-on .nitro-room-creator .content-area {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--pu-ft), #000 calc(100% - var(--pu-fb)), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--pu-ft), #000 calc(100% - var(--pu-fb)), transparent 100%);
-  animation: pu-edge linear both; animation-timeline: scroll(self);
-}
-
-/* One small corner (6px) on every button, chip, input and box in the windows */
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(.btn, .form-control, .form-select, input, select, textarea, .nav-link, .layout-grid-item) { border-radius: 6px !important; }
-
-/* Inputs: the Friends search look (deep inset field, black edge), one height with the chips (36px) */
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"]) {
-  height: 36px !important; min-height: 36px !important; padding: 0 12px !important;
-  background-color: #0d0d0d !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important;
-  color: #f2f2f2 !important; font: 400 14px/1 Ubuntu, sans-serif !important; outline: 0 !important;
-}
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) textarea.form-control {
-  background-color: #0d0d0d !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important;
-  color: #f2f2f2 !important; font: 400 14px/1.35 Ubuntu, sans-serif !important;
-}
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, textarea)::placeholder { color: #6b6b6b !important; font-family: Ubuntu, sans-serif !important; font-style: normal !important; opacity: 1 !important; }
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, select, textarea):focus { border-color: #169ccc !important; }
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) select.form-select { padding-right: 30px !important; background-position: right 10px center !important; }
-/* Search boxes get the Friends magnifier on the left; the Shop pencil is gone (it searches as you type) */
-html.pu-on .draggable-window .nitro-catalog .catalog-left input.form-control,
-html.pu-on .draggable-window > .nitro-card.nitro-navigator input.form-control,
-html.pu-on .draggable-window .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input {
-  padding-left: 34px !important; background-repeat: no-repeat !important; background-position: 11px center !important; background-size: 16px 16px !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7.5'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E") !important;
-}
-html.pu-on .nitro-catalog .catalog-search-button, html.pu-on .nitro-navigator .navigator-search-button { display: none !important; }
-html.pu-on .nitro-catalog .catalog-clear-button { top: 50% !important; transform: translateY(-50%) !important; }
-html.pu-on .nitro-catalog .quantity-input { height: 36px !important; text-align: center !important; padding: 0 8px !important; }
-html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn-danger { height: 36px !important; width: 36px !important; }
-
-/* Chips: one height (36px) */
-html.pu-on .draggable-window .nitro-card-tabs .nav-link { height: 36px !important; }
-html.pu-on .user-profile .profile-nav-close, html.pu-on .user-profile .profile-nav-edit,
-html.pu-on .user-profile .profile-nav-actions .btn { width: 36px !important; height: 36px !important; min-width: 36px !important; }
-/* Profile: edit (pencil) blue, close (X) red, same corner as the chips */
-html.pu-on .user-profile .profile-nav-edit {
-  background: var(--pu-blue) !important; box-shadow: var(--pu-bin) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
-}
-html.pu-on .user-profile .profile-nav-close {
-  background: linear-gradient(#e0443f 50%, #c22f2b 50%) !important; box-shadow: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14) !important; color: #fff !important; border: 1px solid #000 !important; border-radius: 6px !important;
-}
-html.pu-on .user-profile .profile-nav-edit:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
-html.pu-on .user-profile .profile-nav-close:active { background: linear-gradient(#c22f2b 50%, #a92724 50%) !important; }
-html.pu-on .user-profile .profile-nav-edit svg, html.pu-on .user-profile .profile-nav-close svg { color: #fff !important; fill: currentColor; }
-
-/* Profiles: one standard dark design for everyone. Stickers, custom colours, gradients, name styles and the
-   card background picture are ignored; the picture behind the avatar (banner + stand) stays. */
-html.pu-on .draggable-window > .nitro-card.user-profile,
-html.pu-dark .draggable-window > .nitro-card.user-profile { background: #141414 !important; --profile-surface: #141414 !important; --profile-fg: #f2f2f2 !important; --profile-tab-fg: #f2f2f2 !important; }
-html.pu-on .user-profile .content-area,
-html.pu-dark .user-profile .content-area {
-  background: #141414 !important; background-image: none !important; color: #f2f2f2 !important;
-  --profile-bento-bg: #1c1c1c !important; --profile-bento-blur: 0px !important; --profile-fg: #f2f2f2 !important; padding: 0 12px 12px !important;
-}
-html.pu-on .user-profile .profile-stickers-layer, html.pu-on .user-profile .profile-sticker { display: none !important; }
-html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card) {
-  background: #1c1c1c !important; background-image: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08) !important; color: #f2f2f2 !important;
-}
-html.pu-on .user-profile .bento { padding: 10px !important; }
-html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; background: #181818 !important; }
-html.pu-on .user-profile .relationship-row { padding: 8px 10px !important; min-height: 40px; background: #202020 !important; }
-html.pu-on .user-profile .relationship-row :is(a, .text-decoration-underline, b, strong) { color: #f2f2f2 !important; }
-html.pu-on .user-profile .relationship-empty, html.pu-on .user-profile .relationship-row .small { color: #8a8a8a !important; font-style: normal !important; }
-html.pu-on .user-profile :is(.bento-title) { color: #a6a6a6 !important; font: 700 11px/1 UbuntuBold, Ubuntu, sans-serif !important; letter-spacing: .06em; text-transform: uppercase; }
-html.pu-on .user-profile .bento-count { background: #262626 !important; color: #d0d0d0 !important; border: 1px solid #000 !important; border-radius: 5px !important; padding: 2px 7px !important; font-size: 12px !important; }
-/* Name: plain white bold, no gradient or name-style icon */
-html.pu-on .user-profile .name-profile-kk :is(strong, span, b) { background: none !important; -webkit-text-fill-color: #f2f2f2 !important; color: #f2f2f2 !important; text-shadow: none !important; filter: none !important; animation: none !important; }
-html.pu-on .user-profile .name-profile-kk strong { font: 700 16px/1.2 UbuntuBold, Ubuntu, sans-serif !important; }
-html.pu-on .user-profile .name-profile-kk span[style*="namecustomizer"], html.pu-on .user-profile .name-profile-kk span[style*="namecustomizer"] + span { display: none !important; }
-html.pu-on .user-profile .profile-motto { color: #a6a6a6 !important; font-style: normal !important; }
-html.pu-on .user-profile .meta-label { color: #8a8a8a !important; }
-html.pu-on .user-profile .meta-value { color: #f2f2f2 !important; font-weight: 700 !important; }
-html.pu-on .user-profile .identity-footer .line { background: rgba(255, 255, 255, .1) !important; }
-html.pu-on .user-profile .friend-btn {
-  display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important;
-  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important; font-size: 12.5px !important;
-}
-html.pu-on .user-profile .profile-avatar { border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08) !important; }
-/* Every other tab of the profile: plain dark text on the dark card */
-html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]) { color: #a6a6a6 !important; }
-html.pu-on .user-profile .content-area :is(h1, h2, h3, h4, h5, h6, p, span, div):not(.meta-label):not(.bento-title):not(.relationship-empty) { text-shadow: none !important; }
-html.pu-on .user-profile .profile-motto.font-italic { font-style: normal !important; }
-/* Chip rows that scroll sideways: the row is as wide as its chips, so the window's 12px padding shows at both ends */
-html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) .nav-tabs { width: max-content !important; min-width: 0 !important; flex: none !important; flex-wrap: nowrap !important; }
-html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) { scrollbar-width: none !important; }
-html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar)::-webkit-scrollbar { display: none !important; }
-/* Mentions: same 12px gutter, select styled like the other inputs, 36px trash button */
-html.pu-on .nitro-mentions .content-area { padding: 0 12px 12px !important; }
-/* Every dropdown: same field look plus one small chevron */
-html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(select, select.form-select) {
-  height: 36px !important; min-height: 36px !important; padding: 0 30px 0 12px !important; -webkit-appearance: none !important; appearance: none !important;
-  background: #0d0d0d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8a8a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 14px 14px !important;
-  border: 1px solid #000 !important; box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06) !important;
-  color: #f2f2f2 !important; font: 400 14px Ubuntu, sans-serif !important; border-radius: 6px !important;
-}
-html.pu-on .nitro-mentions .nitro-mention-search-type { width: 110px !important; flex: none !important; }
-html.pu-on .nitro-mentions .nitro-mention-search-type select { width: 100% !important; }
-html.pu-on .nitro-mentions .nitro-mention-search > .btn { width: 36px !important; height: 36px !important; min-width: 36px !important; padding: 0 !important; flex: none !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-html.pu-on .nitro-mentions .nitro-mention-search > .btn svg { width: 15px !important; height: 15px !important; }

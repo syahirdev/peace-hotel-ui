@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" class="pu-on pu-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peace UI design system</title>
+<!-- The real game stylesheet (nitro.css): every sample below uses it, so this page can't drift from the game. -->
+<style id="nitro">/*NITRO_CSS*/</style>
+<style>
+/* VOICE: a product team's internal reference, calm and exact.
+   IDEA: the spec sheet that ships with a UI kit: tokens first, then each part with where it is used.
+   PICTURE: real phone screens built from the shipped CSS, side by side.
+   COLOUR and TYPE: the Peace HUD itself (near-black two-tone, Peace blue, Ubuntu).
+   LAYOUT: sticky section links, token tables, component cards, a row of phone screens. */
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--pu-bg) !important; color: var(--pu-ink); font: 400 var(--pu-fs-md)/1.55 var(--pu-font); overflow-x: clip; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; min-width: 0; }
+.sb-top { position: sticky; top: 0; z-index: 50; display: flex; gap: 6px; padding: 10px max(4vw, 12px); overflow-x: auto; scrollbar-width: none; background: var(--pu-tone-bar); border-bottom: var(--pu-edge); }
+.sb-top a { flex: none; height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: var(--pu-r); background: var(--pu-tone); border: var(--pu-edge); box-shadow: var(--pu-hi); color: var(--pu-ink-2); font: 500 13px/1 var(--pu-font); text-decoration: none; }
+.sb-top a:active { background: var(--pu-blue-tone); color: var(--pu-ink-on); }
+.sb-band { padding: 28px max(4vw, 12px); max-width: 1240px; margin: 0 auto; }
+.sb-band + .sb-band { border-top: 1px solid var(--pu-line); }
+h1 { margin: 0 0 8px; font: 700 clamp(28px, 5vw, 40px)/1.08 var(--pu-font-bold); text-wrap: balance; }
+h2 { margin: 0 0 6px; font: 700 24px/1.2 var(--pu-font-bold); }
+h3.sb { margin: 0 0 4px; font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold); }
+p { margin: 0 0 12px; max-width: 70ch; color: var(--pu-ink-2); }
+p b, li b { color: var(--pu-ink); }
+code { font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--pu-ink); background: var(--pu-s1); border: 1px solid var(--pu-line-2); border-radius: var(--pu-r-in); padding: 1px 5px; overflow-wrap: anywhere; }
+.sb-lead { font-size: 17px; color: var(--pu-ink-2); }
+.sb-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.sb-rules li { padding: 12px 14px; background: var(--pu-s1); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi-soft); color: var(--pu-ink-2); font-size: var(--pu-fs); }
+.sb-rules li b { display: block; margin-bottom: 2px; }
+/* phone screens */
+.sb-phones { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x mandatory; }
+.sb-phone { flex: none; width: 360px; max-width: calc(100vw - 32px); scroll-snap-align: start; }
+.sb-phone > small { display: block; margin: 0 0 6px; color: var(--pu-ink-3); font-size: var(--pu-fs-sm); }
+.sb-screen { position: relative; height: 640px; overflow: hidden; border-radius: 14px; border: 1px solid var(--pu-line-2); background: linear-gradient(160deg, #24414f, #10202a 60%, #0b151b); }
+.sb-screen .sb-host { position: absolute; inset: 0; }
+.sb-screen > .draggable-window { position: absolute !important; top: 52px !important; bottom: 60px !important; }
+.sb-screen > .draggable-window > .nitro-card { height: 100% !important; max-height: none !important; }
+/* tokens */
+.sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px; margin-top: 14px; }
+.sb-tok { display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--pu-s1); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi-soft); }
+.sb-sw { flex: none; width: 52px; height: 40px; border-radius: var(--pu-r-in); border: 1px solid var(--pu-line-2); display: grid; place-items: center; overflow: hidden; }
+.sb-tok div { min-width: 0; }
+.sb-tok code { background: none; border: 0; padding: 0; font-size: 12.5px; }
+.sb-tok small { display: block; color: var(--pu-ink-3); font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-tok i { display: block; color: var(--pu-ink-2); font-style: normal; font-size: 12.5px; line-height: 1.3; }
+.sb-group { margin: 22px 0 0; font: 700 var(--pu-fs-xs)/1 var(--pu-font-bold); letter-spacing: .06em; text-transform: uppercase; color: var(--pu-ink-3); }
+/* components */
+.sb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 12px; margin-top: 14px; }
+.sb-card { display: flex; flex-direction: column; background: var(--pu-s0); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi); overflow: hidden; }
+.sb-card > header { padding: 12px 14px 8px; }
+.sb-card > header p { margin: 0; font-size: var(--pu-fs); }
+.sb-demo { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 14px; background: var(--pu-s0); border-top: 1px solid var(--pu-line); border-bottom: 1px solid var(--pu-line); }
+.sb-demo.col { flex-direction: column; align-items: stretch; }
+.sb-demo .sb-host { display: block; width: 100%; }
+/* Samples sit in the page flow, not at window positions */
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window { position: relative !important; inset: auto !important; transform: none !important; width: 100% !important; height: auto !important; max-height: none !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window > .nitro-card { position: relative !important; inset: auto !important; width: 100% !important; height: auto !important; max-height: none !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .content-area { flex-direction: column !important; gap: 8px !important; height: auto !important; overflow: visible !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { display: block !important; height: auto !important; }
+.sb-demo > .lbl, .sb-lbl { width: 100%; margin: 4px 0 -2px; font-size: 12px; color: var(--pu-ink-3); }
+.sb-use { padding: 10px 14px 12px; font-size: 13px; color: var(--pu-ink-3); }
+.sb-use b { color: var(--pu-ink-2); font-weight: 500; }
+/* bare Nitro structure the samples need (in the game, Nitro's own CSS does this) */
+.draggable-window { position: relative !important; }
+.nitro-card { display: flex; flex-direction: column; overflow: hidden; }
+.nitro-card-header { position: relative; display: flex; align-items: center; justify-content: center; flex: none; }
+.nitro-card-header-close { position: absolute; top: 6px; }
+.nitro-card-tabs .nav-tabs { display: flex; margin: 0; padding: 0; list-style: none; }
+.nitro-card-tabs .nav-link { display: flex; align-items: center; cursor: pointer; }
+.content-area { display: flex; flex-direction: column; gap: 8px; padding: 12px; overflow: hidden; flex: 1 1 auto; }
+.btn { display: inline-block; padding: 6px 12px; border: 1px solid transparent; cursor: pointer; }
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; }
+.form-control, .form-select { display: block; width: 100%; }
+.d-flex { display: flex !important; } .flex-column { flex-direction: column !important; } .gap-2 { gap: 8px !important; } .w-100 { width: 100% !important; }
+.navigator-item { display: flex; align-items: center; }
+.room-thumbnail { position: relative; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.room-thumbnail .badge.w-100 { position: absolute; left: 0; bottom: 0; justify-content: center; }
+.nav-thumbnail { display: flex; flex-direction: column; }
+.nav-thumbnail .room-thumbnail .badge { position: absolute; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navigator-item .flex-column { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.sb-pic { width: 100%; height: 100%; background: linear-gradient(135deg, #3c6e85, #1d3946 55%, #2b2b2b); }
+.sb-pic.b { background: linear-gradient(135deg, #8a5a3a, #3b2a20 55%, #2b2b2b); }
+.sb-pic.c { background: linear-gradient(135deg, #5b4a8a, #2a2340 55%, #2b2b2b); }
+.sb-ico { width: 12px; height: 12px; fill: currentColor; }
+.sb-coin { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--pu-edge-c); flex: none; }
+.builders-tools .is-ticked, .builders-tools .is-not-ticked { position: relative; display: inline-block; }
+</style>
+</head>
+<body>
+<nav class="sb-top" aria-label="Sections">
+  <a href="#screens">Screens</a><a href="#rules">Rules</a><a href="#colour">Colour</a><a href="#type">Type</a><a href="#shape">Shape &amp; size</a>
+  <a href="#icons">Icons</a><a href="#buttons">Buttons</a><a href="#close">Close (X)</a><a href="#chips">Chips</a><a href="#inputs">Inputs</a>
+  <a href="#panels">Panels &amp; tiles</a><a href="#badges">Badges</a><a href="#floating">Floating</a>
+</nav>
+
+<section class="sb-band">
+  <h1>Peace UI design system</h1>
+  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version __VERSION__, so what you see here is exactly what the game draws.</p>
+</section>
+
+<section class="sb-band" id="screens">
+  <h2>Screens</h2>
+  <p>Real windows, all built from the same parts: same header, same X, same 36px controls, same 6px corner.</p>
+  <div class="sb-phones">
+    <div class="sb-phone"><small>Top bar, Room menu (owner tools 6px apart)</small><div class="sb-screen"><div class="sb-host" data-ui="room"></div></div></div>
+    <div class="sb-phone"><small>Rooms: people badges grey / green / red</small><div class="sb-screen" id="scr-rooms"></div></div>
+    <div class="sb-phone"><small>Friends</small><div class="sb-screen"><div class="sb-host" data-ui="friends"></div></div></div>
+    <div class="sb-phone"><small>Me: Credits and Duckets on one row</small><div class="sb-screen"><div class="sb-host" data-ui="me"></div></div></div>
+    <div class="sb-phone"><small>Inventory: Place in room = primary button</small><div class="sb-screen" id="scr-inv"></div></div>
+  </div>
+</section>
+
+<section class="sb-band" id="rules">
+  <h2>Rules</h2>
+  <p>Follow these and nothing can drift out of sync again. <code>tools/check-design.js</code> runs on every pull request and fails when a rule is broken.</p>
+  <ul class="sb-rules">
+    <li><b>Raw values live in one place</b>Every colour, corner, font and font size is a <code>--pu-*</code> token at the top of nitro.css. The Peace UI panels read the same tokens.</li>
+    <li><b>One look per job</b>Main action = primary (blue). Delete, report, the profile X = danger (red). Everything else = default (dark two-tone).</li>
+    <li><b>One height</b>Buttons, chips, inputs, selects and square icon buttons are 36px (<code>--pu-ctl</code>). Only bottom action bars use 44px.</li>
+    <li><b>One corner</b>6px (<code>--pu-r</code>) on everything you can tap or read in a box. 4px only for parts inside a padded control.</li>
+    <li><b>One X</b>Every close button is the same 36px square with the same drawing (<code>--pu-i-x</code>), in Nitro windows and Peace panels.</li>
+    <li><b>Pages set layout only</b>A window's own section in nitro.css may set size, position, order and gaps. A new look means adding the element to a component list.</li>
+  </ul>
+</section>
+
+<section class="sb-band" id="colour">
+  <h2>Colour</h2>
+  <p>Near-black surfaces in steps, light text in three strengths, and three accents with a job each. Duotone fills are Peace's HUD look: the top half a shade lighter.</p>
+  <div id="tok-colour"></div>
+</section>
+
+<section class="sb-band" id="type">
+  <h2>Type</h2>
+  <p>Ubuntu for text, Ubuntu Bold for titles, names and primary buttons. Seven sizes.</p>
+  <div id="tok-type"></div>
+</section>
+
+<section class="sb-band" id="shape">
+  <h2>Shape &amp; size</h2>
+  <div id="tok-shape"></div>
+</section>
+
+<section class="sb-band" id="icons">
+  <h2>Icons</h2>
+  <p>Icons drawn by CSS are tokens too. Masks take the text colour, so one drawing works on dark, blue and red.</p>
+  <div id="tok-icons"></div>
+</section>
+
+<section class="sb-band" id="components">
+  <div id="buttons"></div>
+  <h2>Components</h2>
+  <p>Each card shows the game sample (Nitro window markup + nitro.css) and, where the Peace UI has the same part, its sample (shadow root + ui.css). Below each: where it is used.</p>
+  <div class="sb-cards">
+    <article class="sb-card"><header><h3 class="sb">Buttons</h3><p>Default, primary, danger. 36px, 6px corner, black edge, light inner line.</p></header>
+      <div class="sb-demo"><span class="lbl">Game windows</span>
+        <div class="draggable-window" style="width:100%"><div class="nitro-card nitro-mentions" style="animation:none;border:0;box-shadow:none;border-radius:0"><div class="content-area" style="flex-direction:row;flex-wrap:wrap;padding:0">
+          <button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Place in room</button><button class="btn btn-danger">Report</button><button class="btn btn-primary" disabled>Disabled</button>
+        </div></div></div>
+        <span class="lbl">Peace UI</span><div class="sb-host" data-ui="buttons"></div>
+      </div>
+      <div class="sb-use"><b>Default:</b> .btn-secondary/-light/-dark/-outline-*, Shop Gift, Create room Cancel, Inventory Sell, room info buttons, zoom, back bar, voice tools, music, Change looks tools · <b>Primary:</b> .btn-primary, .btn-success, Save changes, Wear, profile edit, voice Join, Accept · <b>Danger:</b> .btn-danger, profile X, remove layer, Report</div>
+    </article>
+
+    <article class="sb-card" id="close"><header><h3 class="sb">Close (X)</h3><p>One 36px square, one drawing. The profile's X is the red variant.</p></header>
+      <div class="sb-demo"><span class="lbl">Game window header</span>
+        <div class="draggable-window" style="width:100%"><div class="nitro-card nitro-mentions" style="animation:none;border-radius:var(--pu-r)"><div class="nitro-card-header"><span class="nitro-card-header-text">Inventory</span><div class="nitro-card-header-close"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor"/></svg></div></div></div></div>
+        <span class="lbl">Peace UI window header (Friends, Me)</span><div class="sb-host" data-ui="whead"></div>
+        <span class="lbl">Profile (danger variant) and room details</span>
+        <div class="draggable-window"><div class="nitro-card user-profile" style="animation:none;border:0;box-shadow:none;background:none!important"><div class="nitro-card-tabs profile-nav-bar" style="display:flex"><div class="profile-nav-actions d-flex"><button class="btn profile-nav-edit"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor"/></svg></button><button class="btn btn-danger profile-nav-close"></button></div></div></div></div>
+        <div class="popover" style="position:relative"><div class="pu-x"></div></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> every Nitro window header, Friends, Me, friend card, zoomed preview, room details card, voice panel, profile</div>
+    </article>
+
+    <article class="sb-card" id="chips"><header><h3 class="sb">Chips and segmented control</h3><p>Filter tabs. Selected = Peace blue. Segments sit inside a track.</p></header>
+      <div class="sb-demo col"><span class="lbl">Game window tabs</span>
+        <div class="draggable-window"><div class="nitro-card nitro-mentions" style="animation:none;border:0;box-shadow:none;border-radius:0"><div class="nitro-card-tabs" style="padding:0!important"><ul class="nav-tabs"><li class="nav-link">Public</li><li class="nav-link active">All Rooms</li><li class="nav-link">My World</li></ul></div></div></div>
+        <span class="lbl">Peace UI (Friends)</span><div class="sb-host" data-ui="chips"></div>
+        <span class="lbl">Segmented (Change looks item types)</span>
+        <div class="draggable-window"><div class="nitro-card nitro-avatar-editor" style="animation:none;display:block!important;background:none!important;border:0!important;box-shadow:none!important"><div class="choose-clothing" style="display:block!important"><div class="d-flex" style="height:40px;padding:3px;gap:3px"><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center"><div class="selected"></div>Shirts</div><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center">Prints</div><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center">Jackets</div></div></div></div></div></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> all window tabs, Shop category rows (white text), Change looks categories, Friends filters · <b>Segmented:</b> item types, Colour 1 / 2</div>
+    </article>
+
+    <article class="sb-card" id="inputs"><header><h3 class="sb">Inputs</h3><p>The Friends search look: deep field, black edge, 36px. Search gets the magnifier, selects one chevron.</p></header>
+      <div class="sb-demo col">
+        <div class="draggable-window"><div class="nitro-card nitro-navigator" style="animation:none;border:0;box-shadow:none;border-radius:0;height:auto!important"><div class="content-area" style="padding:0!important">
+          <div class="d-flex gap-2"><select class="form-select" style="width:130px;flex:none"><option>Anything</option></select><input class="form-control" placeholder="filter rooms by..."></div>
+        </div></div></div>
+        <div class="draggable-window"><div class="nitro-card nitro-room-creator" style="animation:none;border:0;box-shadow:none;border-radius:0;height:auto!important"><div class="content-area" style="padding:0!important;background:none!important">
+          <input class="form-control" type="text" value="Typed text">
+          <textarea class="form-control" rows="2" placeholder="Room description"></textarea>
+        </div></div></div>
+        <span class="lbl">Peace UI search and message field</span><div class="sb-host" data-ui="inputs"></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> every input, select and textarea in windows, Shop / Rooms / Inventory / Chat history search, Builders tool numbers, Friends search, message box</div>
+    </article>
+
+    <article class="sb-card" id="panels"><header><h3 class="sb">Panels and tiles</h3><p>Panels hold information (s1, faint inner line). Tiles are picked (s2); selected = blue ring.</p></header>
+      <div class="sb-demo col">
+        <div class="draggable-window"><div class="nitro-card nitro-catalog" style="animation:none;border:0;box-shadow:none;height:auto!important"><div class="content-area" style="padding:0!important">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+          </div>
+        </div></div></div>
+        <span class="lbl">Peace UI: stats panel, icon tiles</span><div class="sb-host" data-ui="tiles"></div>
+      </div>
+      <div class="sb-use"><b>Panels:</b> Inventory preview, room rows and cards, Builders tool rows, profile sections, Me stats and list · <b>Tiles:</b> Shop items, room layouts, Me tools, Room menu tools, room actions · <b>Light tiles:</b> Change looks items and layers</div>
+    </article>
+
+    <article class="sb-card" id="badges"><header><h3 class="sb">People badge, tags, labels</h3><p>One colour rule for people in a room, the same in the list, the grid and the details.</p></header>
+      <div class="sb-demo">
+        <div class="nitro-navigator" style="display:flex;gap:8px"><span class="badge" data-pu-ppl="0"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>0</span><span class="badge" data-pu-ppl="1"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>1</span><span class="badge" data-pu-ppl="full"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>25</span></div>
+        <span class="lbl">Grey = empty · green = people inside · red = full</span>
+        <div class="nitro-room-info"><span class="text-tag">chill</span> <span class="text-tag">music</span></div>
+        <div class="user-profile"><span class="bento-title">Section label</span></div>
+      </div>
+      <div class="sb-use"><b>Badge:</b> Rooms list, Rooms grid, room details · <b>Tags:</b> room tags, profile counts · <b>Labels:</b> My Wardrobe, profile sections, Friends sections, Room info</div>
+    </article>
+
+    <article class="sb-card" id="floating"><header><h3 class="sb">Floating panels and switch</h3><p>Things that float over the game: dark s0, black edge, a soft drop shadow.</p></header>
+      <div class="sb-demo col">
+        <div class="nitro-phone-corner" style="position:static!important;display:block!important"><div class="phone-corner-card" style="padding:12px;animation:none">Music card, voice panel, room details and drop-downs all use this look.</div></div>
+        <div class="builders-tools" style="display:flex;gap:10px;align-items:center"><span class="is-ticked"></span><span class="is-not-ticked"></span><span style="color:var(--pu-ink-2);font-size:13px">Switch on / off (Builders tool)</span></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> room details card, voice panel, music card, currency drop-down, Room menu, friend card, toasts, layer actions</div>
+    </article>
+  </div>
+</section>
+
+<template id="t-room">
+  <div class="top"><div class="lcol"><button class="pill roomchip"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg><span class="ct"><b>3</b></span><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m6 9 6 6 6-6"/></svg></button></div>
+  <button class="pill money"><span class="cy"><i class="sb-coin" style="background:var(--pu-gold)"></i><b>283.2K</b></span><span class="cy"><i class="sb-coin" style="background:#c08bfa"></i><b>309.3K</b></span><span class="cy"><i class="sb-coin" style="background:#7dd3fc"></i><b>35</b></span><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m6 9 6 6 6-6"/></svg></button></div>
+  <div class="pop rpop on" style="display:block">
+    <div class="rhead"><div class="rht"><b>Batu Caves</b><small>3 of 25 people here</small></div><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg></button></div>
+    <div class="rts"><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2M11 8v6M8 11h6"/></svg><span>Zoom in</span></button><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span>Chat history</span></button><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg><span>Hide bubbles</span></button><button class="rt on"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/></svg><span>Room voice</span></button></div>
+    <div class="rinfo"><div class="rlbl">Room info</div><div class="rkv"><span>Owner</span><b>Calcifer</b></div><div class="rkv"><span>Rating</span><b>12</b></div><div class="rtags"><span>caves</span><span>chill</span></div>
+      <div class="racts"><button class="ra"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Home room</span></button><button class="ra on"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/></svg><span>Favourite</span></button><button class="ra"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg><span>Like</span></button></div>
+      <button class="btn dng">Report room</button></div>
+  </div>
+  <nav class="tabs" data-tabs="rooms"></nav>
+</template>
+
+<template id="t-friends">
+  <div class="sheet open" style="top:52px"><div class="shc">
+    <div class="whead"><h3>Friends</h3><button class="sqb"><i class="gx"></i></button></div>
+    <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg><input placeholder="Search 48 friends"></label>
+    <div class="chips"><button class="chip on">Online<span class="n">3</span></button><button class="chip">All<span class="n">48</span></button><button class="chip">Chats<span class="n">5</span><i class="rd"></i></button><button class="chip">Requests<span class="n">1</span><i class="rd"></i></button></div>
+    <div class="sbody"><div class="sec"><span>Online</span><span>3</span></div>
+      <div class="row unread"><span class="avw"><span class="av ini" style="--h:200">C</span><i class="st"></i></span><span class="who"><span class="nm"><span>Calcifer</span></span><span class="mt">building the caves</span></span><span class="acts"><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><b class="badge">2</b></button></span></div>
+      <div class="row"><span class="avw"><span class="av ini" style="--h:30">S</span><i class="st"></i></span><span class="who"><span class="nm"><span>soupy</span></span><span class="mt">11:11</span></span><span class="acts"><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button></span></div>
+      <div class="row"><span class="avw"><span class="av ini" style="--h:300">A</span><i class="st"></i></span><span class="who"><span class="nm"><span>Addaaaa</span></span><span class="mt">Online</span></span><span class="acts"><button class="act" disabled><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button></span></div>
+    </div></div></div>
+  <nav class="tabs" data-tabs="friends"></nav>
+</template>
+
+<template id="t-me">
+  <div class="sheet open"><div class="shc">
+    <div class="whead"><h3>Me</h3><button class="sqb"><i class="gx"></i></button></div>
+    <div class="sbody"><div class="mehero"><span class="av xl ini" style="--h:210">S</span><div class="tt"><h3>SKIBIDI</h3><div class="sub">peace and love</div></div></div>
+      <div class="stats"><div class="stat w3"><b><i class="sb-coin" style="background:var(--pu-gold)"></i>283,214</b><span>Credits</span></div><div class="stat w3"><b><i class="sb-coin" style="background:#c08bfa"></i>309,312</b><span>Duckets</span></div><div class="stat"><b><i class="sb-coin" style="background:#7dd3fc"></i>35</b><span>Diamonds</span></div><div class="stat"><b><i class="sb-coin" style="background:#f472b6"></i>1.2K</b><span>Event points</span></div><div class="stat"><b><i class="sb-coin" style="background:var(--pu-green)"></i>80</b><span>Peace coins</span></div></div>
+      <div class="tools" id="me-tools"></div>
+      <div class="sec"><span>App</span></div><div class="list mx"><button class="li"><span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span></button><button class="li"><span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span></button><button class="li danger"><span class="lt">Back to website<small>Leaves the game</small></span></button></div>
+    </div></div></div>
+  <nav class="tabs" data-tabs="me"></nav>
+</template>
+
+<template id="t-buttons"><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn">Show all</button><button class="btn pri">Accept</button><button class="btn dng">Report room</button><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m15 18-6-6 6-6"/></svg></button></div></template>
+<template id="t-whead"><div class="whead"><h3>Friends</h3><button class="sqb"><i class="gx"></i></button></div></template>
+<template id="t-chips"><div class="chips" style="padding:0"><button class="chip on">Online<span class="n">3</span></button><button class="chip">All<span class="n">48</span></button><button class="chip">Chats<span class="n">5</span></button></div></template>
+<template id="t-inputs"><div style="display:flex;flex-direction:column;gap:8px"><label class="search" style="margin:0"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg><input placeholder="Search 48 friends"></label><div style="display:flex;gap:8px"><label class="field"><input placeholder="Message Calcifer"></label><button class="send on"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button></div></div></template>
+<template id="t-tiles"><div class="stats" style="padding:0"><div class="stat w3"><b><i class="sb-coin" style="background:var(--pu-gold)"></i>283,214</b><span>Credits</span></div><div class="stat w3"><b><i class="sb-coin" style="background:#c08bfa"></i>309,312</b><span>Duckets</span></div></div><div class="tools" style="padding:8px 0 0;grid-template-columns:repeat(3,1fr)" id="tl-tools"></div></template>
+
+<script>
+{
+  const UI_CSS = "__UI_CSS__";
+  const TOKENS = "__TOKENS__";
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Shadow root samples: the real ui.css, with the host made static so it sits in the page.
+  const HOST_FIX = ':host{position:absolute!important;inset:0!important;z-index:auto!important;pointer-events:auto!important;display:block}';
+  const HOST_INLINE = ':host{position:relative!important;inset:auto!important;z-index:auto!important;pointer-events:auto!important;display:block}';
+  const ic = (p, z) => '<svg class="i" viewBox="0 0 24 24" style="width:' + z + 'px;height:' + z + 'px">' + p + '</svg>';
+  const P = {
+    compass: '<circle cx="12" cy="12" r="9.5"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3Z"/>', bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    box: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+    user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', shirt: '<path d="M20.4 3.5 16 2a4 4 0 0 1-8 0L3.6 3.5a2 2 0 0 0-1.3 2.2l.6 3.5a1 1 0 0 0 1 .8H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.2a1 1 0 0 0 1-.8l.6-3.5a2 2 0 0 0-1.4-2.2Z"/>',
+    at: '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>', phone: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M11 18h2"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0Z"/>', camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3"/>',
+    gem: '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20"/>', star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
+  };
+  const tabs = (on) => [['rooms', 'compass', 'Rooms'], ['shop', 'bag', 'Shop'], ['friends', 'users', 'Friends'], ['inventory', 'box', 'Inventory'], ['me', 'user', 'Me']]
+    .map((t) => '<button class="tab' + (t[0] === on ? ' on' : '') + '"><span class="ico">' + (t[0] === 'me' ? '<span class="mehead">' + ic(P.user, 18) + '</span>' : ic(P[t[1]], 22)) + (t[0] === 'friends' ? '<b class="badge">1</b>' : '') + '</span><span>' + t[2] + '</span></button>').join('');
+  const tools = (list) => list.map((t) => '<button class="tool">' + ic(P[t[1]], 22) + '<span>' + t[0] + '</span></button>').join('');
+  document.querySelectorAll('.sb-host[data-ui]').forEach((h) => {
+    const t = document.getElementById('t-' + h.dataset.ui), inScreen = !!h.closest('.sb-screen');
+    const r = h.attachShadow({ mode: 'open' });
+    r.innerHTML = '<style>' + UI_CSS + (inScreen ? HOST_FIX : HOST_INLINE) + '</style>' + t.innerHTML;
+    r.querySelectorAll('[data-tabs]').forEach((n) => { n.innerHTML = tabs(n.dataset.tabs); });
+    const mt = r.getElementById('me-tools'); if (mt) mt.innerHTML = tools([['Profile', 'user'], ['Change looks', 'shirt'], ['Mentions', 'at'], ['Phone', 'phone'], ['Achievements', 'trophy'], ['Camera', 'camera'], ['Rare values', 'gem'], ['Prestige', 'star']]);
+    const tl = r.getElementById('tl-tools'); if (tl) tl.innerHTML = tools([['Profile', 'user'], ['Change looks', 'shirt'], ['Mentions', 'at']]);
+    if (!inScreen) { r.host.style.height = 'auto'; }
+  });
+  // Nitro screens: the game's own window markup, styled only by nitro.css
+  const person = '<svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>';
+  const header = (t) => '<div class="nitro-card-header"><span class="nitro-card-header-text">' + t + '</span><div class="nitro-card-header-close"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor" stroke-width="2.5"/></svg></div></div>';
+  const row = (name, owner, n, ppl, pic) => '<div class="navigator-item"><div class="room-thumbnail"><div class="sb-pic ' + pic + '"></div><div class="badge w-100" data-pu-ppl="' + ppl + '">' + person + n + '</div></div><div class="flex-column"><div class="titleromddas text-truncate">' + name + '</div><div class="pu-owner pu-lo"><span>Owner:</span> ' + owner + '</div></div></div>';
+  const card = (name, owner, n, ppl, pic) => '<div class="nav-thumbnail"><div class="room-thumbnail"><div class="sb-pic ' + pic + '" style="position:absolute;inset:0"></div><div class="badge" data-pu-ppl="' + ppl + '">' + person + n + '</div></div><div class="d-flex w-100"><div class="text-truncate">' + name + '</div></div><div class="pu-owner">' + owner + '</div></div>';
+  document.getElementById('scr-rooms').innerHTML = '<div class="sb-host" data-ui="none"></div><div class="draggable-window"><div class="nitro-card nitro-navigator">' + header('Navigator') +
+    '<div class="nitro-card-tabs"><ul class="nav-tabs"><li class="nav-link">Public</li><li class="nav-link active">All Rooms</li><li class="nav-link">My World</li></ul></div>' +
+    '<div class="content-area"><div class="d-flex gap-2"><select class="form-select" style="width:120px;flex:none"><option>Anything</option></select><input class="form-control" placeholder="filter rooms by..."></div>' +
+    '<div class="containernew-kvjd"><div class="grid" style="display:grid">' + card('11:11', 'soupy', 1, '1', '') + card('Batu Caves', 'Calcifer', 1, '1', 'b') + '</div></div>' +
+    '<div class="d-flex flex-column gap-2">' + row('Cafe', 'Calcifer', 0, '0', 'c') + row('Pool party', 'Addaaaa', 25, 'full', 'b') + '</div></div></div></div>';
+  document.getElementById('scr-inv').innerHTML = '<div class="draggable-window"><div class="nitro-card nitro-inventory">' + header('Inventory') +
+    '<div class="nitro-card-tabs"><ul class="nav-tabs"><li class="nav-link active">Furni</li><li class="nav-link">Pets</li><li class="nav-link">Badges</li><li class="nav-link">Bots</li></ul></div>' +
+    '<div class="content-area"><div class="d-flex gap-2"><input class="form-control" placeholder="Search"><button class="btn btn-danger"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>' +
+    '<div class="grid"><div class="g-col-5 d-flex"><div><div class="sb-pic"></div></div><div class="d-flex flex-column gap-2"><div class="font-bold">Throne</div><button class="btn btn-success">Place in room</button><button class="btn btn-primary">Sell</button></div></div></div></div></div></div>';
+  // add the Peace UI top bar and tab bar to the Nitro screens
+  document.querySelectorAll('#scr-rooms, #scr-inv').forEach((s) => {
+    const h = document.createElement('div'); h.className = 'sb-host'; s.prepend(h);
+    const r = h.attachShadow({ mode: 'open' }), on = s.id === 'scr-rooms' ? 'rooms' : 'inventory';
+    r.innerHTML = '<style>' + UI_CSS + HOST_FIX + '</style>' + document.getElementById('t-room').innerHTML.replace(/<div class="pop rpop[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<nav/, '<nav');
+    r.querySelectorAll('[data-tabs]').forEach((n) => { n.innerHTML = tabs(on); });
+    r.querySelectorAll('.pop').forEach((n) => n.remove());
+  });
+  document.querySelectorAll('.sb-host[data-ui="none"]').forEach((n) => n.remove());
+
+  // Tokens
+  const groups = {};
+  TOKENS.forEach((t) => { (groups[t[0]] = groups[t[0]] || []).push(t); });
+  const sw = (name, value) => {
+    if (/^--pu-(i|bg)-/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2)"><span style="width:22px;height:22px;display:block;' + (name.indexOf('--pu-i-') === 0 ? 'background:var(--pu-ink);-webkit-mask:var(' + name + ') center/contain no-repeat;mask:var(' + name + ') center/contain no-repeat' : 'background:var(' + name + ') center/contain no-repeat') + '"></span></span>';
+    if (/^--pu-font/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font:700 18px var(' + name + ')">Aa</span>';
+    if (/^--pu-fs/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font-size:var(' + name + ')">Aa</span>';
+    if (/^--pu-r(-|$)/.test(name)) return '<span class="sb-sw" style="background:none;border:0"><span style="width:36px;height:36px;display:block;background:var(--pu-tone);border:var(--pu-edge);box-shadow:var(--pu-hi);border-radius:var(' + name + ')"></span></span>';
+    if (/^--pu-(ctl|head|tile|ic|gap|pad|top|tabs|bottom)/.test(name)) return '<span class="sb-sw" style="background:none;border:0;place-items:end center"><span style="width:14px;height:min(40px,var(' + name + '));display:block;background:var(--pu-blue-tone);border-radius:2px"></span></span>';
+    if (/inset|0 \d|px rgba/.test(value) && !/gradient/.test(value)) return '<span class="sb-sw" style="background:var(--pu-s1);box-shadow:var(' + name + ')"></span>';
+    if (/^--pu-edge$/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);border:var(--pu-edge)"></span>';
+    if (/^--pu-(ease)/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font-size:12px;color:var(--pu-ink-3)">ease</span>';
+    return '<span class="sb-sw" style="background:var(' + name + ')"></span>';
+  };
+  const tile = (t) => '<div class="sb-tok">' + sw(t[1], t[2]) + '<div><code>' + esc(t[1]) + '</code>' + (t[3] ? '<i>' + esc(t[3]) + '</i>' : '') + '<small>' + esc(t[2].length > 60 ? t[2].slice(0, 58) + '…' : t[2]) + '</small></div></div>';
+  const put = (id, names) => { document.getElementById(id).innerHTML = names.filter((g) => groups[g]).map((g) => '<div class="sb-group">' + esc(g) + '</div><div class="sb-grid">' + groups[g].map(tile).join('') + '</div>').join(''); };
+  const known = ['Type', 'Shape and size', 'Icons'];
+  put('tok-colour', Object.keys(groups).filter((g) => known.indexOf(g) < 0 && g !== 'Depth'));
+  put('tok-type', ['Type']);
+  put('tok-shape', ['Shape and size', 'Depth']);
+  put('tok-icons', ['Icons']);
+}
+</script>
+</body>
+</html>

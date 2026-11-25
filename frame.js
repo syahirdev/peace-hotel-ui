@@ -353,7 +353,7 @@
         if (L < 0.5 && sat(c) > 0.2) {
           // Coloured dark text keeps its hue, lifted to a light shade (a filter would also brighten the box).
           var m = function (v) { return Math.round(v + (255 - v) * 0.72); };
-          el.style.setProperty('--pu-ink', 'rgb(' + m(c.r) + ',' + m(c.g) + ',' + m(c.b) + ')');
+          el.style.setProperty('--pu-tink', 'rgb(' + m(c.r) + ',' + m(c.g) + ',' + m(c.b) + ')');
           el.setAttribute('data-pu-ink', 'tint');
         } else if (L < 0.3) el.setAttribute('data-pu-ink', '1');
         else if (L < 0.5) el.setAttribute('data-pu-ink', '2');
@@ -463,9 +463,22 @@
       b.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2M11 8v6M8 11h6"/></svg>';
       box.appendChild(b);
     });
+    pplScan();
     invGrid();
     looksSync();
     setTabs();
+  }
+  // People badges: one colour rule in the list, the grid and the room details (Peace colours them differently in
+  // each): grey = empty, green = people inside, red = full. nitro.css styles data-pu-ppl.
+  function pplScan() {
+    document.querySelectorAll('.nitro-navigator .badge, .popover .room-info .badge').forEach(function (b) {
+      var n = parseInt((b.textContent || '').replace(/[^0-9]+/g, ''), 10);
+      if (isNaN(n)) { if (b.hasAttribute('data-pu-ppl')) b.removeAttribute('data-pu-ppl'); return; }
+      var item = b.closest('.navigator-item, .nav-thumbnail'), rd = null, max = 0;
+      if (item && n > 0) { try { rd = roomDataOf(item); } catch (e) {} max = rd ? +(rd.maxUserCount || rd._maxUserCount || 0) : 0; }
+      var v = n === 0 ? '0' : max && n >= max ? 'full' : '1';
+      if (b.getAttribute('data-pu-ppl') !== v) b.setAttribute('data-pu-ppl', v);
+    });
   }
   // Peace's Inventory grid is virtual: rows of 40px tiles spread with space-between, so columns sit far apart
   // while rows are 4px apart. Zooming the scroller makes the tiles fill the width with the same gap both ways.
@@ -486,7 +499,7 @@
     if (!src) return;
     S.zoom = 1;
     $zoom.innerHTML = '<div class="zstage" id="zstage"><img id="zimg" alt="" src="' + esc(src) + '"></div>' +
-      '<div class="zbar"><button class="sqb" data-a="zout" aria-label="Zoom out">' + ic('zoomout', 18) + '</button><button class="sqb" data-a="zin" aria-label="Zoom in">' + ic('zoomin', 18) + '</button><button class="sqb" data-a="zclose" aria-label="Close">' + ic('x', 18) + '</button></div>';
+      '<div class="zbar"><button class="sqb" data-a="zout" aria-label="Zoom out">' + ic('zoomout', 18) + '</button><button class="sqb" data-a="zin" aria-label="Zoom in">' + ic('zoomin', 18) + '</button>' + xbtn('zclose') + '</div>';
     var im = $('#zimg');
     im.onload = function () { var st = $('#zstage'); S.zbase = Math.min((st.clientWidth - 24) / im.naturalWidth, (st.clientHeight - 24) / im.naturalHeight); zoomSet(1); };
     $zoom.classList.add('on'); report();
@@ -758,6 +771,8 @@
     flag: '<path d="M4 22V4c4-3 8 3 16 0v11c-8 3-12-3-16 0"/>',
     star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
   };
+  // The close (X) button: one drawing (--pu-i-x in nitro.css) shared with every Nitro window.
+  function xbtn(a, label) { return '<button class="sqb" data-a="' + a + '" aria-label="' + (label || 'Close') + '"><i class="gx"></i></button>'; }
   function ic(n, z) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"' + (z ? ' style="width:' + z + 'px;height:' + z + 'px"' : '') + '>' + (P[n] || '') + '</svg>'; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function num(n) { return (n || 0).toLocaleString('en-US'); }
@@ -772,11 +787,6 @@
     return '<span class="' + cls + '" data-ini="' + esc(name || '?') + '"><img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></span>';
   }
   function avw(f, size) { return '<span class="avw">' + av(f.name, f.figure, size) + (f.online ? '<i class="st"></i>' : '') + '</span>'; }
-  // Full body (Peace's imager always draws the whole avatar, so hats and effects show like in the profile).
-  function fbody(f, big) {
-    var src = f.figure && IMAGER ? IMAGER + encodeURIComponent(f.figure) + '&direction=2&head_direction=2&gesture=sml' + (big ? '&size=l' : '') : '';
-    return '<span class="fb' + (big ? ' big' : '') + '" data-ini="' + esc(f.name || '?') + '">' + (src ? '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="av ini" style="--h:' + hue(f.name || '?') + '">' + esc((f.name || '?').charAt(0).toUpperCase()) + '</span>') + (f.online && !big ? '<i class="st"></i>' : '') + '</span>';
-  }
   var REL = { 1: ['heart', '#f472b6', 'Heart', 1], 2: ['smile', '#facc15', 'Smile', 0], 3: ['skull', '#a1a1aa', 'Bobba', 0] };
   function rel(r) { var x = REL[r]; return x ? '<span class="rl' + (x[3] ? ' fill' : '') + '" style="--c:' + x[1] + '" title="' + x[2] + '">' + ic(x[0]) + '</span>' : ''; }
 
@@ -802,7 +812,7 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button>' +
+      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button></div>' +
       '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
       '<div class="pop rpop" id="rpop"></div>' +
@@ -975,7 +985,7 @@
         (acts.length ? '<div class="racts">' + acts.map(function (a) {
           return '<button class="ra' + (a.on ? ' on' : '') + '" ' + (a.rt ? 'data-rt="' + a.rt + '"' : 'data-ri="' + a.i + '"' + (a.keep ? ' data-keep="1"' : '')) + '>' + ic(a.ic, 18) + '<span>' + esc(a.t) + '</span></button>';
         }).join('') + '</div>' : '') +
-        info.btns.map(function (b) { return '<button class="rbtn' + (b.danger ? ' danger' : '') + '" data-ri="' + b.i + '">' + (b.danger ? ic('flag', 16) : '') + esc(b.t) + '</button>'; }).join('') +
+        info.btns.map(function (b) { return '<button class="btn' + (b.danger ? ' dng' : '') + '" data-ri="' + b.i + '">' + (b.danger ? ic('flag', 16) : '') + esc(b.t) + '</button>'; }).join('') +
         '</div>';
     }
     $rpop.innerHTML = head + '<div class="rts">' + btns + '</div>' + sec;
@@ -1058,8 +1068,8 @@
   function friendsHTML() {
     var all = friendList(), on = all.filter(function (f) { return f.online; }).length;
     var chats = Object.keys(S.conv).filter(function (k) { return S.conv[k].length; }).length;
-    return '<div class="whead"><h3>Friends</h3><button class="sqb" data-a="close" aria-label="Close">' + ic('x', 16) + '</button></div>' +
-      '<label class="search">' + ic('search', 18) + '<input id="fq" type="search" placeholder="Search ' + all.length + ' friends" autocomplete="off" enterkeyhint="search"><button class="clr" data-a="fclr" aria-label="Clear search"' + (S.q ? '' : ' hidden') + '>' + ic('x', 16) + '</button></label>' +
+    return '<div class="whead"><h3>Friends</h3>' + xbtn('close') + '</div>' +
+      '<label class="search">' + ic('search', 18) + '<input id="fq" type="search" placeholder="Search ' + all.length + ' friends" autocomplete="off" enterkeyhint="search"><button class="clr" data-a="fclr" aria-label="Clear search"' + (S.q ? '' : ' hidden') + '><i class="gx"></i></button></label>' +
       chipRow([['online', 'Online', on], ['all', 'All', all.length], ['chats', 'Chats', chats, unreadTotal() > 0], ['req', 'Requests', S.requests.length, S.requests.length > 0]]) +
       '<div class="sbody" id="fbody">' + friendBody() + '</div>';
   }
@@ -1078,7 +1088,7 @@
     if (S.ff === 'req') {
       if (!S.requests.length) return '<div class="empty"><p>No friend requests.</p></div>';
       return '<div class="sec"><span>Friend requests</span><button class="link" data-a="accall">Accept all</button></div>' + S.requests.map(function (r) {
-        return '<div class="row">' + av(r.name, r.figure) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri sm" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline">' + ic('x', 18) + '</button></span></div>';
+        return '<div class="row">' + av(r.name, r.figure) + '<span class="who"><span class="nm"><span>' + esc(r.name) + '</span></span></span><span class="acts"><button class="btn pri" data-acc="' + r.id + '">Accept</button><button class="act" data-dec="' + r.id + '" aria-label="Decline"><i class="gx"></i></button></span></div>';
       }).join('');
     }
     if (S.ff === 'chats') {
@@ -1098,7 +1108,7 @@
       var off = list.filter(function (f) { return !f.online && match(f); }).sort(sortFriends);
       if (off.length) h += '<div class="sec"><span>Offline</span><span>' + off.length + '</span></div>' + off.map(friendRow).join('');
     }
-    if (!h) h = q ? '<div class="empty"><p>No friends match “' + esc(S.q) + '”.</p></div>' : '<div class="empty"><p>No friends online right now.</p><button class="btn sec" data-ff="all">Show all friends</button></div>';
+    if (!h) h = q ? '<div class="empty"><p>No friends match “' + esc(S.q) + '”.</p></div>' : '<div class="empty"><p>No friends online right now.</p><button class="btn" data-ff="all">Show all friends</button></div>';
     return h;
   }
 
@@ -1108,7 +1118,7 @@
     var f = S.friends[S.card];
     if (!f) { closeModal(); return; }
     $card.innerHTML = '<div class="hero">' + av(f.name, f.figure, 'xl') + '<div class="tt"><h4>' + esc(f.name) + rel(f.rel) + '</h4><div class="sub">' + (f.online ? '<i class="sdot"></i>Online' : '<i class="sdot off"></i>Offline') + '</div>' +
-      (f.motto ? '<div class="motto">' + esc(f.motto) + '</div>' : '') + '</div><button class="sqb" data-a="cclose" aria-label="Close">' + ic('x', 16) + '</button></div>' +
+      (f.motto ? '<div class="motto">' + esc(f.motto) + '</div>' : '') + '</div>' + xbtn('cclose') + '</div>' +
       '<div class="trio"><button data-chat="' + f.id + '">' + ic('msg') + 'Message</button><button data-follow="' + f.id + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + 'Go to</button><button data-prof="' + f.id + '">' + ic('user') + 'Profile</button></div>';
   }
   function closeModal() { if (!$modal.classList.contains('on')) return; $modal.classList.remove('on'); S.card = 0; report(); }
@@ -1120,11 +1130,11 @@
     S.chat = id; S.unread[id] = 0;
     S.conv[id] = S.conv[id] || [];
     var f = S.friends[id] || { id: id, name: nameOf(id) };
-    $page.innerHTML = '<header class="phead"><button class="ibtn" data-a="back" aria-label="Back">' + ic('chevl') + '</button>' + avw(f) +
+    $page.innerHTML = '<header class="phead"><button class="sqb" data-a="back" aria-label="Back">' + ic('chevl', 18) + '</button>' + avw(f) +
       '<div class="tt"><h3>' + esc(f.name) + '</h3><div class="sub">' + (f.online ? 'Online' : 'Offline') + '</div></div>' +
-      '<button class="ghost" data-follow="' + id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow') + '</button></header>' +
+      '<button class="sqb" data-follow="' + id + '" aria-label="Go to ' + esc(f.name) + '"' + (f.online && f.follow ? '' : ' disabled') + '>' + ic('follow', 18) + '</button></header>' +
       '<div class="msgs" id="msgs"></div>' +
-      '<form class="compose" id="compose"><label class="field"><input id="cin" type="text" placeholder="Message ' + esc(f.name) + '" autocomplete="off" enterkeyhint="send" maxlength="255"></label><button class="send" type="submit" aria-label="Send">' + ic('send') + '</button></form>';
+      '<form class="compose" id="compose"><label class="field"><input id="cin" type="text" placeholder="Message ' + esc(f.name) + '" autocomplete="off" enterkeyhint="send" maxlength="255"></label><button class="send" type="submit" aria-label="Send">' + ic('send', 18) + '</button></form>';
     $page.classList.add('on');
     renderChat();
     renderBadges();
@@ -1164,13 +1174,15 @@
   ];
   function meHTML() {
     var all = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; });
-    // Credits and duckets get a full row each with the whole number; the rest share rows of three
+    // Credits and duckets share the first row (two columns, whole numbers); the rest share rows of three
     // on a 6-column grid, and a short last row splits the full width.
     var big = all.filter(function (c) { return c[0] === -1 || c[0] === 0; }), stats = all.filter(function (c) { return big.indexOf(c) < 0; });
     var left = stats.length % 3, cut = stats.length - left;
-    return '<div class="whead"><h3>Me</h3><button class="sqb" data-a="close" aria-label="Close">' + ic('x', 16) + '</button></div>' + '<div class="sbody">' +
+    function stat(c, cls, whole) { var v = amount(c[0]); return '<div class="stat' + cls + '"><b>' + cicon(c[0]) + (v == null ? '…' : whole ? num(v) : short(v)) + '</b><span>' + c[1] + '</span></div>'; }
+    return '<div class="whead"><h3>Me</h3>' + xbtn('close') + '</div>' + '<div class="sbody">' +
       '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure, 'xl') + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
-      '<div class="stats">' + big.map(function (c) { var v = amount(c[0]); return '<div class="stat w6 big"><span>' + cicon(c[0]) + c[1] + '</span><b>' + (v == null ? '…' : num(v)) + '</b></div>'; }).join('') + stats.map(function (c, i) { var v = amount(c[0]); return '<div class="stat' + (i >= cut ? (left === 1 ? ' w6' : ' w3') : '') + '"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="stats">' + big.map(function (c) { return stat(c, big.length > 1 ? ' w3' : ' w6', true); }).join('') +
+      stats.map(function (c, i) { return stat(c, i >= cut ? (left === 1 ? ' w6' : ' w3') : '', false); }).join('') + '</div>' +
       '<div class="tools">' + TILES.map(function (t) {
         var cls = 'tool', dot = '';
         if (t[0] === 'prestige') {
