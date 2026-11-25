@@ -928,8 +928,19 @@
     setDark(true);
     bind();
     renderAll();
+    walletWatch();
     onStart();
     post({ a: 'ready' });
+  }
+  // Peace's live event card sits under the wallet, as wide as it (nitro.css reads --pu-wallet-l).
+  function walletWatch() {
+    function set() {
+      var l = Math.round($money.getBoundingClientRect().left);
+      if (l > 0) document.documentElement.style.setProperty('--pu-wallet-l', l + 'px');
+    }
+    if (window.ResizeObserver) new ResizeObserver(set).observe($money);
+    window.addEventListener('resize', set);
+    set();
   }
   function tab(id, icon, label, badge) {
     return '<button class="tab" data-tab="' + id + '"><span class="ico">' + ic(icon, 22) + (badge ? '<b class="badge" id="' + badge + '" hidden></b>' : '') + '</span><span>' + label + '</span></button>';

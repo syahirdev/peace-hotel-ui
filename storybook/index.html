@@ -311,6 +311,8 @@ html.pu-on .nitro-phone-corner .phone-corner-btn,
 html.pu-on .rv-pagebtn,
 html.pu-on .chat-input-extras-close,
 html.pu-on .chat-image-upload-btn:not(.send),
+html.pu-on .nitro-event-alert .nea-btn.is-ghost,
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert-tab,
 html.pu-on .user-profile .friend-btn {
   background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
   color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important; text-shadow: none !important;
@@ -328,6 +330,8 @@ html.pu-on .nitro-catalog .pu-back:active,
 html.pu-on .pu-zoom:active,
 html.pu-on .chat-input-extras-close:active,
 html.pu-on .chat-image-upload-btn:not(.send):active,
+html.pu-on .nitro-event-alert .nea-btn.is-ghost:active,
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert-tab:active,
 html.pu-on .rv-pagebtn:active { background: var(--pu-tone-press) !important; }
 /* primary */
 html.pu-on .draggable-window .btn-primary:not(.btn-danger),
@@ -337,6 +341,7 @@ html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .butto
 html.pu-on .user-profile .profile-nav-edit,
 html.pu-on #hud-more-voice .voice-join,
 html.pu-on .chat-image-upload-btn.send,
+html.pu-on .nitro-event-alert .nea-btn.is-primary,
 html.pu-on .nitro-phone-corner .phone-corner-btn.open {
   background: var(--pu-blue-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-blue-hi) !important;
   color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
@@ -345,6 +350,7 @@ html.pu-on .draggable-window .btn-primary:not(.btn-danger):active,
 html.pu-on .draggable-window .btn-success:active,
 html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active,
 html.pu-on .chat-image-upload-btn.send:active,
+html.pu-on .nitro-event-alert .nea-btn.is-primary:active,
 html.pu-on .user-profile .profile-nav-edit:active { background: var(--pu-blue-press) !important; }
 /* the default ones listed above win over primary/danger where Nitro uses those classes for a secondary action */
 html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn.btn-primary,
@@ -499,6 +505,7 @@ html.pu-on .nitro-catalog .catalog-default-image,
 html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child,
 html.pu-on .popover .room-info .room-thumbnail,
 html.pu-on .nitro-room-info .room-thumbnail,
+html.pu-on .nitro-event-alert .nea-avatar-wrap,
 html.pu-on .user-profile .profile-avatar {
   background-color: var(--pu-well); border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
 }
@@ -509,6 +516,7 @@ html.pu-on .nitro-catalog .catalog-default-image:empty { display: none !importan
 /* ---- Floating panels: room details, voice, music card, layer actions ---- */
 html.pu-on .popover:has(.room-info),
 html.pu-on #hud-more-voice:not(:empty),
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert,
 html.pu-on .nitro-phone-corner .phone-corner-card {
   background: var(--pu-s0) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi), var(--pu-float) !important; color: var(--pu-ink) !important;
 }
@@ -561,6 +569,8 @@ html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-
 html.pu-on .builders-tools .builders-tools-furni-count,
 html.pu-on .user-profile .profile-motto,
 html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]),
+html.pu-on .nitro-event-alert :is(.nea-kicker, .nea-sender),
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert-tab .neat-time,
 html.pu-on .nitro-avatar-editor .pu-lkt small { color: var(--pu-ink-2) !important; }
 /* hint */
 html.pu-on .nitro-chat-history-window .ch-chevron,
@@ -569,6 +579,7 @@ html.pu-on .user-profile .meta-label,
 html.pu-on .user-profile .relationship-empty,
 html.pu-on .user-profile .relationship-row .small,
 html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .nitro-event-alert .nea-by,
 html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { color: var(--pu-ink-3) !important; }
 /* main */
 html.pu-on .nitro-navigator .pu-owner.pu-lo,
@@ -582,6 +593,8 @@ html.pu-on .builders-tools .builders-tools-field-row,
 html.pu-on .rv-card-name,
 html.pu-on .user-profile .meta-value,
 html.pu-on .user-profile .relationship-row :is(a, .text-decoration-underline, b, strong),
+html.pu-on .nitro-event-alert :is(.nea-room, .nea-message),
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert-tab .neat-label,
 html.pu-on .nitro-avatar-editor .pu-lkt { color: var(--pu-ink) !important; }
 html.pu-on .rv-pill, html.pu-on .rv-pagelabel { color: var(--pu-ink-2) !important; }
 /* names: plain white bold (profiles ignore name styles and gradients) */
@@ -924,6 +937,43 @@ html.pu-on #hud-more-voice .nitro-voice-tools { width: 100% !important; max-widt
 html.pu-on #hud-more-voice .voice-tools-header { padding: var(--pu-gap) 52px var(--pu-gap) 10px !important; }
 html.pu-on #hud-more-voice .voice-tools-body { padding: var(--pu-gap) 10px 10px !important; }
 html.pu-on #hud-more-voice .voice-tools-toggle { position: absolute !important; z-index: 2; top: 6px !important; right: 6px !important; left: auto !important; }
+
+/* ---- Live event alert: Peace's own card (and its minimized tab) under the wallet, as wide as the wallet.
+        frame.js sets --pu-wallet-l to the wallet's left edge. Hidden while a window is open. ---- */
+html.pu-on .nitro-event-alerts-stack {
+  position: fixed !important; z-index: 455 !important; top: var(--pu-top) !important; left: var(--pu-wallet-l, 10px) !important; right: 10px !important;
+  transform: none !important; align-items: stretch !important; gap: 6px !important;
+}
+html.pu-on body:has(.draggable-window .nitro-card) .nitro-event-alerts-stack { display: none !important; }
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert {
+  min-width: 0 !important; max-width: none !important; width: auto !important; padding: var(--pu-gap) 10px 10px !important; font-family: var(--pu-font) !important;
+  grid-template-columns: 44px minmax(0, 1fr) !important; grid-template-rows: auto auto !important; column-gap: 10px !important; row-gap: var(--pu-gap) !important; align-items: start !important;
+}
+html.pu-on .nitro-event-alert .nea-avatar-wrap { grid-area: 1 / 1 !important; width: 44px !important; height: 44px !important; overflow: hidden !important; }
+html.pu-on .nitro-event-alert .nea-avatar-wrap .nea-avatar { position: absolute !important; left: 50%; top: 50%; width: 64px; height: 110px; max-width: none !important; max-height: none !important; margin: -38px 0 0 -32px; filter: none !important; }
+html.pu-on .nitro-event-alert .nea-body { grid-area: 1 / 2 !important; gap: 2px !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-kicker { gap: 6px !important; font: 700 var(--pu-fs-2xs)/14px var(--pu-font-bold) !important; letter-spacing: .08em !important; }
+html.pu-on .nitro-event-alert .nea-kicker-dot,
+html.pu-on .nitro-event-alert-tab .neat-dot { background: var(--pu-green) !important; box-shadow: none !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-heading { flex-wrap: wrap !important; gap: 0 4px !important; line-height: 1.3 !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-heading .nea-room { flex: 1 0 100%; max-width: 100% !important; font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-heading :is(.nea-by, .nea-sender) { font: 400 var(--pu-fs-sm)/1.3 var(--pu-font) !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-heading .nea-sender { font-family: var(--pu-font-bold) !important; font-weight: 700 !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-message { padding-top: 2px !important; font: 400 var(--pu-fs-sm)/1.35 var(--pu-font) !important; }
+html.pu-on .nitro-event-alert .nea-body .nea-message .nea-signoff { display: none !important; }
+html.pu-on .nitro-event-alert .nea-actions { grid-area: 2 / 1 / 3 / 3 !important; flex-direction: row-reverse !important; min-width: 0 !important; gap: var(--pu-gap) !important; }
+html.pu-on .nitro-event-alert .nea-btn { flex: 1 1 0; height: var(--pu-ctl) !important; padding: 0 10px !important; font-size: var(--pu-fs) !important; letter-spacing: 0 !important; transform: none !important; filter: none !important; }
+html.pu-on .nitro-event-alert .nea-progress { height: 2px !important; background: var(--pu-line) !important; }
+html.pu-on .nitro-event-alert .nea-progress .nea-progress-bar { background: var(--pu-blue) !important; }
+html.pu-on .nitro-event-alerts-stack .nitro-event-alert-tab {
+  height: var(--pu-ctl); padding: 0 10px !important; gap: var(--pu-gap) !important; justify-content: flex-start !important; transform: none !important; filter: none !important;
+  font: 700 var(--pu-fs-sm)/1 var(--pu-font-bold) !important; letter-spacing: 0 !important;
+}
+html.pu-on .nitro-event-alert-tab .neat-label { flex: 1 1 auto; max-width: none !important; text-align: left; }
+html.pu-on .nitro-event-alert-tab .neat-time { font-family: var(--pu-font) !important; }
+/* the music button moves under a minimized event, and steps aside while the full event card shows */
+html.pu-on body:has(.nitro-event-alert-tab) .nitro-phone-corner { top: calc(var(--pu-top) + var(--pu-ctl) + 6px) !important; }
+html.pu-on body:has(.nitro-event-alert) .nitro-phone-corner { display: none !important; }
 
 /* ---- Room music: Peace's own button and card under the wallet; hidden while a window is open ---- */
 html.pu-on .nitro-phone-corner { display: flex !important; position: fixed !important; z-index: 450 !important; top: var(--pu-top) !important; right: 10px !important; }
@@ -1319,7 +1369,7 @@ html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { displa
 
 <section class="sb-band">
   <h1>Peace UI design system</h1>
-  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version 21, so what you see here is exactly what the game draws.</p>
+  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version 22, so what you see here is exactly what the game draws.</p>
 </section>
 
 <section class="sb-band" id="screens">
@@ -1450,9 +1500,10 @@ html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { displa
     <article class="sb-card" id="floating"><header><h3 class="sb">Floating panels and switch</h3><p>Things that float over the game: dark s0, black edge, a soft drop shadow.</p></header>
       <div class="sb-demo col">
         <div class="nitro-phone-corner" style="position:static!important;display:block!important"><div class="phone-corner-card" style="padding:12px;animation:none">Music card, voice panel, room details and drop-downs all use this look.</div></div>
+        <div class="nitro-event-alerts-stack" style="position:static!important;display:flex;flex-direction:column;gap:6px;max-width:300px"><div class="nitro-event-alert" style="display:grid;position:relative;overflow:hidden"><div class="nea-avatar-wrap" style="position:relative"></div><div class="nea-body" style="display:flex;flex-direction:column"><div class="nea-kicker" style="display:inline-flex;align-items:center;text-transform:uppercase"><span class="nea-kicker-dot" style="width:6px;height:6px;border-radius:50%"></span>Live Event · 4:32</div><div class="nea-heading" style="display:flex;white-space:nowrap;overflow:hidden"><span class="nea-room" style="overflow:hidden;text-overflow:ellipsis">Calcifer's Cafe</span><span class="nea-by">hosted by</span><span class="nea-sender">Calcifer</span></div><div class="nea-message">“Free drinks tonight”</div></div><div class="nea-actions" style="display:flex"><button class="nea-btn is-primary" style="display:inline-flex;align-items:center;justify-content:center">Go to Room →</button><button class="nea-btn is-ghost" style="display:inline-flex;align-items:center;justify-content:center">Minimize</button></div></div><button class="nitro-event-alert-tab" style="display:inline-flex;align-items:center"><span class="neat-dot" style="width:6px;height:6px;border-radius:50%"></span><span class="neat-label">Live Event · Calcifer's Cafe</span><span class="neat-time">2:10</span></button></div>
         <div class="builders-tools" style="display:flex;gap:10px;align-items:center"><span class="is-ticked"></span><span class="is-not-ticked"></span><span style="color:var(--pu-ink-2);font-size:13px">Switch on / off (Builders tool)</span></div>
       </div>
-      <div class="sb-use"><b>Used on:</b> room details card, voice panel, music card, currency drop-down, Room menu, friend card, toasts, layer actions</div>
+      <div class="sb-use"><b>Used on:</b> room details card, voice panel, music card, live event card (under the wallet, as wide as it), currency drop-down, Room menu, friend card, toasts, layer actions</div>
     </article>
   </div>
 </section>
