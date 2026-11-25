@@ -899,8 +899,8 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button>' +
-      '<button class="pill online" data-a="online" hidden>' + ic('users', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button></div>' +
+      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span></button>' +
+      '<button class="pill online" data-a="online" hidden>' + ic('users', 16) + '<span class="ct"><b></b></span></button></div>' +
       '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
       '<div class="pop rpop" id="rpop"></div>' +
@@ -968,7 +968,7 @@
     } else { $chip.hidden = true; if ($rpop.classList.contains('on')) closeRoomMenu(); }
     $money.innerHTML = PILL.filter(function (t) { return t === -1 || amount(t) != null; }).map(function (t) {
       return '<span class="cy">' + cicon(t) + '<b>' + short(amount(t)) + '</b></span>';
-    }).join('') + ic('chevd', 16);
+    }).join('');
     if ($pop.classList.contains('on')) renderPop();
   }
   function amount(t) { return t === -1 ? S.credits : S.cur[t]; }
@@ -1092,18 +1092,23 @@
       return (bm - am) || (!!onFriend(b.name) - !!onFriend(a.name)) || byName(a, b);
     });
   }
+  // The website lists online players in a random order on every request, so reading page 1 then page 2 can show
+  // someone twice and miss someone else. Read the pages again (a few rounds at most) until everyone is in.
   function onLoad(force) {
     if (ON.busy) return ON.busy;
     if (!force && ON.list && Date.now() - ON.at < 30000) return Promise.resolve(ON.list);
-    ON.busy = onAsk(1).then(function (d) {
-      var out = onUsers(d), total = onTotal(d, out), last = Math.min(d.last_page || 1, ON_PAGES), chain = Promise.resolve();
-      for (var p = 2; p <= last; p++) (function (p) { chain = chain.then(function () { return onAsk(p).then(function (x) { out = out.concat(onUsers(x)); }, function () {}); }); })(p);
-      return chain.then(function () {
-        var seen = {};
-        out = out.filter(function (u) { var k = u.name.toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; });
-        ON.fails = 0; ON.n = total; ON.list = onSort(out); ON.at = Date.now(); ON.more = Math.max(0, total - out.length);
-        return ON.list;
-      });
+    var seen = {}, out = [], total = 0, last = 1, calls = 0, MAXCALLS = 16;
+    function add(d) { onUsers(d).forEach(function (u) { var k = u.name.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(u); } }); }
+    function page(p) { calls++; return onAsk(p).then(function (d) { if (p === 1) { total = onTotal(d, onUsers(d)); last = Math.min(d.last_page || 1, ON_PAGES); } add(d); }, function () {}); }
+    function round() {
+      var chain = page(1);
+      chain = chain.then(function () { var c = Promise.resolve(); for (var p = 2; p <= last; p++) (function (p) { c = c.then(function () { return page(p); }); })(p); return c; });
+      return chain.then(function () { if (out.length < Math.min(total, ON_PAGES * 10) && last > 1 && calls + last <= MAXCALLS) return round(); });
+    }
+    ON.busy = round().then(function () {
+      if (!calls || (!out.length && !total)) { if (!ON.list) throw new Error('no answer'); return ON.list; }
+      ON.fails = 0; ON.n = Math.max(total, out.length); ON.list = onSort(out); ON.at = Date.now(); ON.more = Math.max(0, ON.n - out.length);
+      return ON.list;
     });
     ON.busy.then(function () { ON.busy = null; }, function () { ON.busy = null; });
     return ON.busy;
@@ -1232,6 +1237,9 @@
     var on = S.sheet;
     if (!on) { var top = topNitroWindow(); Object.keys(TABWIN).forEach(function (t) { if (top && tabWindow(t) === top) on = t; }); }
     root.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.tab === on); });
+    // The online counter sits behind everything: it hides while a tab, window or page is open.
+    var busy = !!(S.sheet || pageOpen() || nitroWindows().length);
+    if (busy !== S.busy) { S.busy = busy; root.querySelector('.top').classList.toggle('busy', busy); if (busy) closeOnline(); }
   }
   // One tab at a time: opening a tab closes the other game windows first.
   function closeNitroWindows(keep) {

@@ -122,6 +122,7 @@ html.pu-on {
 
   /* Icons. Masks (drawn in currentColor): close, turn, undo, save, wear. Backgrounds (drawn in --pu-ink-3): search, chevron, hints. */
   --pu-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
+  --pu-i-edit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.17 6.81a2.82 2.82 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5zM15 5l4 4'/%3E%3C/svg%3E"); /* edit (pencil), same stroke as the X */
   --pu-i-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
   --pu-i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
   --pu-i-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
@@ -239,29 +240,36 @@ html.pu-on .draggable-window .nitro-card-tabs { background: var(--pu-s0) !import
 /* ---- Close (X): one size, one drawing, everywhere. The profile's is the red variant (danger). ---- */
 html.pu-on .draggable-window .nitro-card-header-close,
 html.pu-on .user-profile .profile-nav-close,
+html.pu-on .user-profile .profile-nav-edit,
 html.pu-on .popover .pu-x,
 html.pu-on #hud-more-voice .voice-tools-toggle {
   width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; margin: 0 !important;
-  display: grid !important; place-items: center !important; cursor: pointer;
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 0 !important; cursor: pointer;
   background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
-  color: var(--pu-ink) !important; font-size: 0 !important; text-shadow: none !important;
+  color: var(--pu-ink) !important; font-size: 0 !important; line-height: 0 !important; text-shadow: none !important;
 }
 html.pu-on .draggable-window .nitro-card-header-close > *,
 html.pu-on .user-profile .profile-nav-close > *,
+html.pu-on .user-profile .profile-nav-edit > *,
 html.pu-on .popover .pu-x > *,
 html.pu-on #hud-more-voice .voice-tools-toggle > * { display: none !important; }
 html.pu-on .draggable-window .nitro-card-header-close::before,
 html.pu-on .user-profile .profile-nav-close::before,
+html.pu-on .user-profile .profile-nav-edit::before,
 html.pu-on .popover .pu-x::before,
 html.pu-on #hud-more-voice .voice-tools-toggle::before {
-  content: '' !important; display: block !important; position: static !important; width: 14px !important; height: 14px !important; margin: 0 !important;
+  content: '' !important; display: block !important; position: static !important; flex: none !important; width: 14px !important; height: 14px !important; margin: 0 !important;
   border: 0 !important; background: currentColor !important; transform: none !important; opacity: 1 !important;
   -webkit-mask: var(--pu-i-x) center / contain no-repeat; mask: var(--pu-i-x) center / contain no-repeat;
 }
 html.pu-on .draggable-window .nitro-card-header-close::after,
 html.pu-on .user-profile .profile-nav-close::after,
+html.pu-on .user-profile .profile-nav-edit::after,
 html.pu-on .popover .pu-x::after,
 html.pu-on #hud-more-voice .voice-tools-toggle::after { content: none !important; display: none !important; }
+html.pu-on .user-profile .profile-nav-edit::before { -webkit-mask-image: var(--pu-i-edit); mask-image: var(--pu-i-edit); }
+/* The profile's X is a .btn with a "×" text: the button rule's font size would show it under the drawing. */
+html.pu-on .draggable-window > .nitro-card.user-profile .profile-nav-actions .btn { font-size: 0 !important; gap: 0 !important; }
 html.pu-on .draggable-window .nitro-card-header-close:active,
 html.pu-on .popover .pu-x:active,
 html.pu-on #hud-more-voice .voice-tools-toggle:active { background: var(--pu-tone-press) !important; }
@@ -426,14 +434,12 @@ html.pu-on .nitro-navigator .nav-thumbnail,
 html.pu-on .builders-tools .builders-tools-toggle-list,
 html.pu-on .builders-tools .builders-tools-field-row,
 html.pu-on .rv-card,
-html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card),
+html.pu-on .user-profile :is(.bento, section.identity-relationships, .profile-section, .bento-card),
 html.pu-on .draggable-window .content-area .layout-grid-item:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.room-creator-grid-item):not(.nitro-catalog-navigation-grid-container .layout-grid-item) {
   background: var(--pu-s1) !important; background-image: none !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 html.pu-on .draggable-window .content-area .layout-grid-item.active:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.nitro-catalog-navigation-grid-container .layout-grid-item) { background: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; }
-/* raised panel inside a panel */
-html.pu-on .user-profile .relationship-row { background: var(--pu-s2) !important; }
 /* outlined card: a light edge round a picture card (Rooms grid) */
 html.pu-on .nitro-navigator .nav-thumbnail { border-color: var(--pu-line-solid) !important; box-shadow: none !important; overflow: hidden !important; }
 /* split panel: two stacked parts that read as one box (Shop quantity + buy buttons) */
@@ -658,7 +664,10 @@ html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display
 html.pu-on .user-profile .profile-nav-actions { flex: none !important; align-self: center !important; gap: 6px !important; margin: 0 !important; }
 html.pu-on .user-profile .profile-nav-close,
 html.pu-on .user-profile .profile-nav-edit,
-html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+/* the four tabs share the width left of the buttons, so "Other" isn't cut off */
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { gap: 6px !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs > .nav-link { flex: 1 1 0 !important; min-width: 0 !important; padding: 0 6px !important; justify-content: center !important; text-align: center !important; overflow: hidden !important; text-overflow: ellipsis !important; }
 html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
 html.pu-on .user-profile .identity-row,
 html.pu-on .user-profile .identity-relationships,
@@ -666,7 +675,47 @@ html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !
 html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
 html.pu-on .user-profile .bento { padding: 10px !important; }
 html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
-html.pu-on .user-profile .relationship-row { padding: var(--pu-gap) 10px !important; min-height: 40px; }
+/* Relationships: heart / smile / bobba as three small cards in one row.
+   Icon in the corner, the friend's head centred and never clipped, name below. */
+html.pu-on .user-profile section.identity-relationships { gap: var(--pu-gap) !important; }
+html.pu-on .user-profile section.identity-relationships .bento-header { display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; margin: 0 !important; }
+html.pu-on .user-profile .relationships-list { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+html.pu-on .user-profile .relationships-list .relationship-row {
+  position: relative !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important;
+  min-height: 96px !important; height: auto !important; padding: 8px 6px !important; overflow: hidden !important; text-align: center !important;
+  background: var(--pu-s2) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-icon { position: absolute !important; top: 6px !important; left: 6px !important; margin: 0 !important; z-index: 1; }
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) .relationship-icon { opacity: .55; }
+/* Peace marks the body flex-grow-1, which pushed "None" to the top of a tall card */
+html.pu-on .user-profile .relationships-list .relationship-body { flex: none !important; width: 100% !important; min-width: 0 !important; }
+/* an empty card next to a filled one: icon and "None" stacked in the middle */
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) { gap: 4px !important; }
+html.pu-on .user-profile .relationships-list .relationship-row:has(.relationship-empty) .relationship-icon { position: static !important; }
+/* all three empty: short boxes, icon and "None" side by side in the middle */
+html.pu-on .user-profile .relationships-list:not(:has(.relationship-avatar)) .relationship-row { flex-direction: row !important; gap: 6px !important; min-height: 0 !important; padding: 8px 6px !important; }
+html.pu-on .user-profile .relationships-list:not(:has(.relationship-avatar)) .relationship-body { width: auto !important; }
+/* head above the name: Peace puts the name block first and the head second */
+html.pu-on .user-profile .relationships-list .relationship-body > div { display: flex !important; flex-direction: column-reverse !important; align-items: center !important; justify-content: flex-end !important; gap: 4px !important; width: 100% !important; min-width: 0 !important; }
+html.pu-on .user-profile .relationships-list .relationship-body > div > div:not(.relationship-avatar) { width: 100% !important; min-width: 0 !important; }
+html.pu-on .user-profile .relationships-list :is(.relationship-name, .relationship-more, .relationship-empty) {
+  display: block !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-decoration: none !important; line-height: 1.35 !important; text-align: center !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-name { font: 700 var(--pu-fs-sm) var(--pu-font-bold) !important; color: var(--pu-ink) !important; }
+html.pu-on .user-profile .relationships-list .relationship-more { font: 400 var(--pu-fs-xs) var(--pu-font) !important; color: var(--pu-ink-3) !important; }
+/* the empty text ("No friends in this category") becomes a short "None" */
+html.pu-on .user-profile .relationships-list .relationship-empty { font-size: 0 !important; }
+html.pu-on .user-profile .relationships-list .relationship-empty { display: flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; }
+html.pu-on .user-profile .relationships-list .relationship-empty::after { content: 'None'; font: 400 var(--pu-fs-sm) var(--pu-font); line-height: 16px; color: var(--pu-ink-3); }
+/* the head: Nitro draws it inside a 90x130 box, head at about x 22-70, y 20-72.
+   A 48x54 slot holds that part; tall hats may rise above it, so the slot never clips. */
+html.pu-on .user-profile .relationships-list .relationship-avatar {
+  position: relative !important; top: auto !important; right: auto !important; left: auto !important; width: 48px !important; height: 54px !important; flex: none !important;
+  overflow: visible !important; background: none !important; box-shadow: none !important; border-radius: 0 !important;
+}
+html.pu-on .user-profile .relationships-list .relationship-avatar .avatar-image {
+  position: absolute !important; left: 50% !important; top: -18px !important; margin: 0 0 0 -45px !important; transform: none !important;
+}
 html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
 html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
 html.pu-on .user-profile .friend-btn { display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important; }
