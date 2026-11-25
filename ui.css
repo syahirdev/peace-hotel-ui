@@ -140,16 +140,16 @@ svg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-widt
 .lcol { flex: none; display: flex; flex-direction: column; gap: 6px; }
 .lcol:not(:has(> :not([hidden]))) { display: none; }
 .pill {
-  height: var(--pu-ctl); display: flex; align-items: center; gap: 6px; padding: 0 6px 0 9px; color: var(--pu-ink);
+  height: var(--pu-ctl); display: flex; align-items: center; gap: 6px; padding: 0 10px; color: var(--pu-ink);
   font: 700 var(--pu-fs-sm)/1 var(--pu-font-bold); font-variant-numeric: tabular-nums;
   background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);
 }
 .pill:active { background: var(--pu-tone-press); }
-.pill > svg.i:last-child { color: var(--pu-ink-3); }
+.top.busy .online { display: none; }
 .roomchip .ct, .online .ct { display: flex; align-items: center; gap: 3px; color: var(--pu-ink-2); flex: none; }
 .lcol > .pill { justify-content: flex-start; }
 .online > svg.i:first-child { color: var(--pu-green); }
-.money { flex: 1 1 auto; justify-content: space-between; gap: var(--pu-gap); padding: 0 6px 0 var(--pu-gap); }
+.money { flex: 1 1 auto; justify-content: space-between; gap: var(--pu-gap); padding: 0 var(--pu-pad); }
 .money .cy { display: flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; }
 .ci { width: 18px; height: 18px; object-fit: contain; image-rendering: pixelated; flex: none; }
 /* currency drop-down */

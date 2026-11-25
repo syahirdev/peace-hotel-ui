@@ -812,8 +812,8 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button>' +
-      '<button class="pill online" data-a="online" hidden>' + ic('users', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button></div>' +
+      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span></button>' +
+      '<button class="pill online" data-a="online" hidden>' + ic('users', 16) + '<span class="ct"><b></b></span></button></div>' +
       '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
       '<div class="pop rpop" id="rpop"></div>' +
@@ -881,7 +881,7 @@
     } else { $chip.hidden = true; if ($rpop.classList.contains('on')) closeRoomMenu(); }
     $money.innerHTML = PILL.filter(function (t) { return t === -1 || amount(t) != null; }).map(function (t) {
       return '<span class="cy">' + cicon(t) + '<b>' + short(amount(t)) + '</b></span>';
-    }).join('') + ic('chevd', 16);
+    }).join('');
     if ($pop.classList.contains('on')) renderPop();
   }
   function amount(t) { return t === -1 ? S.credits : S.cur[t]; }
@@ -1145,6 +1145,9 @@
     var on = S.sheet;
     if (!on) { var top = topNitroWindow(); Object.keys(TABWIN).forEach(function (t) { if (top && tabWindow(t) === top) on = t; }); }
     root.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.tab === on); });
+    // The online counter sits behind everything: it hides while a tab, window or page is open.
+    var busy = !!(S.sheet || pageOpen() || nitroWindows().length);
+    if (busy !== S.busy) { S.busy = busy; root.querySelector('.top').classList.toggle('busy', busy); if (busy) closeOnline(); }
   }
   // One tab at a time: opening a tab closes the other game windows first.
   function closeNitroWindows(keep) {
