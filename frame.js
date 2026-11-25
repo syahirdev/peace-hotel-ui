@@ -31,7 +31,7 @@
     FRIENDS: 3130, FRIENDS_UPDATE: 2800, REQUESTS: 280, NEW_REQUEST: 2219, MESSENGER_CHAT: 1587,
     BATTLEPASS_DATA: 7212
   };
-  var OUT = { FOLLOW: 3997, PROFILE: 3265, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
+  var OUT = { FOLLOW: 3997, PROFILE: 3265, PROFILE_BY_NAME: 2249, MESSENGER_CHAT: 3567, ACCEPT: 137, DECLINE: 2890 };
   // Nitro controls the tabs and Me tiles press. Each entry: selectors to try, in order.
   // Peace's client always renders its desktop toolbar (.nitro-toolbar) next to the phone tab bar, so the
   // first group is always in the page. The Me group lives in Nitro's Me menu (.nitro-toolbar-me), which
@@ -799,7 +799,7 @@
   function nameOf(id) { var f = S.friends[id]; return f ? f.name : 'User ' + id; }
 
   // ---------------------------------------------------------------- DOM
-  var host, root, $tabs, $sheet, $shc, $page, $modal, $card, $toast, $pop, $rpop, $chip, $money, $zoom;
+  var host, root, $tabs, $sheet, $shc, $page, $modal, $card, $toast, $pop, $rpop, $opop, $on, $chip, $money, $zoom;
   function $(sel) { return root.querySelector(sel); }
 
   function mount() {
@@ -812,10 +812,12 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button></div>' +
+      '<div class="top"><div class="lcol"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button>' +
+      '<button class="pill online" data-a="online" hidden>' + ic('users', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button></div>' +
       '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
       '<div class="pop rpop" id="rpop"></div>' +
+      '<div class="pop opop" id="opop"></div>' +
       '<div class="sheet" id="sheet"><div class="shc" id="shc"></div></div>' +
       '<nav class="tabs" id="tabs">' +
       tab('rooms', 'compass', 'Rooms') + tab('shop', 'bag', 'Shop') + tab('friends', 'users', 'Friends', 'fbadge') + tab('inventory', 'box', 'Inventory') +
@@ -829,7 +831,7 @@
     document.body.appendChild(host);
 
     $tabs = $('#tabs'); $sheet = $('#sheet'); $shc = $('#shc'); $page = $('#page'); $modal = $('#modal'); $card = $('#card');
-    $toast = $('#toast'); $pop = $('#pop'); $rpop = $('#rpop'); $chip = $('.roomchip'); $money = $('#crk'); $zoom = $('#zoom');
+    $toast = $('#toast'); $pop = $('#pop'); $rpop = $('#rpop'); $opop = $('#opop'); $on = $('.pill.online'); $chip = $('.roomchip'); $money = $('#crk'); $zoom = $('#zoom');
 
     var nitroStyle = document.createElement('style');
     nitroStyle.id = 'peace-ui-nitro';
@@ -839,6 +841,7 @@
     setDark(true);
     bind();
     renderAll();
+    onStart();
     post({ a: 'ready' });
   }
   function tab(id, icon, label, badge) {
@@ -933,6 +936,125 @@
   function closeRoomMenu(keepInfo) {
     if (!$rpop.classList.contains('on')) return;
     $rpop.classList.remove('on'); closeRoomInfo(keepInfo); closeRoomTools(); report();
+  }
+
+  // ---------------------------------------------------------------- Online players (counter under the room chip + list)
+  // The website's own list (www.peacehotel.my/api/online-users, 10 a page) only allows its own origin, so the app's
+  // script on the website page reads it for us (postMessage). An older app has no such script: no answer, no counter.
+  // Calls: page 1 once a minute while the game is on screen (the count), and every page when the list is opened.
+  var ON = { n: null, list: null, at: 0, more: 0, seq: 0, wait: {}, busy: null, fails: 0, timer: 0 };
+  var ON_PAGES = 10, ON_EVERY = 60000;
+  var CP1252 = { 0x20ac: 0x80, 0x201a: 0x82, 0x0192: 0x83, 0x201e: 0x84, 0x2026: 0x85, 0x2020: 0x86, 0x2021: 0x87, 0x02c6: 0x88, 0x2030: 0x89, 0x0160: 0x8a,
+    0x2039: 0x8b, 0x0152: 0x8c, 0x017d: 0x8e, 0x2018: 0x91, 0x2019: 0x92, 0x201c: 0x93, 0x201d: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+    0x02dc: 0x98, 0x2122: 0x99, 0x0161: 0x9a, 0x203a: 0x9b, 0x0153: 0x9c, 0x017e: 0x9e, 0x0178: 0x9f };
+  var MOJI = /[Â-ô][\u0080-¿ŒœŠšŸŽžƒˆ˜–—‘-‚“-„†-•…‰‹›€™]/;
+  var UTF8 = new TextDecoder('utf-8', { fatal: true });
+  // Peace sends some text encoded twice (UTF-8 bytes read as Windows-1252); turn it back, leave anything else alone.
+  function unmoji(s) {
+    var t = String(s == null ? '' : s);
+    if (!MOJI.test(t)) return t;
+    var b = [];
+    for (var ch of t) { var c = ch.codePointAt(0), v = c < 0x100 ? c : CP1252[c]; if (v == null) return t; b.push(v); }
+    try { return UTF8.decode(new Uint8Array(b)); } catch (e) { return t; }
+  }
+  function onAsk(page) {
+    return new Promise(function (res, rej) {
+      if (window.parent === window) { rej(new Error('no page')); return; }
+      var id = ++ON.seq, t = setTimeout(function () { delete ON.wait[id]; rej(new Error('timeout')); }, 8000);
+      ON.wait[id] = function (d) { clearTimeout(t); delete ON.wait[id]; if (d.ok && d.data) res(d.data); else rej(new Error(d.error || 'failed')); };
+      try { window.parent.postMessage({ peaceUi: 'online', id: id, page: page }, '*'); } catch (e) { clearTimeout(t); delete ON.wait[id]; rej(e); }
+    });
+  }
+  window.addEventListener('message', function (e) {
+    var d = e.data;
+    if (e.source !== window.parent || !d || d.peaceUi !== 'online' || !ON.wait[d.id]) return;
+    if (!/^https:\/\/(www\.)?peacehotel\.my$/.test(e.origin)) return;
+    ON.wait[d.id](d);
+  });
+  function onUsers(d) {
+    return (d && d.data || []).filter(function (u) { return u && u.username; }).map(function (u) { return { name: String(u.username), look: u.look || '', motto: unmoji(u.motto || '').trim() }; });
+  }
+  function onTotal(d, users) { return typeof d.total === 'number' ? d.total : users.length; }
+  function onCount() {
+    if (document.visibilityState === 'hidden' || ON.busy) return;
+    onAsk(1).then(function (d) {
+      var users = onUsers(d);
+      ON.fails = 0; ON.n = onTotal(d, users);
+      if ((d.last_page || 1) <= 1) { ON.list = onSort(users); ON.at = Date.now(); ON.more = 0; }
+      renderOnline();
+    }, function () {
+      // a few misses in a row (old app, or the website is down): hide the counter until it answers again
+      if (++ON.fails >= 3 && ON.n != null) { ON.n = null; renderOnline(); }
+    });
+  }
+  function onStart() {
+    if (ON.timer) return;
+    setTimeout(onCount, 1500);
+    ON.timer = setInterval(onCount, ON_EVERY);
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && Date.now() - ON.at > ON_EVERY) onCount(); });
+  }
+  function onFriend(name) {
+    var l = name.toLowerCase(), hit = null;
+    Object.keys(S.friends).some(function (k) { var f = S.friends[k]; if (f.name && f.name.toLowerCase() === l) { hit = f; return true; } return false; });
+    return hit;
+  }
+  function onSort(list) {
+    var meName = (S.me.name || '').toLowerCase();
+    return list.sort(function (a, b) {
+      var am = a.name.toLowerCase() === meName, bm = b.name.toLowerCase() === meName;
+      return (bm - am) || (!!onFriend(b.name) - !!onFriend(a.name)) || byName(a, b);
+    });
+  }
+  function onLoad(force) {
+    if (ON.busy) return ON.busy;
+    if (!force && ON.list && Date.now() - ON.at < 30000) return Promise.resolve(ON.list);
+    ON.busy = onAsk(1).then(function (d) {
+      var out = onUsers(d), total = onTotal(d, out), last = Math.min(d.last_page || 1, ON_PAGES), chain = Promise.resolve();
+      for (var p = 2; p <= last; p++) (function (p) { chain = chain.then(function () { return onAsk(p).then(function (x) { out = out.concat(onUsers(x)); }, function () {}); }); })(p);
+      return chain.then(function () {
+        var seen = {};
+        out = out.filter(function (u) { var k = u.name.toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; });
+        ON.fails = 0; ON.n = total; ON.list = onSort(out); ON.at = Date.now(); ON.more = Math.max(0, total - out.length);
+        return ON.list;
+      });
+    });
+    ON.busy.then(function () { ON.busy = null; }, function () { ON.busy = null; });
+    return ON.busy;
+  }
+  function renderOnline() {
+    if (!$on) return;
+    $on.hidden = ON.n == null;
+    if (ON.n != null) { $on.querySelector('b').textContent = ON.n; $on.setAttribute('aria-label', ON.n + ' players online'); }
+    if ($opop.classList.contains('on')) renderOnlineList();
+  }
+  function onRow(u) {
+    var f = onFriend(u.name), me = u.name.toLowerCase() === (S.me.name || '').toLowerCase();
+    return '<div class="row" data-on="' + esc(u.name) + '" role="button" tabindex="0">' + av(u.name, u.look) +
+      '<span class="who"><span class="nm"><span>' + esc(u.name) + '</span>' + (me ? '<span class="tag">You</span>' : f ? '<span class="tag">Friend</span>' : '') + '</span>' +
+      (u.motto ? '<span class="mt">' + esc(u.motto) + '</span>' : '') + '</span>' +
+      (f && !me ? '<span class="acts"><button class="act" data-chat="' + f.id + '" aria-label="Message ' + esc(u.name) + '">' + ic('msg') + '</button></span>' : '') + '</div>';
+  }
+  function renderOnlineList() {
+    var n = ON.n == null ? '' : ON.n + ' player' + (ON.n === 1 ? '' : 's');
+    var body = !ON.list ? '<div class="empty sm">Loading…</div>'
+      : !ON.list.length ? '<div class="empty sm">Nobody is online right now.</div>'
+      : ON.list.map(onRow).join('') + (ON.more ? '<div class="empty sm">+' + ON.more + ' more</div>' : '');
+    $opop.innerHTML = '<div class="rhead"><div class="rht"><b>Online now</b><small>' + n + '</small></div>' + xbtn('oclose', 'Close') + '</div><div class="olist">' + body + '</div>';
+  }
+  function openOnline() {
+    $pop.classList.remove('on'); closeRoomMenu();
+    // under the counter, down to just above the tab bar
+    var top = Math.round($on.getBoundingClientRect().bottom) + 6;
+    $opop.style.top = top + 'px'; $opop.style.maxHeight = 'calc(100% - ' + top + 'px - var(--pu-tabs) - 10px)';
+    $opop.classList.add('on'); renderOnlineList(); report();
+    onLoad().then(function () { if ($opop.classList.contains('on')) renderOnlineList(); }, function () {
+      if ($opop.classList.contains('on') && !ON.list) $opop.querySelector('.olist').innerHTML = '<div class="empty sm">Could not load the list. Try again in a minute.</div>';
+    });
+  }
+  function closeOnline() { if (!$opop.classList.contains('on')) return; $opop.classList.remove('on'); report(); }
+  // Opens a player's profile by name (Nitro's profile-by-name request, the same as tapping a name in the game).
+  function profileByName(name) {
+    if (send(OUT.PROFILE_BY_NAME, [name])) closeAll();
   }
   function roomInfoParts() {
     var el = roomInfoEl(); S.riEls = [];
@@ -1209,10 +1331,10 @@
   function post(o) { if (BRIDGE) { try { BRIDGE.postMessage(JSON.stringify(o)); } catch (e) {} } }
   var lastReported = null;
   function report() {
-    var open = !!(S.sheet || pageOpen() || ($zoom && $zoom.classList.contains('on')) || ($modal && $modal.classList.contains('on')) || ($pop && $pop.classList.contains('on')) || ($rpop && $rpop.classList.contains('on')));
+    var open = !!(S.sheet || pageOpen() || ($zoom && $zoom.classList.contains('on')) || ($modal && $modal.classList.contains('on')) || ($pop && $pop.classList.contains('on')) || ($rpop && $rpop.classList.contains('on')) || ($opop && $opop.classList.contains('on')));
     if (open !== lastReported) { lastReported = open; post({ a: 'overlay', open: open }); }
   }
-  function closeAll() { zoomClose(); closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); closeRoomMenu(); report(); }
+  function closeAll() { zoomClose(); closeModal(); closePage(); closeSheet(); $pop.classList.remove('on'); closeRoomMenu(); closeOnline(); report(); }
   // Android Back button, one step at a time: the top panel of this UI, then the top Nitro window, then a
   // panel that opened that window (a profile opened from Friends goes back to Friends). The app asks the
   // player to close the game only when this answers that nothing was left to close.
@@ -1230,6 +1352,7 @@
     var shopPage = document.querySelector('.nitro-catalog.pu-page'), win;
     if (zoomClose()) { /* zoomed preview closed */ }
     else if ($rpop.classList.contains('on')) closeRoomMenu();
+    else if ($opop.classList.contains('on')) closeOnline();
     else if ($pop.classList.contains('on')) $pop.classList.remove('on');
     else if ($modal.classList.contains('on')) closeModal();
     else if (pageOpen()) closePage();
@@ -1270,7 +1393,7 @@
     }, true);
 
     root.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt],[data-ri]');
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt],[data-ri],[data-on]');
       if (!el || el.disabled) return;
       var d = el.dataset;
       if (d.tab) {
@@ -1290,8 +1413,10 @@
           case 'zin': zoomSet(S.zoom + 0.5); break;
           case 'zout': zoomSet(S.zoom - 0.5); break;
           case 'zclose': zoomClose(); break;
-          case 'room': if ($rpop.classList.contains('on')) closeRoomMenu(); else openRoomMenu(); break;
-          case 'money': closeRoomMenu(); if ($pop.classList.toggle('on')) { $pop.style.width = $money.offsetWidth + 'px'; renderPop(); } report(); break;
+          case 'room': closeOnline(); if ($rpop.classList.contains('on')) closeRoomMenu(); else openRoomMenu(); break;
+          case 'online': if ($opop.classList.contains('on')) closeOnline(); else openOnline(); break;
+          case 'oclose': closeOnline(); break;
+          case 'money': closeRoomMenu(); closeOnline(); if ($pop.classList.toggle('on')) { $pop.style.width = $money.offsetWidth + 'px'; renderPop(); } report(); break;
           case 'fclr': S.q = ''; var i = $('#fq'); if (i) i.value = ''; renderFriendBody(); break;
           case 'cclose': closeModal(); break;
           case 'back': closePage(); break;
@@ -1327,6 +1452,7 @@
         openNitro(d.me, tile ? tile[1] : 'This');
         return;
       }
+      if (d.on) { profileByName(d.on); return; }
       if (d.app) { closeAll(); post({ a: d.app }); return; }
     });
 
