@@ -418,7 +418,9 @@
       var col = el.querySelector(':scope > .flex-column:not(.room-thumbnail)'); if (!col) return;
       var rd = null; try { rd = roomDataOf(el); } catch (e) {}
       var th = el.querySelector(':scope > .pu-thumb');
-      if (!el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)')) {
+      // React reuses row elements: a row that became a Public row (own picture) drops the one added here.
+      if (th && (!el.classList.contains('my-world-item') || el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)'))) { th.remove(); th = null; }
+      if (el.classList.contains('my-world-item') && !el.querySelector(':scope > .room-thumbnail:not(.pu-thumb)')) {
         var id = rd && (rd.roomId || rd._roomId), b = col.querySelector('.badge');
         if (id) {
           if (!th) { th = document.createElement('div'); th.className = 'pu-thumb flex-shrink-0 overflow-hidden room-thumbnail border d-flex flex-column align-items-center justify-content-end thumbnailsmalslsk'; el.insertBefore(th, el.firstChild); }
@@ -800,7 +802,7 @@
     root.appendChild(style);
     var wrap = document.createElement('div');
     wrap.innerHTML =
-      '<div class="top"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct">' + ic('user', 14) + '<b></b></span>' + ic('chevd', 15) + '</button>' +
+      '<div class="top"><button class="pill roomchip" data-a="room" hidden>' + ic('home', 16) + '<span class="ct"><b></b></span>' + ic('chevd', 15) + '</button>' +
       '<button class="pill money" data-a="money" id="crk"></button></div>' +
       '<div class="pop" id="pop"></div>' +
       '<div class="pop rpop" id="rpop"></div>' +
@@ -939,7 +941,7 @@
       out.acts.push({ ic: u[0], t: u[1], on: b.classList.contains('is-active') || /(^|[^n])active|_on\b/.test(((b.querySelector('img') || {}).src || '').split('/').pop()), i: ref(b), keep: u[0] === 'link' });
     });
     var gear = el.querySelector('.settings-room-infoss');
-    if (gear) out.acts.push({ ic: 'cog', t: 'Settings', i: ref(gear) });
+    if (gear) out.gear = ref(gear);
     ca.querySelectorAll('.btn:not(.btn-grpup > .btn):not(.settings-room-infoss)').forEach(function (b) {
       var t = b.textContent.trim(); if (t) out.btns.push({ t: t, danger: b.classList.contains('btn-danger') || /report/i.test(t), i: ref(b) });
     });
@@ -950,7 +952,10 @@
     var name = box && box.querySelector('.rt-room-name');
     var ppl = S.room && S.room.users != null ? S.room.users + (S.room.max ? ' of ' + S.room.max : '') + ' people here' : '';
     var bld = box && box.querySelector(RT.find(function (x) { return x[0] === 'builder'; })[1]);
+    var info = box ? roomInfoParts() : null, sec = '';
+    // Owner tools sit together on the right of the name: room settings, then the builder tools.
     var head = '<div class="rhead"><div class="rht"><b>' + esc(name ? name.textContent : (S.room ? S.room.name : 'Room')) + '</b>' + (ppl ? '<small>' + esc(ppl) + '</small>' : '') + '</div>' +
+      (info && info.gear != null ? '<button class="sqb rbld" data-ri="' + info.gear + '" aria-label="Room settings">' + ic('cog', 18) + '</button>' : '') +
       (bld ? '<button class="sqb rbld" data-rt="builder" aria-label="Builder tools">' + ic('hardhat', 18) + '</button>' : '') + '</div>';
     if (!box) { $rpop.innerHTML = head + '<div class="empty sm">Room tools are not available here</div>'; return; }
     var btns = RT_GRID.map(function (key) {
@@ -958,7 +963,6 @@
       var u = RT_UI[key](el);
       return '<button class="rt' + (u[2] ? ' on' : '') + '" data-rt="' + key + '">' + ic(u[0], 22) + '<span>' + u[1] + '</span></button>';
     }).join('');
-    var info = roomInfoParts(), sec = '';
     if (info) {
       var acts = info.acts.slice();
       ['like', 'youtube'].forEach(function (k) { var el = rtFind(k); if (el) { var u = RT_UI[k](el); acts.splice(k === 'like' ? 2 : acts.length, 0, { ic: u[0], t: k === 'like' ? 'Like' : u[1], rt: k }); } });
@@ -1159,12 +1163,14 @@
     ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star']
   ];
   function meHTML() {
-    var stats = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; });
-    // Wallet on a 6-column grid: rows of three, and a short last row splits the full width.
+    var all = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; });
+    // Credits and duckets get a full row each with the whole number; the rest share rows of three
+    // on a 6-column grid, and a short last row splits the full width.
+    var big = all.filter(function (c) { return c[0] === -1 || c[0] === 0; }), stats = all.filter(function (c) { return big.indexOf(c) < 0; });
     var left = stats.length % 3, cut = stats.length - left;
     return '<div class="whead"><h3>Me</h3><button class="sqb" data-a="close" aria-label="Close">' + ic('x', 16) + '</button></div>' + '<div class="sbody">' +
       '<div class="mehero">' + av(S.me.name || 'Me', S.me.figure, 'xl') + '<div class="tt"><h3>' + esc(S.me.name || 'Me') + '</h3><div class="sub">' + esc(S.me.motto || '') + '</div></div></div>' +
-      '<div class="stats">' + stats.map(function (c, i) { var v = amount(c[0]); return '<div class="stat' + (i >= cut ? (left === 1 ? ' w6' : ' w3') : '') + '"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
+      '<div class="stats">' + big.map(function (c) { var v = amount(c[0]); return '<div class="stat w6 big"><span>' + cicon(c[0]) + c[1] + '</span><b>' + (v == null ? '…' : num(v)) + '</b></div>'; }).join('') + stats.map(function (c, i) { var v = amount(c[0]); return '<div class="stat' + (i >= cut ? (left === 1 ? ' w6' : ' w3') : '') + '"><b>' + cicon(c[0]) + (v == null ? '…' : short(v)) + '</b><span>' + c[1] + '</span></div>'; }).join('') + '</div>' +
       '<div class="tools">' + TILES.map(function (t) {
         var cls = 'tool', dot = '';
         if (t[0] === 'prestige') {
@@ -1273,7 +1279,7 @@
           case 'zout': zoomSet(S.zoom - 0.5); break;
           case 'zclose': zoomClose(); break;
           case 'room': if ($rpop.classList.contains('on')) closeRoomMenu(); else openRoomMenu(); break;
-          case 'money': closeRoomMenu(); if ($pop.classList.toggle('on')) renderPop(); report(); break;
+          case 'money': closeRoomMenu(); if ($pop.classList.toggle('on')) { $pop.style.width = $money.offsetWidth + 'px'; renderPop(); } report(); break;
           case 'fclr': S.q = ''; var i = $('#fq'); if (i) i.value = ''; renderFriendBody(); break;
           case 'cclose': closeModal(); break;
           case 'back': closePage(); break;
