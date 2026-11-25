@@ -1,0 +1,23 @@
+name: Design check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  design:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: No raw colours, corners or fonts outside the tokens
+        run: node tools/check-design.js
+      - name: Storybook is up to date
+        run: |
+          python3 storybook/build.py
+          git diff --exit-code storybook/index.html || (echo "Run python3 storybook/build.py and commit storybook/index.html" && exit 1)
+      - name: frame.js parses
+        run: node --check frame.js

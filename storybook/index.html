@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en" class="pu-on pu-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peace UI design system</title>
+<!-- The real game stylesheet (nitro.css): every sample below uses it, so this page can't drift from the game. -->
+<style id="nitro">/*
+ * Peace UI: added to the Nitro game document (not the Peace UI shadow root).
+ * Every rule is gated on html.pu-on, which frame.js sets only after the Peace UI has mounted,
+ * so if the script fails the original Nitro HUD stays visible.
+ *
+ * DESIGN SYSTEM. storybook/index.html in this repo shows every token and component, rendered with this file.
+ *   1. TOKENS      Every colour, size, corner, font, shadow and icon. The only place with raw values.
+ *                  ui.css (the Peace UI shadow root) uses the same tokens: custom properties inherit into it.
+ *   2. SHELL       Nitro's own HUD hidden, the game area above the tab bar, windows as sheets, the dark pass.
+ *   3. COMPONENTS  Each look is defined once, as a list of every element that has it: window, close (X),
+ *                  buttons (default / primary / danger), chips, segmented control, inputs, panels, tiles,
+ *                  pictures, floating panels, badges, tags, labels, text colours, switch.
+ *   4. PAGES       Layout only (size, position, order, gaps, padding) per window. No colours, corners,
+ *                  borders, shadows or fonts: for a new look, add the element to a component list above.
+ *   5. MOTION
+ * tools/check-design.js (run on every pull request) fails if a raw colour, corner or font shows up
+ * outside TOKENS, in this file or in ui.css.
+ */
+
+/* ================================================================ 1. TOKENS */
+/* @tokens-start */
+html.pu-on {
+  /* Type */
+  --pu-font: Ubuntu, system-ui, -apple-system, Roboto, sans-serif;
+  --pu-font-bold: UbuntuBold, Ubuntu, system-ui, sans-serif;
+  --pu-fs-2xs: 10px;   /* micro labels on the Change looks stage */
+  --pu-fs-xs: 11px;    /* tile captions, section labels, wardrobe */
+  --pu-fs-sm: 12.5px;  /* secondary text, owners, timestamps, badges */
+  --pu-fs: 14px;       /* body text, buttons, chips, inputs */
+  --pu-fs-md: 15px;    /* names, list titles */
+  --pu-fs-lg: 16px;    /* window titles */
+  --pu-fs-xl: 19px;    /* the big name in Me and the friend card */
+
+  /* Text */
+  --pu-ink: #f2f2f2;   /* main text */
+  --pu-ink-2: #a6a6a6; /* secondary text */
+  --pu-ink-3: #7a7a7a; /* hints, placeholders, timestamps */
+  --pu-ink-on: #fff;   /* text on blue, red and green */
+
+  /* Surfaces, darkest to lightest */
+  --pu-bg: #0b0b0b;    /* behind the game */
+  --pu-well: #0d0d0d;  /* inside inputs and picture wells */
+  --pu-s0: #141414;    /* window body, floating panels */
+  --pu-s1: #1c1c1c;    /* panels, cards, list rows */
+  --pu-s2: #262626;    /* tiles and rows inside panels */
+  --pu-s3: #2e2e2e;    /* open rows */
+  --pu-scrim: rgba(0, 0, 0, .52);
+  --pu-scrim-strong: rgba(0, 0, 0, .86);
+
+  /* Lines */
+  --pu-edge-c: #000;
+  --pu-edge: 1px solid var(--pu-edge-c);               /* the black outline every control and panel has */
+  --pu-line: rgba(255, 255, 255, .07);                 /* soft divider between rows */
+  --pu-line-2: rgba(255, 255, 255, .14);               /* visible light border (chat history, tags) */
+  --pu-line-solid: #3a3a3a;                            /* light edge round picture cards (Rooms grid) */
+  --pu-hi: inset 0 0 0 1px rgba(255, 255, 255, .12);   /* inner highlight of buttons and chips */
+  --pu-hi-soft: inset 0 0 0 1px rgba(255, 255, 255, .08); /* inner highlight of panels */
+  --pu-hi-top: inset 0 1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08);
+  --pu-hi-bottom: inset 0 -1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08);
+  --pu-hi-line: inset 0 1px 0 rgba(255, 255, 255, .1); /* light line on top of a bar */
+  --pu-inset: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06); /* sunken field */
+
+  /* Duotone fills: Peace's HUD look, top half a shade lighter */
+  --pu-tone: linear-gradient(#262626 50%, #1a1a1a 50%);       /* buttons, chips */
+  --pu-tone-press: linear-gradient(#303030 50%, #222 50%);
+  --pu-tone-bar: linear-gradient(#202020 50%, #161616 50%);   /* window headers, bars */
+  --pu-tone-track: linear-gradient(#1d1d1d 50%, #171717 50%); /* segmented control track */
+
+  /* Accents: Peace blue = main action / selected, red = close-danger / delete, green = people / online */
+  --pu-blue: #169ccc;
+  --pu-blue-tone: linear-gradient(#22ade0 50%, #1591c0 50%);
+  --pu-blue-press: linear-gradient(#1591c0 50%, #127fa9 50%);
+  --pu-blue-hi: inset 0 1px 0 #7eeaff, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-blue-soft: #1d3340;                                     /* selected tile */
+  --pu-ring: inset 0 0 0 2px #169ccc;                          /* selected tile outline */
+  --pu-red: #e5383b;
+  --pu-red-tone: linear-gradient(#e0443f 50%, #c22f2b 50%);
+  --pu-red-press: linear-gradient(#c22f2b 50%, #a92724 50%);
+  --pu-red-hi: inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-green: #3fd26b;
+  --pu-green-tone: linear-gradient(#35b85c 50%, #2a9b4c 50%);
+  --pu-green-hi: inset 0 1px 0 #8af0a8, inset 0 0 0 1px rgba(255, 255, 255, .14);
+  --pu-gold: #f5c542;
+
+  /* Light tiles: avatar items and layers read better on a light tile */
+  --pu-lt: #c9cdd2;
+  --pu-lt-on: #d9eef7;
+  --pu-lt-hi: inset 0 1px 0 rgba(255, 255, 255, .55);
+  --pu-lt-shine: rgba(255, 255, 255, .6);
+  --pu-lt-dash: #7d838a;
+  /* Change looks stage: Peace's teal spotlight */
+  --pu-stage: radial-gradient(60% 46% at 50% 0%, rgba(120, 225, 255, .2), transparent 70%), linear-gradient(#11394a, #0c2a37 45%, #08171f);
+  --pu-stage-beam: linear-gradient(rgba(150, 235, 255, .17), rgba(150, 235, 255, .03) 85%, transparent);
+  --pu-stage-ink: rgba(200, 240, 255, .72);
+  --pu-stage-card: linear-gradient(#1c3a48, #0e2029);          /* wardrobe slots */
+  --pu-stage-dash: rgba(255, 255, 255, .2);
+  --pu-stage-float: rgba(12, 14, 16, .94);                     /* layer actions over the stage */
+  --pu-swatch-hi: inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 -3px 0 rgba(0, 0, 0, .14);
+  --pu-swatch-on: 0 0 0 2px #141414, 0 0 0 4px #fff;
+
+  /* Shape and size */
+  --pu-r: 6px;         /* one corner for every button, chip, input, panel, tile and window */
+  --pu-r-in: 4px;      /* parts inside a padded control (segments, badges, swatches) */
+  --pu-r-pill: 999px;  /* counters and dots */
+  --pu-ctl: 36px;      /* height of every button, chip, input, select and square icon button */
+  --pu-ctl-lg: 44px;   /* bottom action bars only (Buy, Create room) */
+  --pu-head: 48px;     /* window header */
+  --pu-tile: 64px;     /* icon tiles with a caption (Me tools, Room menu) */
+  --pu-tile-sm: 50px;  /* small icon tiles (room actions) */
+  --pu-ic: 16px;       /* icon inside a control */
+  --pu-gap: 8px;
+  --pu-pad: 12px;      /* window gutter */
+  --pu-top: 52px;      /* top of the windows, under the top bar */
+  --pu-tabs: 60px;     /* tab bar */
+  --pu-bottom: var(--pu-tabs);
+
+  /* Depth */
+  --pu-float: 0 12px 28px rgba(0, 0, 0, .55);
+  --pu-sheet: 0 -10px 30px rgba(0, 0, 0, .55);
+  --pu-lift: 0 -1px 0 rgba(255, 255, 255, .1), 0 -8px 18px rgba(0, 0, 0, .35);
+  --pu-ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* Icons. Masks (drawn in currentColor): close, turn, undo, save, wear. Backgrounds (drawn in --pu-ink-3): search, chevron, hints. */
+  --pu-i-x: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E");
+  --pu-i-turn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
+  --pu-i-undo: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E");
+  --pu-i-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
+  --pu-i-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
+  --pu-bg-search: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7.5'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E");
+  --pu-bg-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --pu-bg-save: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E");
+  --pu-bg-wear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E");
+}
+html.pu-looks { --pu-bottom: 0px; }
+/* @tokens-end */
+
+
+/* ================================================================ 2. SHELL */
+/* Keep all of Nitro (room, windows, chat input) above the Peace tab bar.
+   The transform makes Nitro's position:fixed children use #root as their box. */
+html.pu-on #root {
+  position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: var(--pu-bottom) !important;
+  width: auto !important; height: auto !important; overflow: hidden !important; transform: translateZ(0);
+}
+html.pu-on body { background: var(--pu-bg) !important; }
+
+/* Nitro's own navigation, replaced by the Peace tab bar, Friends and Me.
+   Hidden elements can still be clicked from script, which is how the tabs open Nitro windows. */
+html.pu-on .nitro-hud-tabbar,
+html.pu-on .nitro-hud-tabs-toggle,
+html.pu-on .toolbar-navigation-list,
+html.pu-on .toolbar-collapse-toggle,
+html.pu-on .nitro-toolbar-me,
+html.pu-on .hud-more-friends,
+html.pu-on .toolbar-friend-bar-container,
+html.pu-on .nitro-purse-container { display: none !important; }
+
+/* Peace's More sheet stays in the page (hidden, no height) so its room tools and voice panel can render. */
+html.pu-on .nitro-hud-more-sheet {
+  display: block !important; visibility: hidden !important; height: 0 !important; min-height: 0 !important; max-height: 0 !important;
+  padding: 0 !important; margin: 0 !important; border: 0 !important; overflow: visible !important;
+  transform: none !important; animation: none !important; pointer-events: none !important;
+}
+html.pu-on .nitro-hud-more-sheet > :not(#hud-more-voice):not(#hud-more-room) { display: none !important; }
+
+/* Every Nitro window is a full-width sheet at the bottom of the game area, so none is wider than the screen. */
+html.pu-on .draggable-window { left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; transform: none !important; width: 100% !important; }
+html.pu-on .draggable-window > .nitro-card {
+  width: 100% !important; min-width: 0 !important; max-width: none !important; max-height: calc(100vh - var(--pu-bottom) - 60px) !important; overflow: hidden !important;
+}
+/* No dead space at the bottom (Nitro caps the content at 80% of the card) */
+html.pu-on .draggable-window > .nitro-card > .content-area { max-height: none !important; min-height: 0 !important; }
+/* Big windows take the whole game area under the top bar */
+html.pu-on .draggable-window:has(> .nitro-catalog),
+html.pu-on .draggable-window:has(> .nitro-inventory:not(.trading)),
+html.pu-on .draggable-window:has(> .nitro-navigator),
+html.pu-on .draggable-window:has(> .nitro-rarevalues-window),
+html.pu-on .draggable-window:has(> .nitro-room-creator) { top: var(--pu-top) !important; }
+html.pu-on .draggable-window > :is(.nitro-catalog, .nitro-inventory:not(.trading), .nitro-navigator, .nitro-rarevalues-window, .nitro-room-creator) {
+  height: 100% !important; max-height: none !important;
+}
+html.pu-on :is(.nitro-catalog, .nitro-inventory, .nitro-navigator, .nitro-room-creator) .content-area { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
+/* Change looks covers the top bar and the tab bar too (frame.js sets html.pu-looks and hides the Peace UI bars) */
+html.pu-on .draggable-window:has(> .nitro-avatar-editor) { top: 0 !important; bottom: 0 !important; height: auto !important; }
+html.pu-on .draggable-window > .nitro-avatar-editor { height: 100% !important; min-height: 0 !important; max-height: none !important; }
+html.pu-looks #hud-more-voice:not(:empty) { visibility: hidden !important; pointer-events: none !important; }
+/* Room menu reads Nitro's Room info window; it stays open but hidden while the menu is open */
+html.pu-rihide .draggable-window:has(> .nitro-room-info) { visibility: hidden !important; pointer-events: none !important; }
+/* Scrolling lists built on Bootstrap's .grid: the first row was 1fr and stretched. */
+html.pu-on .nitro-card .overflow-auto.grid { grid-template-rows: none !important; align-content: start !important; }
+
+/* Dark pass: frame.js marks elements by their computed colour (Nitro's windows are drawn for a light theme).
+   Near-black text turns light, light neutral backgrounds become dark surfaces, pastels keep a faint tint. */
+html.pu-dark [data-pu-ink="1"] { color: var(--pu-ink) !important; }
+html.pu-dark [data-pu-ink="2"] { color: var(--pu-ink-2) !important; }
+html.pu-dark [data-pu-ink="tint"] { color: var(--pu-tink) !important; }
+/* Only the colour changes when the element has its own picture: virtual lists (Change looks items) mark a tile
+   before Nitro gives it its image, and the background shorthand would hide that image. */
+html.pu-dark [data-pu-bg="1"]:not([style*="background-image"]) { background: var(--pu-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"]:not([style*="background-image"]) { background: var(--pu-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"]:not([style*="background-image"]) { background: color-mix(in srgb, var(--pu-tint) 14%, var(--pu-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="1"][style*="background-image"] { background-color: var(--pu-s1) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="2"][style*="background-image"] { background-color: var(--pu-s2) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bg="tint"][style*="background-image"] { background-color: color-mix(in srgb, var(--pu-tint) 14%, var(--pu-s1)) !important; box-shadow: none !important; }
+html.pu-dark [data-pu-bd="1"] { border-color: var(--pu-line) !important; }
+
+/* Scroll edge fade: registered here (document) so the Peace UI shadow root can use them too.
+   Lists fade at the top/bottom edge only while there is more to scroll that way. */
+@property --pu-ft { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@property --pu-fb { syntax: '<length>'; inherits: false; initial-value: 0px; }
+@keyframes pu-edge { 0% { --pu-ft: 0px; --pu-fb: 22px; } 6% { --pu-ft: 22px; --pu-fb: 22px; } 94% { --pu-ft: 22px; --pu-fb: 22px; } 100% { --pu-ft: 22px; --pu-fb: 0px; } }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .overflow-auto,
+html.pu-on .nitro-inventory .g-col-7 > div,
+html.pu-on .nitro-room-creator .content-area {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);
+  animation: pu-edge linear both; animation-timeline: scroll(self);
+}
+
+
+/* ================================================================ 3. COMPONENTS */
+
+/* ---- Window: card, header, title ---- */
+html.pu-on .draggable-window > .nitro-card {
+  background: var(--pu-s0) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-hi), var(--pu-sheet) !important;
+}
+html.pu-on .draggable-window > :is(.nitro-catalog, .nitro-inventory:not(.trading), .nitro-navigator, .nitro-rarevalues-window, .nitro-room-creator, .nitro-avatar-editor) {
+  border-radius: 0 !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .draggable-window > .nitro-avatar-editor { border: 0 !important; box-shadow: none !important; }
+html.pu-on .draggable-window .nitro-card-header {
+  min-height: var(--pu-head) !important; padding: 0 !important;
+  background: var(--pu-tone-bar) !important; border: 0 !important; border-bottom: var(--pu-edge) !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-card-header-text { color: var(--pu-ink) !important; font: 700 var(--pu-fs-lg)/1.2 var(--pu-font-bold) !important; text-shadow: none !important; }
+html.pu-on .draggable-window .nitro-card .content-area { background: var(--pu-s0) !important; color: var(--pu-ink) !important; }
+html.pu-on .draggable-window .nitro-card-tabs { background: var(--pu-s0) !important; border: 0 !important; box-shadow: none !important; }
+
+/* ---- Close (X): one size, one drawing, everywhere. The profile's is the red variant (danger). ---- */
+html.pu-on .draggable-window .nitro-card-header-close,
+html.pu-on .user-profile .profile-nav-close,
+html.pu-on .popover .pu-x,
+html.pu-on #hud-more-voice .voice-tools-toggle {
+  width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; margin: 0 !important;
+  display: grid !important; place-items: center !important; cursor: pointer;
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font-size: 0 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-card-header-close > *,
+html.pu-on .user-profile .profile-nav-close > *,
+html.pu-on .popover .pu-x > *,
+html.pu-on #hud-more-voice .voice-tools-toggle > * { display: none !important; }
+html.pu-on .draggable-window .nitro-card-header-close::before,
+html.pu-on .user-profile .profile-nav-close::before,
+html.pu-on .popover .pu-x::before,
+html.pu-on #hud-more-voice .voice-tools-toggle::before {
+  content: '' !important; display: block !important; position: static !important; width: 14px !important; height: 14px !important; margin: 0 !important;
+  border: 0 !important; background: currentColor !important; transform: none !important; opacity: 1 !important;
+  -webkit-mask: var(--pu-i-x) center / contain no-repeat; mask: var(--pu-i-x) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-card-header-close::after,
+html.pu-on .user-profile .profile-nav-close::after,
+html.pu-on .popover .pu-x::after,
+html.pu-on #hud-more-voice .voice-tools-toggle::after { content: none !important; display: none !important; }
+html.pu-on .draggable-window .nitro-card-header-close:active,
+html.pu-on .popover .pu-x:active,
+html.pu-on #hud-more-voice .voice-tools-toggle:active { background: var(--pu-tone-press) !important; }
+
+/* ---- Buttons. Every button in a window is one height (--pu-ctl) and one of three looks:
+        default (dark two-tone), primary (Peace blue), danger (red). ---- */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn {
+  min-height: var(--pu-ctl); padding-top: 0; padding-bottom: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: var(--pu-r) !important; font-size: var(--pu-fs) !important; line-height: 1.2 !important; text-shadow: none !important;
+}
+/* every clickable box in a window gets the one corner */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(.form-control, .form-select, .nav-link, .layout-grid-item) { border-radius: var(--pu-r) !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn.btn-sm { min-height: var(--pu-ctl); }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) .btn svg { flex: none; }
+/* default */
+html.pu-on .draggable-window :is(.btn-secondary, .btn-light, .btn-dark, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light),
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn-primary,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn-primary,
+html.pu-on .draggable-window .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger,
+html.pu-on .draggable-window .nitro-room-info .settings-room-infoss,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn,
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon,
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > *,
+html.pu-on .nitro-avatar-editor .pu-lkbar > button,
+html.pu-on .nitro-catalog .pu-back,
+html.pu-on .pu-zoom,
+html.pu-on #hud-more-voice .voice-tool-button,
+html.pu-on #hud-more-voice .voice-icon-button,
+html.pu-on .nitro-phone-corner .phone-corner-btn,
+html.pu-on .rv-pagebtn,
+html.pu-on .user-profile .friend-btn {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window :is(.btn-secondary, .btn-light, .btn-dark, .btn-outline-secondary, .btn-outline-dark, .btn-outline-light):active,
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn-primary:active,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn-primary:active,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn:active,
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon:active,
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:active,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers:active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > :active,
+html.pu-on .nitro-avatar-editor .pu-lkbar > button:active,
+html.pu-on .nitro-catalog .pu-back:active,
+html.pu-on .pu-zoom:active,
+html.pu-on .rv-pagebtn:active { background: var(--pu-tone-press) !important; }
+/* primary */
+html.pu-on .draggable-window .btn-primary:not(.btn-danger),
+html.pu-on .draggable-window .btn-success,
+html.pu-on .draggable-window .nitro-room-info .btn-grpup .btn.is-active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button,
+html.pu-on .user-profile .profile-nav-edit,
+html.pu-on #hud-more-voice .voice-join,
+html.pu-on .nitro-phone-corner .phone-corner-btn.open {
+  background: var(--pu-blue-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-blue-hi) !important;
+  color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-primary:not(.btn-danger):active,
+html.pu-on .draggable-window .btn-success:active,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button:active,
+html.pu-on .user-profile .profile-nav-edit:active { background: var(--pu-blue-press) !important; }
+/* the default ones listed above win over primary/danger where Nitro uses those classes for a secondary action */
+html.pu-on .draggable-window .nitro-catalog .purchase-buttons .btn.btn-primary,
+html.pu-on .draggable-window .nitro-inventory .g-col-5 .btn + .btn.btn-primary,
+html.pu-on .draggable-window .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn.btn-danger {
+  background: var(--pu-tone) !important; box-shadow: var(--pu-hi) !important; color: var(--pu-ink) !important; font-family: var(--pu-font) !important; font-weight: 400 !important;
+}
+/* danger */
+html.pu-on .draggable-window .btn-danger,
+html.pu-on .user-profile .profile-nav-close,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-danger {
+  background: var(--pu-red-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-red-hi) !important;
+  color: var(--pu-ink-on) !important; font-family: var(--pu-font-bold) !important; font-weight: 700 !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .btn-danger:active,
+html.pu-on .user-profile .profile-nav-close:active { background: var(--pu-red-press) !important; }
+html.pu-on .user-profile :is(.profile-nav-edit, .profile-nav-close) svg { color: var(--pu-ink-on) !important; fill: currentColor; }
+html.pu-on .draggable-window .btn.disabled, html.pu-on .draggable-window .btn:disabled { opacity: .45 !important; }
+/* joined buttons (wardrobe slot: Save | Wear share one edge) */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container { background: var(--pu-edge-c); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > *,
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button { border: 0 !important; border-radius: 0 !important; }
+
+/* ---- Chips: window tabs, Shop category rows, Change looks category tabs. Selected = blue. ---- */
+html.pu-on .draggable-window .nitro-card-tabs .nav-link,
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink-2) !important; font: 500 var(--pu-fs)/1 var(--pu-font) !important; text-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:before,
+html.pu-on .draggable-window .nitro-card-tabs .nav-link:after { display: none !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item { color: var(--pu-ink) !important; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-link.active,
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item.active,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link.active,
+html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link:has(.tab-wardrobe) {
+  background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; color: var(--pu-ink-on) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor.expanded .avatar-editor-tabs .nav-link.active:not(:has(.tab-wardrobe)) { background: var(--pu-tone) !important; box-shadow: var(--pu-hi) !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item:not(.active):active { background: var(--pu-tone-press) !important; }
+
+/* ---- Segmented control: a track with options inside; the chosen one is blue (item types, Colour 1 / 2) ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item),
+html.pu-on .nitro-avatar-editor .pu-lkslots {
+  background: var(--pu-tone-track) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .category-item,
+html.pu-on .nitro-avatar-editor .pu-lkslots button {
+  background: transparent !important; border: 0 !important; border-radius: var(--pu-r-in) !important; box-shadow: none !important;
+  color: var(--pu-ink-2) !important; font: 500 var(--pu-fs-sm)/1 var(--pu-font) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .category-item * { color: inherit !important; font: inherit !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .category-item:has(> .selected),
+html.pu-on .nitro-avatar-editor .pu-lkslots button.on {
+  background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; color: var(--pu-ink-on) !important; font-weight: 700 !important;
+}
+
+/* ---- Inputs: the Friends search look (deep field, black edge), one height with the chips ---- */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"], select, textarea),
+html.pu-on .nitro-chat-history-window .ch-search input,
+html.pu-on .builders-tools input {
+  min-height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; outline: 0 !important;
+  background-color: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important;
+  color: var(--pu-ink) !important; font: 400 var(--pu-fs)/1 var(--pu-font) !important;
+}
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input.form-control, select.form-select, .form-control:not(textarea), input[type="text"], input[type="number"], input[type="search"], select),
+html.pu-on .nitro-chat-history-window .ch-search input,
+html.pu-on .builders-tools input { height: var(--pu-ctl) !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) textarea { padding: 8px var(--pu-pad) !important; line-height: 1.35 !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, textarea)::placeholder { color: var(--pu-ink-3) !important; font-family: var(--pu-font) !important; font-style: normal !important; opacity: 1 !important; }
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(input, select, textarea):focus,
+html.pu-on .builders-tools input:focus { border-color: var(--pu-blue) !important; }
+/* search: the magnifier on the left (Enter or typing searches; Nitro's pencils are hidden) */
+html.pu-on .draggable-window .nitro-catalog .catalog-left input.form-control,
+html.pu-on .draggable-window > .nitro-card.nitro-navigator input.form-control,
+html.pu-on .draggable-window .nitro-inventory:not(.trading) .content-area > .d-flex:first-child input,
+html.pu-on .draggable-window .nitro-chat-history-window .ch-search input {
+  padding-left: 34px !important; background-image: var(--pu-bg-search) !important; background-repeat: no-repeat !important; background-position: 11px center !important; background-size: var(--pu-ic) var(--pu-ic) !important;
+}
+html.pu-on .nitro-catalog .catalog-search-button, html.pu-on .nitro-navigator .navigator-search-button { display: none !important; }
+/* select: one small chevron */
+html.pu-on .draggable-window > .nitro-card:not(.nitro-avatar-editor) :is(select, select.form-select) {
+  padding: 0 30px 0 var(--pu-pad) !important; -webkit-appearance: none !important; appearance: none !important;
+  background-image: var(--pu-bg-chev) !important; background-repeat: no-repeat !important; background-position: right 10px center !important; background-size: 14px 14px !important;
+}
+
+/* ---- Panels: a box on the window (dark grey, black edge, faint inner line) ---- */
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5,
+html.pu-on .nitro-navigator .navigator-item,
+html.pu-on .nitro-navigator .nav-thumbnail,
+html.pu-on .builders-tools .builders-tools-toggle-list,
+html.pu-on .builders-tools .builders-tools-field-row,
+html.pu-on .rv-card,
+html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card),
+html.pu-on .draggable-window .content-area .layout-grid-item:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.room-creator-grid-item):not(.nitro-catalog-navigation-grid-container .layout-grid-item) {
+  background: var(--pu-s1) !important; background-image: none !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html.pu-on .draggable-window .content-area .layout-grid-item.active:not([style*="background"]):not(.layout-catalog-grid-item):not(.avatar-parts):not(.nitro-catalog-navigation-grid-container .layout-grid-item) { background: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; }
+/* raised panel inside a panel */
+html.pu-on .user-profile .relationship-row { background: var(--pu-s2) !important; }
+/* outlined card: a light edge round a picture card (Rooms grid) */
+html.pu-on .nitro-navigator .nav-thumbnail { border-color: var(--pu-line-solid) !important; box-shadow: none !important; overflow: hidden !important; }
+/* split panel: two stacked parts that read as one box (Shop quantity + buy buttons) */
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) {
+  background: var(--pu-s1) !important; border: var(--pu-edge) !important; border-bottom: 0 !important; border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-hi-top) !important;
+}
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons {
+  background: var(--pu-s1) !important; border: var(--pu-edge) !important; border-top: 0 !important; border-radius: 0 0 var(--pu-r) var(--pu-r) !important; box-shadow: var(--pu-hi-bottom) !important;
+}
+/* light panel: lighter groups with visible light borders (Chat history) */
+html.pu-on .nitro-chat-history-window .nitro-chat-history-content { background: var(--pu-s1) !important; color: var(--pu-ink) !important; }
+html.pu-on .nitro-chat-history-window .ch-search,
+html.pu-on .nitro-chat-history-window .ch-results { background: transparent !important; border: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion { border: 1px solid var(--pu-line-2) !important; border-radius: var(--pu-r) !important; background: var(--pu-s2) !important; box-shadow: none !important; overflow: hidden !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header { background: var(--pu-s2) !important; color: var(--pu-ink) !important; border: 0 !important; border-radius: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header.expanded { background: var(--pu-s3) !important; border-bottom: 1px solid var(--pu-line-2) !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-body { background: var(--pu-s1) !important; border: 0 !important; }
+/* bars: a strip at the bottom or top of a window (Create room actions) */
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child { background: var(--pu-s0); border-top: var(--pu-edge); box-shadow: var(--pu-hi-line); }
+
+/* ---- Tiles: square picture tiles you pick; selected = blue ring (Shop items, room layouts) ---- */
+html.pu-on .nitro-catalog .layout-catalog-grid-item,
+html.pu-on .nitro-room-creator .room-creator-grid-item {
+  background-color: var(--pu-s2) !important; background-repeat: no-repeat !important; background-position: center !important;
+  border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important; color: var(--pu-ink-2) !important;
+}
+html.pu-on .nitro-catalog .catalog-grid-active.active .layout-catalog-grid-item,
+html.pu-on .nitro-room-creator .room-creator-grid-item.active { background-color: var(--pu-blue-soft) !important; box-shadow: var(--pu-ring) !important; color: var(--pu-ink-on) !important; }
+/* light tiles (Change looks items and layers) */
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts {
+  background-color: var(--pu-lt) !important; border: 0 !important; border-radius: var(--pu-r-in) !important;
+  box-shadow: 0 0 0 calc(1px / var(--lk-z, 1.6)) var(--pu-edge-c), inset 0 calc(1px / var(--lk-z, 1.6)) 0 var(--pu-lt-shine) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts.part-selected {
+  background-color: var(--pu-lt-on) !important; box-shadow: 0 0 0 calc(2px / var(--lk-z, 1.6)) var(--pu-blue), 0 0 0 calc(3px / var(--lk-z, 1.6)) var(--pu-edge-c) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb { background-color: var(--pu-lt) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-lt-hi) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb { background-color: var(--pu-lt-on) !important; box-shadow: 0 0 0 2px var(--pu-blue), var(--pu-lt-hi) !important; }
+/* colour swatches */
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame {
+  border: var(--pu-edge) !important; border-image: none !important; border-radius: var(--pu-r-in) !important; background-image: none !important; box-shadow: var(--pu-swatch-hi) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active { box-shadow: var(--pu-swatch-on) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkbar .sw { border: var(--pu-edge); border-radius: var(--pu-r-in); box-shadow: var(--pu-swatch-hi); }
+
+/* ---- Pictures: a well for room thumbnails, item previews and avatars ---- */
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail,
+html.pu-on .nitro-navigator .navigator-item .pu-thumb,
+html.pu-on .nitro-catalog .catalog-default-image,
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child,
+html.pu-on .popover .room-info .room-thumbnail,
+html.pu-on .nitro-room-info .room-thumbnail,
+html.pu-on .user-profile .profile-avatar {
+  background-color: var(--pu-well); border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+}
+/* picture at the top of an outlined card */
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { background-color: var(--pu-well); border: 0 !important; border-bottom: 1px solid var(--pu-line-solid) !important; border-radius: 0 !important; }
+html.pu-on .nitro-catalog .catalog-default-image:empty { display: none !important; }
+
+/* ---- Floating panels: room details, voice, music card, layer actions ---- */
+html.pu-on .popover:has(.room-info),
+html.pu-on #hud-more-voice:not(:empty),
+html.pu-on .nitro-phone-corner .phone-corner-card {
+  background: var(--pu-s0) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi), var(--pu-float) !important; color: var(--pu-ink) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] {
+  background: var(--pu-stage-float) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi), var(--pu-float) !important;
+}
+html.pu-on #hud-more-voice .voice-tools-header { background: var(--pu-tone-bar) !important; border-bottom: var(--pu-edge) !important; }
+html.pu-on #hud-more-voice .nitro-voice-tools-container,
+html.pu-on #hud-more-voice .nitro-voice-tools,
+html.pu-on .popover .room-info .room-info-bg { background: transparent !important; border: 0 !important; border-image: none !important; box-shadow: none !important; }
+html.pu-on #hud-more-voice button:not(.voice-tools-toggle):not(.voice-participant-main) { border-radius: var(--pu-r) !important; }
+
+/* ---- Badges: people in a room. Grey = empty, green = people inside, red = full (frame.js sets data-pu-ppl
+        from the count, so the list, the grid and the details all agree) ---- */
+html.pu-on .nitro-navigator .badge,
+html.pu-on .popover .room-info .badge {
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r-in) !important; box-shadow: var(--pu-hi) !important;
+  color: var(--pu-ink) !important; font: 700 var(--pu-fs-sm)/1.1 var(--pu-font-bold) !important; text-shadow: none !important;
+}
+html.pu-on .nitro-navigator .badge[data-pu-ppl="1"], html.pu-on .popover .room-info .badge[data-pu-ppl="1"] { background: var(--pu-green-tone) !important; box-shadow: var(--pu-green-hi) !important; color: var(--pu-ink-on) !important; }
+html.pu-on .nitro-navigator .badge[data-pu-ppl="full"], html.pu-on .popover .room-info .badge[data-pu-ppl="full"] { background: var(--pu-red-tone) !important; box-shadow: var(--pu-red-hi) !important; color: var(--pu-ink-on) !important; }
+/* the full-width strip under a list thumbnail keeps square bottom corners against the picture */
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail .badge.w-100,
+html.pu-on .nitro-navigator .navigator-item .pu-thumb .badge { border-width: 1px 0 0 !important; border-radius: 0 !important; }
+
+/* ---- Tags: small labels (room tags, counts) ---- */
+html.pu-on .nitro-room-info .text-tag,
+html.pu-on .user-profile .bento-count {
+  padding: 2px 7px !important; background: var(--pu-s2) !important; border: 1px solid var(--pu-line-2) !important; border-radius: var(--pu-r-in) !important;
+  color: var(--pu-ink-2) !important; font-size: var(--pu-fs-sm) !important;
+}
+/* tag on a picture */
+html.pu-on .rv-card-tag { background: var(--pu-scrim-strong) !important; color: var(--pu-ink-on) !important; border-radius: var(--pu-r-in) !important; }
+
+/* ---- Section labels: small caps over a group ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfits-title,
+html.pu-on .user-profile .bento-title {
+  color: var(--pu-ink-3) !important; font: 700 var(--pu-fs-xs)/20px var(--pu-font-bold) !important; letter-spacing: .06em; text-transform: uppercase;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel::before { color: var(--pu-stage-ink); font: 700 var(--pu-fs-2xs)/14px var(--pu-font); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---- Text colours ---- */
+/* secondary */
+html.pu-on .nitro-catalog .quanity-container .text-muted,
+html.pu-on .nitro-navigator .pu-owner,
+html.pu-on .nitro-navigator .pu-owner.pu-lo > span,
+html.pu-on .popover .room-info .text-muted,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold,
+html.pu-on .builders-tools .builders-tools-furni-count,
+html.pu-on .user-profile .profile-motto,
+html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]),
+html.pu-on .nitro-avatar-editor .pu-lkt small { color: var(--pu-ink-2) !important; }
+/* hint */
+html.pu-on .nitro-chat-history-window .ch-chevron,
+html.pu-on .nitro-chat-history-window .ch-ts,
+html.pu-on .user-profile .meta-label,
+html.pu-on .user-profile .relationship-empty,
+html.pu-on .user-profile .relationship-row .small,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { color: var(--pu-ink-3) !important; }
+/* main */
+html.pu-on .nitro-navigator .pu-owner.pu-lo,
+html.pu-on .popover .room-info,
+html.pu-on .popover .room-info .text-decoration-underline,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child > :last-child,
+html.pu-on .nitro-chat-history-window .ch-room-name,
+html.pu-on .builders-tools .builders-tools-content,
+html.pu-on .builders-tools .builders-tools-check-row,
+html.pu-on .builders-tools .builders-tools-field-row,
+html.pu-on .rv-card-name,
+html.pu-on .user-profile .meta-value,
+html.pu-on .user-profile .relationship-row :is(a, .text-decoration-underline, b, strong),
+html.pu-on .nitro-avatar-editor .pu-lkt { color: var(--pu-ink) !important; }
+html.pu-on .rv-pill, html.pu-on .rv-pagelabel { color: var(--pu-ink-2) !important; }
+/* names: plain white bold (profiles ignore name styles and gradients) */
+html.pu-on .user-profile .name-profile-kk :is(strong, span, b) { background: none !important; -webkit-text-fill-color: var(--pu-ink) !important; color: var(--pu-ink) !important; text-shadow: none !important; filter: none !important; animation: none !important; }
+html.pu-on .user-profile .name-profile-kk strong { font: 700 var(--pu-fs-lg)/1.2 var(--pu-font-bold) !important; }
+/* titles in windows */
+html.pu-on .nitro-navigator .nav-category { font-family: var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .navigator-item .titleromddas { font: 700 var(--pu-fs)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .navigator-item .ekkcikdbawahsd { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 > .text-truncate { font: 700 var(--pu-fs)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .nitro-navigator .pu-owner { font-size: var(--pu-fs-sm); line-height: 1.3; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { font-style: italic; }
+html.pu-on .popover .room-info { font-size: var(--pu-fs) !important; }
+html.pu-on .popover .room-info .room-info-bg .font-bold { font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold) !important; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { font-size: var(--pu-fs-sm); }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child .font-bold { font: 400 var(--pu-fs-sm)/1.3 var(--pu-font) !important; }
+html.pu-on .popover .room-info .font-italic { font-style: normal !important; }
+html.pu-on .nitro-chat-history-window .ch-room-name { font-size: var(--pu-fs) !important; }
+html.pu-on .nitro-room-info .content-area .font-bold { font: 700 var(--pu-fs-lg)/1.25 var(--pu-font-bold) !important; white-space: normal !important; }
+html.pu-on .nitro-room-info .content-area .small { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 .font-bold { font-size: var(--pu-fs-md) !important; white-space: normal !important; }
+html.pu-on .nitro-catalog .quanity-container .text-muted { font-size: var(--pu-fs) !important; }
+html.pu-on .builders-tools .builders-tools-check-row,
+html.pu-on .builders-tools .builders-tools-field-row { font-size: var(--pu-fs-md) !important; }
+html.pu-on .builders-tools .builders-tools-furni-count { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-room-creator .g-col-5 :is(label, .text-black, .font-bold) { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .user-profile .profile-motto, html.pu-on .user-profile .profile-motto.font-italic,
+html.pu-on .user-profile .relationship-empty, html.pu-on .user-profile .relationship-row .small { font-style: normal !important; }
+html.pu-on .user-profile .meta-value { font-weight: 700 !important; }
+html.pu-on .user-profile .content-area :is(h1, h2, h3, h4, h5, h6, p, span, div):not(.meta-label):not(.bento-title):not(.relationship-empty) { text-shadow: none !important; }
+html.pu-on .user-profile .friend-btn { font-size: var(--pu-fs-sm) !important; }
+html.pu-on .nitro-catalog .pu-back { font: 700 var(--pu-fs)/1 var(--pu-font-bold) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkbar > button { font: 600 var(--pu-fs)/1 var(--pu-font) !important; }
+html.pu-on .nitro-avatar-editor .pu-lkt b { font: 700 var(--pu-fs-md)/1.1 var(--pu-font-bold); }
+html.pu-on .nitro-avatar-editor .pu-lkt small { font: 400 var(--pu-fs-sm)/1.2 var(--pu-font); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { font: 700 var(--pu-fs-xs)/1 var(--pu-font) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { font: 500 var(--pu-fs-xs)/20px var(--pu-font); }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after { font: 700 var(--pu-fs-2xs)/15px var(--pu-font); }
+
+/* ---- Switch (Builders tool) ---- */
+html.pu-on .builders-tools .is-ticked,
+html.pu-on .builders-tools .is-not-ticked {
+  width: 44px !important; height: 26px !important; background: var(--pu-well) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-inset) !important;
+}
+html.pu-on .builders-tools .is-ticked { background: var(--pu-blue-tone) !important; box-shadow: var(--pu-blue-hi) !important; }
+html.pu-on .builders-tools .is-ticked::after,
+html.pu-on .builders-tools .is-not-ticked::after {
+  content: '' !important; position: absolute !important; top: 2px !important; left: 2px !important; width: 20px !important; height: 20px !important; transform: none !important;
+  background: var(--pu-tone) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r-in) !important; box-shadow: var(--pu-hi) !important;
+}
+html.pu-on .builders-tools .is-ticked::after { left: 20px !important; }
+
+/* ---- Tooltips / small marks ---- */
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after {
+  background: var(--pu-well); border: var(--pu-edge); border-radius: var(--pu-r-in); box-shadow: var(--pu-hi); color: var(--pu-ink-2);
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row.active .avatar-layer-thumb::after { background: var(--pu-blue); color: var(--pu-ink-on); box-shadow: var(--pu-blue-hi); }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb.is-empty::before { border: 2px dashed var(--pu-lt-dash); border-radius: var(--pu-r-in); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container:empty::before { border: 2px dashed var(--pu-stage-dash); border-radius: var(--pu-r-in); }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active::after { border-left: 2.5px solid var(--pu-ink-on); border-bottom: 2.5px solid var(--pu-ink-on); filter: drop-shadow(0 0 1px var(--pu-edge-c)); }
+html.pu-on .profile-stickers-layer, html.pu-on .user-profile .profile-sticker { display: none !important; }
+
+
+/* ================================================================ 4. PAGES (layout only) */
+
+/* ---- Window header and tabs (every window) ---- */
+html.pu-on .draggable-window .nitro-card-header-close { right: 6px !important; }
+html.pu-on .draggable-window .nitro-card-tabs { padding: 0 var(--pu-pad) var(--pu-gap) !important; overflow-x: auto !important; scrollbar-width: none; }
+html.pu-on .draggable-window .nitro-card-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-tabs { flex-wrap: nowrap !important; gap: 6px !important; border: 0 !important; }
+html.pu-on .draggable-window .nitro-card-tabs .nav-link { flex: none !important; height: var(--pu-ctl) !important; padding: 0 13px !important; margin: 0 !important; }
+/* Chip rows: space above and below; the row is as wide as its chips so the 12px gutter shows at both ends */
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) { padding: 10px var(--pu-pad) !important; min-height: 0 !important; height: auto !important; flex: none !important; }
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) + .content-area { padding-top: 0 !important; }
+html.pu-on .draggable-window .nitro-card-tabs:not(.profile-nav-bar) .nav-tabs { width: max-content !important; min-width: 0 !important; flex: none !important; }
+
+/* ---- Profile ---- */
+html.pu-on .draggable-window > .nitro-card.user-profile { --profile-surface: var(--pu-s0) !important; --profile-fg: var(--pu-ink) !important; --profile-tab-fg: var(--pu-ink) !important; }
+html.pu-on .user-profile .content-area { background-image: none !important; --profile-bento-bg: var(--pu-s1) !important; --profile-bento-blur: 0px !important; --profile-fg: var(--pu-ink) !important; padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .user-profile .profile-nav-bar { padding: 10px var(--pu-pad) !important; min-height: 0 !important; background: transparent !important; box-shadow: none !important; border: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar > .nav-tabs { flex: 1 1 auto !important; min-width: 0 !important; overflow-x: auto !important; flex-wrap: nowrap !important; scrollbar-width: none; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-bar .nav-tabs::-webkit-scrollbar { display: none; }
+html.pu-on .user-profile .profile-nav-actions { flex: none !important; align-self: center !important; gap: 6px !important; margin: 0 !important; }
+html.pu-on .user-profile .profile-nav-close,
+html.pu-on .user-profile .profile-nav-edit,
+html.pu-on .user-profile .profile-nav-actions .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .user-profile .identity-wrap { flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
+html.pu-on .user-profile .identity-row,
+html.pu-on .user-profile .identity-relationships,
+html.pu-on .user-profile .area-identity { width: 100% !important; height: auto !important; }
+html.pu-on .user-profile .identity-info { min-width: 0 !important; flex: 1 1 auto !important; }
+html.pu-on .user-profile .bento { padding: 10px !important; }
+html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; }
+html.pu-on .user-profile .relationship-row { padding: var(--pu-gap) 10px !important; min-height: 40px; }
+html.pu-on .user-profile .bento-count { padding: 2px 7px !important; }
+html.pu-on .user-profile .identity-footer .line { background: var(--pu-line-2) !important; }
+html.pu-on .user-profile .friend-btn { display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important; }
+
+/* ---- Shop: one pane at a time (frame.js toggles .pu-page): the category list, then the page with a back bar ---- */
+html.pu-on .nitro-catalog .content-area,
+html.pu-on .nitro-inventory .content-area,
+html.pu-on .nitro-navigator .content-area { padding: var(--pu-gap) 10px 10px !important; }
+html.pu-on .nitro-catalog .content-area > .grid { display: flex !important; height: 100% !important; gap: 0 !important; }
+html.pu-on .nitro-catalog .catalog-left { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; }
+html.pu-on .nitro-catalog .catalog-left + .g-col-8 { display: none !important; }
+html.pu-on .nitro-catalog.pu-page .catalog-left { display: none !important; }
+html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { display: flex !important; }
+html.pu-on .nitro-catalog .content-area > .grid > .g-col-8 { flex: 1 1 auto !important; width: 100% !important; max-width: none !important; margin: 0 !important; min-height: 0 !important; }
+html.pu-on .nitro-catalog .catalog-clear-button { right: var(--pu-pad) !important; top: 50% !important; transform: translateY(-50%) !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container { padding: 4px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container > .grid { height: 100% !important; gap: 4px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item { width: auto !important; min-height: var(--pu-ctl) !important; padding: 0 var(--pu-pad) !important; gap: 10px !important; justify-content: flex-start !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 10px"] { margin-left: 18px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .layout-grid-item[style*="margin-left: 20px"] { margin-left: 36px !important; }
+html.pu-on .nitro-catalog .nitro-catalog-navigation-grid-container .catalog-icon { width: 24px !important; height: 24px !important; object-fit: contain; }
+/* page: preview on top, the furni grid fills the middle, quantity + buy at the bottom */
+html.pu-on .nitro-catalog .g-col-8 > div:not(.pu-back) { display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; }
+html.pu-on .nitro-catalog .catalog-default-image { position: relative !important; flex: 0 0 auto !important; height: 168px !important; max-height: 30vh !important; overflow: hidden !important; }
+html.pu-on .nitro-catalog .catalog-default-image > .overflow-hidden { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-catalog .catalog-default-image .item-title { position: absolute !important; left: 10px; top: var(--pu-gap); z-index: 2; max-width: calc(100% - 60px); }
+html.pu-on .nitro-catalog .catalog-image-column { max-width: 100% !important; max-height: 100% !important; object-fit: contain; }
+html.pu-on .nitro-catalog .responsive-column-kk-height { flex: 1 1 auto !important; min-height: 0 !important; height: auto !important; gap: 0 !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 { flex: 1 1 auto !important; height: auto !important; min-height: 0 !important; max-height: none !important; padding: var(--pu-gap) !important; margin-bottom: 10px !important; border-radius: var(--pu-r) !important; }
+/* Bootstrap's .grid makes the first row 1fr, which squashed or stretched the top row: square tiles instead */
+html.pu-on .nitro-catalog .responsive-column-kk-height > .grid-bg.g-col-7 > .grid {
+  grid-template-rows: none !important; grid-auto-rows: auto !important; height: auto !important; max-height: 100% !important;
+  grid-template-columns: repeat(auto-fill, minmax(var(--pu-tile), 1fr)) !important; gap: var(--pu-gap) !important; align-content: start !important;
+}
+html.pu-on .nitro-catalog .catalog-grid-active { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+html.pu-on .nitro-catalog .layout-catalog-grid-item { width: 100% !important; height: 100% !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) { flex: none !important; padding: 10px 10px 0 !important; }
+html.pu-on .nitro-catalog .quanity-container { width: 100% !important; height: auto !important; min-height: var(--pu-ctl) !important; align-items: center !important; justify-content: space-between !important; gap: 10px !important; }
+html.pu-on .nitro-catalog .quantity-input { width: 88px !important; text-align: center !important; padding: 0 var(--pu-gap) !important; }
+html.pu-on .nitro-catalog .purchase-buttons { flex: none !important; gap: var(--pu-gap) !important; }
+html.pu-on .nitro-catalog .responsive-column-kk-height > .d-flex.gap-2:not(.purchase-buttons):has(.quanity-container) + .purchase-buttons { padding: 10px !important; }
+html.pu-on .nitro-catalog .purchase-buttons .btn { flex: 1 1 0 !important; height: var(--pu-ctl-lg) !important; }
+html.pu-on .nitro-catalog .item-not-picker { flex: none !important; justify-content: center !important; padding: var(--pu-pad) !important; }
+html.pu-on .nitro-catalog .pu-back { flex: none; display: flex; align-items: center; gap: var(--pu-gap); height: var(--pu-ctl); margin-bottom: var(--pu-gap); padding: 0 var(--pu-pad) 0 var(--pu-gap); cursor: pointer; }
+html.pu-on .nitro-catalog .pu-back svg { flex: none; }
+html.pu-on .nitro-catalog .pu-back span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+html.pu-on .nitro-catalog:not(.pu-page) .pu-back { display: none; }
+
+/* Item previews: the whole item, centred; a zoom button top right (frame.js adds it) */
+html.pu-on .room-preview-container,
+html.pu-on .room-preview-image { width: 100% !important; height: 100% !important; }
+html.pu-on .room-preview-image { background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; image-rendering: pixelated; }
+html.pu-on .pu-zoom { position: absolute; z-index: 3; top: 6px; right: 6px; width: var(--pu-ctl); height: var(--pu-ctl); display: grid; place-items: center; cursor: pointer; }
+html.pu-on .catalog-default-image:not(:has(.room-preview-image)) > .pu-zoom { display: none; }
+
+/* ---- Inventory: the chosen item and "Place in room" on top, the item grid fills the rest ---- */
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid { display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; height: auto !important; flex: 1 1 auto !important; min-height: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-7 { order: 2; flex: 1 1 auto !important; width: 100% !important; min-height: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .grid > .g-col-5 { order: 1; flex: 0 0 auto !important; width: 100% !important; height: 144px !important; flex-direction: row !important; gap: 10px !important; overflow: hidden !important; padding: var(--pu-gap) !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :first-child { flex: 0 0 126px !important; height: 100% !important; position: relative !important; overflow: hidden !important; }
+html.pu-on .nitro-inventory:not(.trading) .g-col-5 > :nth-child(2) { flex: 1 1 auto !important; min-width: 0 !important; justify-content: center !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; flex: none !important; padding: 0 !important; }
+html.pu-on .nitro-inventory:not(.trading) .content-area > .d-flex:first-child .btn svg { width: var(--pu-ic); height: var(--pu-ic); }
+
+/* ---- Rooms (Navigator) ---- */
+html.pu-on .nitro-navigator .d-flex:has(> .navigator-search-button) { position: relative !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto { scrollbar-width: none !important; }
+html.pu-on .nitro-navigator .content-area .overflow-auto::-webkit-scrollbar { display: none !important; }
+html.pu-on .nitro-navigator .containernew-kvjd { width: 100% !important; }
+html.pu-on .nitro-navigator .icon-navigator-info { flex: none; }
+/* list: rows as small cards with a picture and a people badge on the left (frame.js adds .pu-thumb to My World) */
+html.pu-on .nitro-navigator .navigator-item { min-height: 58px !important; padding: 6px var(--pu-gap) 6px 6px !important; gap: 10px !important; }
+html.pu-on .nitro-navigator .navigator-item .room-thumbnail { width: 46px !important; height: 46px !important; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb { position: relative !important; flex: none !important; background-position: center; background-size: cover; background-repeat: no-repeat; overflow: hidden !important; }
+html.pu-on .nitro-navigator .navigator-item .pu-thumb img { position: absolute; inset: 0; width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .nitro-navigator .navigator-item:has(> .pu-thumb) > .flex-column:not(.room-thumbnail) .badge { display: none !important; }
+html.pu-on .nitro-navigator .pu-owner { padding: 1px var(--pu-gap) var(--pu-gap); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-navigator .pu-owner.pu-lo { padding: 0; }
+/* grid: two columns of pictures with name and owner */
+html.pu-on .nitro-navigator .containernew-kvjd > .grid:not(.navigator-grid) {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important; grid-template-rows: none !important; grid-auto-rows: auto !important;
+  gap: var(--pu-gap) !important; height: auto !important; overflow: visible !important;
+}
+html.pu-on .nitro-navigator .nav-thumbnail { position: relative !important; width: auto !important; margin: 0 !important; padding: 0 !important; align-items: stretch !important; gap: 0 !important; }
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail { position: relative !important; width: 100% !important; height: auto !important; aspect-ratio: 4 / 3; margin: 0 !important; }
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail img { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; image-rendering: pixelated; }
+html.pu-on .nitro-navigator .nav-thumbnail .room-thumbnail .badge { left: 6px !important; bottom: 6px !important; top: auto !important; right: auto !important; width: auto !important; margin: 0 !important; z-index: 1; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100 { padding: 7px var(--pu-gap) 0 !important; gap: 6px !important; align-items: center !important; }
+html.pu-on .nitro-navigator .nav-thumbnail > .d-flex.w-100:last-child { padding-bottom: var(--pu-gap) !important; }
+
+/* Room details from the green "i": a card at the bottom instead of a tooltip, so the screen edge never cuts it.
+   Picture on the left; name, owner, people and max users on the right; a close button top right. */
+html.pu-on .popover:has(.room-info) {
+  position: fixed !important; inset: auto var(--pu-gap) calc(var(--pu-bottom) + var(--pu-gap)) var(--pu-gap) !important; transform: none !important;
+  width: auto !important; max-width: none !important; z-index: 1200 !important; padding: 0 !important;
+}
+html.pu-on .popover:has(.room-info) .popover-arrow { display: none !important; }
+html.pu-on .popover .room-info {
+  display: grid !important; grid-template-columns: 88px minmax(0, 1fr); grid-template-rows: auto auto auto auto 1fr; column-gap: var(--pu-pad); row-gap: 6px; align-items: center; align-content: start;
+  padding: var(--pu-pad) !important; width: 100% !important; position: static !important;
+}
+html.pu-on .popover .room-info .room-info-bg { padding: 0 !important; gap: var(--pu-pad) !important; }
+html.pu-on .popover .room-info > .room-info-bg,
+html.pu-on .popover .room-info > .room-info-bg > .d-flex.flex-column:not(.room-thumbnail),
+html.pu-on .popover .room-info > .d-flex.flex-column,
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child { display: contents !important; }
+html.pu-on .popover .room-info .room-info-bg > :first-child { grid-column: 1; grid-row: 1 / span 5; align-self: start; margin: 0 !important; }
+html.pu-on .popover .room-info .room-thumbnail { display: block !important; width: 88px !important; height: 88px !important; margin: 0 !important; }
+html.pu-on .popover .room-info .room-thumbnail img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2:has(.d-flex > .font-italic:empty) { display: none !important; }
+html.pu-on .popover .room-info .room-info-bg .font-bold { grid-column: 2; padding-right: 40px; max-height: none !important; white-space: normal !important; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+html.pu-on .popover .room-info .room-info-bg > .d-flex.flex-column > .d-flex.gap-2 { grid-column: 2; gap: 6px !important; align-items: center; min-width: 0; }
+html.pu-on .popover .room-info .room-info-bg .flex-grow-1:empty { display: none !important; }
+html.pu-on .popover .room-info .badge { position: static !important; grid-column: 2; justify-self: start; margin: 0 !important; padding: 3px 7px !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:first-child { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child { grid-column: 2; width: auto !important; justify-content: flex-start !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:first-child > .d-flex:last-child:has(> .font-bold:empty) { display: none !important; }
+html.pu-on .popover .room-info > .d-flex.flex-column > .d-flex:last-child { grid-column: 2; gap: 4px !important; }
+html.pu-on .popover .pu-x { position: absolute; z-index: 2; top: 10px; right: 10px; }
+
+/* ---- Create room: full screen, the form on one column, layouts in a grid, Create and Cancel fixed at the bottom ---- */
+html.pu-on .draggable-window > .nitro-room-creator { width: 100% !important; max-width: none !important; }
+html.pu-on .nitro-room-creator .content-area { padding: 10px var(--pu-pad) 0 !important; overflow: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div:has(> .grid) { overflow: visible !important; flex: none !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid { display: flex !important; flex-direction: column !important; gap: var(--pu-pad) !important; height: auto !important; }
+html.pu-on .nitro-room-creator .content-area > div > .grid > * { width: 100% !important; max-width: none !important; flex: none !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .g-col-5 { gap: var(--pu-gap) !important; display: flex !important; flex-direction: column !important; }
+html.pu-on .nitro-room-creator textarea.form-control { height: 72px !important; min-height: 72px !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child {
+  order: 99; position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; display: grid !important; grid-template-columns: 1fr 1fr; gap: var(--pu-gap) !important; padding: 10px var(--pu-pad);
+}
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn { height: var(--pu-ctl-lg) !important; margin: 0 !important; width: 100% !important; }
+html.pu-on .nitro-room-creator .g-col-5 > .d-flex.gap-2:last-child .btn-danger { order: -1; }
+html.pu-on .nitro-room-creator .g-col-7 { padding-bottom: 76px !important; }
+html.pu-on .nitro-room-creator .room-creator-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: var(--pu-gap) !important; height: auto !important; overflow: visible !important; }
+html.pu-on .nitro-room-creator .room-creator-grid-item {
+  width: auto !important; height: auto !important; min-height: 96px; margin: 0 !important; padding: 6px !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 4px !important;
+}
+html.pu-on .nitro-room-creator .room-creator-grid-item img { max-width: 100%; image-rendering: pixelated; }
+
+/* ---- Room info (Nitro's window; the Room menu reads it hidden): tidy picture and buttons, the owner's gear left of the title ---- */
+html.pu-on .nitro-room-info .content-area { position: static !important; padding: var(--pu-pad) !important; gap: var(--pu-pad) !important; }
+html.pu-on .nitro-room-info .settings-room-infoss {
+  position: absolute !important; z-index: 3; top: 6px !important; left: 6px !important; right: auto !important; margin: 0 !important;
+  width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-height: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important;
+}
+html.pu-on .nitro-room-info .room-thumbnail { width: 104px !important; height: 104px !important; }
+html.pu-on .nitro-room-info .room-thumbnail img { width: 100% !important; height: 100% !important; object-fit: cover; image-rendering: pixelated; }
+html.pu-on .nitro-room-info .btn-grpup { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px !important; margin-top: 4px; }
+html.pu-on .nitro-room-info .btn-grpup .btn { padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child { display: grid !important; grid-template-columns: 1fr 1fr; gap: var(--pu-gap) !important; }
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn { margin: 0 !important; }
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn:only-child,
+html.pu-on .nitro-room-info .content-area > .d-flex.flex-column:last-child > .btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+/* ---- Chat history ---- */
+html.pu-on .nitro-chat-history-window .ch-search { padding: 10px var(--pu-pad) !important; }
+html.pu-on .nitro-chat-history-window .ch-results { padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion { margin: 0 0 6px !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-header { min-height: var(--pu-ctl-lg) !important; margin: 0 !important; }
+html.pu-on .nitro-chat-history-window .ch-accordion-body { margin: 0 !important; }
+
+/* ---- Builders tool: full width, switches instead of tiny ticks ---- */
+html.pu-on .builders-tools { width: 100% !important; }
+html.pu-on .builders-tools .builders-tools-content { background: var(--pu-s0) !important; padding: var(--pu-pad) !important; gap: 10px !important; }
+html.pu-on .builders-tools .builders-tools-toggle-list { gap: 0 !important; padding: 0 var(--pu-pad) !important; }
+html.pu-on .builders-tools .builders-tools-check-row { grid-template-columns: 1fr auto !important; min-height: var(--pu-head) !important; }
+html.pu-on .builders-tools .builders-tools-check-row + .builders-tools-check-row { border-top: 1px solid var(--pu-line) !important; }
+html.pu-on .builders-tools .builders-tools-check-row > button { order: 2; }
+html.pu-on .builders-tools .builders-tools-field-row { grid-template-columns: auto 1fr 112px !important; gap: var(--pu-pad) !important; min-height: 56px !important; padding: 0 var(--pu-gap) 0 var(--pu-pad) !important; }
+html.pu-on .builders-tools input { width: 112px !important; font-weight: 700 !important; }
+html.pu-on .builders-tools .builders-tools-actions { gap: var(--pu-gap) !important; padding-top: 2px !important; border: 0 !important; }
+html.pu-on .builders-tools .builders-tools-actions .btn { min-height: var(--pu-ctl) !important; }
+html.pu-on .builders-tools .builders-tools-furni-count { padding: 0 !important; }
+
+/* ---- Rare values: search on its own row, readable cards and paging ---- */
+html.pu-on .nitro-rarevalues-window .nitro-card-header { padding: 0 !important; }
+html.pu-on .rv-bar { flex-wrap: wrap !important; gap: var(--pu-gap) !important; }
+html.pu-on .rv-bar-search { flex: 1 1 100% !important; }
+html.pu-on .rv-bar-input { flex: 1 1 auto !important; width: auto !important; }
+html.pu-on .rv-bar-select { flex: 1 1 0 !important; min-width: 0 !important; }
+
+/* ---- Mentions: same gutter, select like the other inputs, square trash button ---- */
+html.pu-on .nitro-mentions .content-area { padding: 0 var(--pu-pad) var(--pu-pad) !important; }
+html.pu-on .nitro-mentions .nitro-mention-search-type { width: 110px !important; flex: none !important; }
+html.pu-on .nitro-mentions .nitro-mention-search-type select { width: 100% !important; }
+html.pu-on .nitro-mentions .nitro-mention-search > .btn { width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; padding: 0 !important; flex: none !important; }
+html.pu-on .nitro-mentions .nitro-mention-search > .btn svg { width: 15px !important; height: 15px !important; }
+
+/* ---- Room voice: Peace's own panel, under the top bar while it is open ---- */
+html.pu-on #hud-more-voice:not(:empty) {
+  visibility: visible !important; pointer-events: auto !important; display: block !important;
+  position: fixed !important; z-index: 460 !important; top: var(--pu-top) !important; left: var(--pu-gap) !important; right: var(--pu-gap) !important;
+  max-height: calc(100% - 120px) !important; overflow: auto !important; padding: 0 !important;
+}
+html.pu-on #hud-more-voice .nitro-voice-tools-container,
+html.pu-on #hud-more-voice .nitro-voice-tools { width: 100% !important; max-width: none !important; margin: 0 !important; position: relative !important; inset: auto !important; transform: none !important; }
+html.pu-on #hud-more-voice .voice-tools-header { padding: var(--pu-gap) 52px var(--pu-gap) 10px !important; }
+html.pu-on #hud-more-voice .voice-tools-body { padding: var(--pu-gap) 10px 10px !important; }
+html.pu-on #hud-more-voice .voice-tools-toggle { position: absolute !important; z-index: 2; top: 6px !important; right: 6px !important; left: auto !important; }
+
+/* ---- Room music: Peace's own button and card under the wallet; hidden while a window is open ---- */
+html.pu-on .nitro-phone-corner { display: flex !important; position: fixed !important; z-index: 450 !important; top: var(--pu-top) !important; right: 10px !important; }
+html.pu-on .nitro-phone-corner .phone-corner-wallet,
+html.pu-on .nitro-phone-corner .phone-corner-purse { display: none !important; }
+html.pu-on .nitro-phone-corner .phone-corner-btn { width: var(--pu-ctl) !important; min-width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; }
+html.pu-on body:has(.draggable-window .nitro-card) .nitro-phone-corner,
+html.pu-on body:has(#hud-more-voice:not(:empty)) .nitro-phone-corner .phone-corner-card { display: none !important; }
+
+/* ---- Change looks, full screen (idea B) ----
+   The avatar on a stage at the top, one sheet below it: the 6 category tabs, the item types and the items, with
+   colours as their own step. Nitro's columns are flattened (display: contents) so they can be reordered: header,
+   stage (the preview column), tabs, sheet (the items column). Stage parts are placed against the card. frame.js
+   keeps these in --lk-*: header height, stage height, avatar zoom, item grid zoom, palette. */
+html.pu-on .draggable-window > .nitro-avatar-editor { background: var(--pu-s0) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor > .nitro-card-header { order: 0; flex: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .content-area,
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid { display: contents !important; }
+/* stage */
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) {
+  order: 1; flex: 0 0 var(--lk-st, 300px) !important; height: var(--lk-st, 300px) !important; width: 100% !important; min-height: 0 !important;
+  position: static !important; overflow: visible !important; padding: 0 !important; gap: 0 !important; background: var(--pu-stage) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) > .d-flex,
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) > .d-flex > .d-flex:has(> .figure-preview-container),
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.figure-preview-container) .d-flex:has(> .action-buttons) { display: contents !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container {
+  position: absolute !important; z-index: 1; top: var(--lk-hh, 48px) !important; left: 0 !important; right: 0 !important; bottom: auto !important;
+  width: auto !important; height: calc(var(--lk-st, 300px) - 12px) !important; margin: 0 !important; padding: 0 !important; zoom: 1 !important;
+  background: none !important; border: 0 !important; border-radius: 0 !important; overflow: hidden !important; touch-action: none;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container::before {
+  content: '' !important; position: absolute; z-index: 0; left: 50%; top: 0; bottom: 30px; width: 290px; margin-left: -145px; pointer-events: none;
+  background: var(--pu-stage-beam); clip-path: polygon(38% 0, 62% 0, 100% 100%, 0 100%);
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important; transform: none !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container::after { content: none !important; display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-spotlight { display: none !important; }
+/* Nitro's composition (podium at 12px, avatar at 125px, both 2x pixel art) zoomed as one: 1 = 2x, .75 = 1.5x */
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-image,
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-shadow { zoom: var(--lk-fk, .75) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-image { position: absolute !important; z-index: 4 !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 125px !important; width: 90px !important; height: 130px !important; margin: 0 auto !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .avatar-shadow { position: absolute !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: 12px !important; margin: 0 auto !important; }
+/* turn buttons beside the podium */
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container {
+  position: absolute !important; z-index: 5 !important; left: 50% !important; right: auto !important; top: auto !important;
+  bottom: calc(12px + 58px * var(--lk-fk, .75)) !important; width: calc(140px * var(--lk-fk, .75) + 100px) !important; margin: 0 !important; padding: 0 !important;
+  transform: translateX(-50%) !important; display: flex !important; justify-content: space-between !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon { width: 40px !important; height: 40px !important; margin: 0 !important; display: grid !important; place-items: center !important; cursor: pointer; }
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .icon::before {
+  content: ''; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--pu-i-turn) center / contain no-repeat; mask: var(--pu-i-turn) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .figure-preview-container .arrow-container .arrow-right::before { transform: scaleX(-1); }
+/* Save (top right) and Undo / Random / Clear under it */
+html.pu-on .draggable-window .nitro-avatar-editor .btn-success {
+  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 48px) + 10px) !important; right: 10px !important; left: auto !important;
+  width: auto !important; height: 38px !important; min-height: 0 !important; margin: 0 !important; padding: 0 14px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; white-space: nowrap; font-size: var(--pu-fs) !important; line-height: 1 !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons {
+  position: absolute !important; z-index: 5; top: calc(var(--lk-hh, 48px) + 58px) !important; right: 10px !important; width: auto !important;
+  display: flex !important; flex-direction: column !important; gap: var(--pu-gap) !important; margin: 0 !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn { flex: none !important; width: 40px !important; height: 40px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn svg { width: var(--pu-ic) !important; height: var(--pu-ic) !important; }
+/* Reset (Nitro's redo arrow) reads as "undo my changes"; random before clear, so the one that wipes is last */
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"]) { order: 1; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"]) > svg { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 512 512"])::before {
+  content: ''; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--pu-i-undo) center / contain no-repeat; mask: var(--pu-i-undo) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 640 512"]) { order: 2; }
+html.pu-on .draggable-window .nitro-avatar-editor .action-buttons .btn:has(> svg[viewBox="0 0 448 512"]) { order: 3; }
+/* layers: a rail on the left of the stage; tap the selected layer again for move up / down / remove */
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel {
+  position: absolute !important; z-index: 6; top: calc(var(--lk-hh, 48px) + 8px) !important; left: 10px !important; width: 44px !important;
+  display: flex !important; flex-direction: column !important; align-items: center !important; gap: 6px !important;
+  margin: 0 !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel::before { content: 'Layers'; height: 14px; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex:not(.flex-column) { display: contents !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex:not(.flex-column) > .avatar-layer-main { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers { flex: none !important; width: 42px !important; height: 42px !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel .btn-layers svg { width: 14px !important; height: 14px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column {
+  max-height: none !important; overflow: visible !important; display: flex !important; flex-direction: column !important;
+  align-items: flex-start !important; gap: 6px !important; width: 42px !important; counter-reset: pu-lyr;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row {
+  position: relative !important; flex: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; gap: 6px !important;
+  background: none !important; border: 0 !important; box-shadow: none !important; cursor: pointer !important; counter-increment: pu-lyr;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .avatar-layer-main { flex: none !important; gap: 0 !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row .avatar-layer-grip,
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row .avatar-layer-labels { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb { position: relative !important; width: 42px !important; height: 42px !important; overflow: visible !important; image-rendering: pixelated; font-size: 0 !important; color: transparent !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb > * { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb.is-empty::before { content: ''; position: absolute; inset: 11px; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-thumb::after { content: counter(pu-lyr); position: absolute; left: -6px; top: -6px; min-width: 17px; height: 17px; padding: 0 3px; text-align: center; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row > .btn-layers { display: none !important; width: var(--pu-ctl) !important; height: var(--pu-ctl) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] { z-index: 2; margin: -4px !important; padding: 4px !important; animation: pu-fade .16s; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-row[data-pu-open] > .btn-layers { display: grid !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column:has(> :nth-child(5)) { gap: 4px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-layer-panel > .d-flex.flex-column:has(> :nth-child(5)) .avatar-layer-thumb { width: 34px !important; height: 34px !important; }
+/* category tabs: the top of the sheet, six equal squares */
+html.pu-on .draggable-window .nitro-avatar-editor > .nitro-card-tabs.avatar-editor-tabs {
+  order: 2; position: relative !important; z-index: 3; flex: none !important; height: auto !important; min-height: 0 !important;
+  margin: -12px 0 0 !important; padding: var(--pu-pad) var(--pu-pad) 10px !important; overflow: visible !important;
+  border-radius: var(--pu-r) var(--pu-r) 0 0 !important; box-shadow: var(--pu-lift) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-tabs { display: grid !important; grid-template-columns: repeat(6, minmax(0, 1fr)) !important; gap: 6px !important; width: 100% !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link { width: auto !important; height: var(--pu-ctl-lg) !important; padding: 0 !important; margin: 0 !important; display: grid !important; place-items: center !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link > div { display: grid !important; place-items: center !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-tabs .nav-link:active { transform: translateY(1px); }
+/* sheet: item types and the Colour button on one row, then the items */
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.choose-clothing) {
+  order: 3; flex: 1 1 0 !important; min-height: 0 !important; width: 100% !important; height: auto !important; position: static !important;
+  display: flex !important; flex-direction: column !important; padding: 0 var(--pu-pad) 10px !important; margin: 0 !important; gap: 0 !important; overflow: hidden !important; background: var(--pu-s0) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .content-area > .grid > :has(.choose-clothing) > .grid { display: flex !important; flex-direction: column !important; flex: 1 1 0 !important; min-height: 0 !important; height: auto !important; gap: 0 !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing {
+  display: grid !important; grid-template-columns: minmax(0, 1fr) auto !important; grid-template-rows: 40px minmax(0, 1fr) !important; gap: 10px var(--pu-gap) !important;
+  flex: 1 1 0 !important; min-height: 0 !important; height: auto !important; overflow: visible !important; position: static !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item) { grid-row: 1; grid-column: 1; width: auto !important; height: 40px !important; min-width: 0 !important; display: flex !important; gap: 3px !important; padding: 3px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing:not(:has(.pu-lkbar)) > .d-flex:has(> .category-item),
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing:has(.pu-lkbar[data-off]) > .d-flex:has(> .category-item) { grid-column: 1 / -1; }
+html.pu-on .draggable-window .nitro-avatar-editor .category-item { flex: 1 1 0 !important; min-width: 0 !important; height: 100% !important; padding: 0 4px !important; gap: 6px !important; margin: 0 !important; overflow: hidden; letter-spacing: -.01em; white-space: nowrap; }
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(4)) > .category-item { padding: 0 2px !important; font-size: calc(var(--pu-fs-sm) - .5px) !important; letter-spacing: -.02em; }
+@media (max-width: 380px) {
+  html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex:has(> .category-item:nth-child(5)) > .category-item { font-size: var(--pu-fs-xs) !important; letter-spacing: -.03em; }
+  html.pu-on .nitro-avatar-editor .pu-lkcol { padding: 0 var(--pu-gap) !important; }
+}
+html.pu-on .draggable-window .nitro-avatar-editor .category-item > .nitro-avatar-editor-spritesheet:is(.male-icon, .female-icon, .hr-icon, .ha-icon, .he-icon, .ea-icon, .fa-icon, .ch-icon, .cp-icon, .cc-icon, .ca-icon, .lg-icon, .sh-icon, .wa-icon, .pt-icon, .mc-icon) { display: none !important; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .hr-icon)::after { content: 'Hair'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .ha-icon)::after { content: 'Hats'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .he-icon)::after { content: 'Head acc'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .ea-icon)::after { content: 'Eyewear'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .nitro-avatar-editor-spritesheet.fa-icon)::after { content: 'Face'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .ch-icon)::after { content: 'Shirts'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .cp-icon)::after { content: 'Prints'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .cc-icon)::after { content: 'Jackets'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .ca-icon)::after { content: 'Necklaces'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .lg-icon)::after { content: 'Pants'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .sh-icon)::after { content: 'Shoes'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .wa-icon)::after { content: 'Belts'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .pt-icon)::after { content: 'Pets'; }
+html.pu-on .nitro-avatar-editor .category-item:has(> .mc-icon)::after { content: 'Misc'; }
+html.pu-on .nitro-avatar-editor .category-item::after { overflow: hidden; text-overflow: ellipsis; }
+/* Colour button (frame.js adds it) and, in the colour step, the bar with Back, the title and Colour 1 / 2 */
+html.pu-on .nitro-avatar-editor .pu-lkbar { grid-row: 1; grid-column: 2; display: flex; align-items: center; gap: var(--pu-gap); min-width: 0; height: 40px; }
+html.pu-on .nitro-avatar-editor .pu-lkbar[data-off] { display: none; }
+html.pu-on .nitro-avatar-editor .pu-lkbar button { flex: none; height: 40px; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 0 9px; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+html.pu-on .nitro-avatar-editor .pu-lkbar svg { width: var(--pu-ic); height: var(--pu-ic); fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkbar .sw { display: block; width: 22px; height: 22px; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkcol .sw + .sw { margin-left: -13px; }
+html.pu-on .nitro-avatar-editor .pu-lkcol { min-width: 44px; padding: 0 10px !important; }
+html.pu-on .nitro-avatar-editor .pu-lkback { width: 40px; padding: 0 !important; }
+html.pu-on .nitro-avatar-editor .pu-lkt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+html.pu-on .nitro-avatar-editor .pu-lkt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-avatar-editor .pu-lkt small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.pu-on .nitro-avatar-editor .pu-lkslots { display: flex; gap: 3px; padding: 3px; height: 40px; flex: none; }
+html.pu-on .nitro-avatar-editor .pu-lkslots button { height: 32px; padding: 0 var(--pu-gap) 0 5px; gap: 6px; }
+html.pu-on .nitro-avatar-editor .pu-lkslots .sw { width: 20px; height: 20px; }
+html.pu-on .nitro-avatar-editor .pu-lkbar .sw[hidden],
+html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkback,
+html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkt,
+html.pu-on .nitro-avatar-editor .pu-lkbar > .pu-lkslots,
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkcol,
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar:not([data-n="2"]) > .pu-lkslots { display: none; }
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar { grid-column: 1 / -1; animation: pu-in-r .22s var(--pu-ease); }
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkback,
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar > .pu-lkt,
+html.pu-on .nitro-avatar-editor[data-pu-colour] .pu-lkbar[data-n="2"] > .pu-lkslots { display: flex; }
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .choose-clothing > .d-flex:has(> .category-item) { display: none !important; }
+/* items: Nitro's list keeps 4 per row in 50px rows, so the list is zoomed to make square tiles that fill the width */
+html.pu-on .draggable-window .nitro-avatar-editor .choose-clothing > .d-flex.overflow-hidden { grid-row: 2; grid-column: 1 / -1; display: flex !important; flex-direction: column !important; gap: 0 !important; min-height: 0 !important; height: auto !important; width: auto !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-parts-container {
+  flex: 1 1 0 !important; min-height: 0 !important; width: auto !important; max-width: none !important; height: auto !important; padding: 0 !important;
+  margin: 0 calc(-2px * var(--lk-z, 1.6)) !important; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: pu-fade .2s;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container { zoom: var(--lk-z, 1.6) !important; padding: 0 !important; height: 100% !important; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: none; }
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container::-webkit-scrollbar { display: none; }
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts { width: 46px !important; height: 46px !important; margin: 0 !important; overflow: visible !important; image-rendering: pixelated; }
+html.pu-on .draggable-window .nitro-avatar-editor .clothing-container .layout-grid-item.avatar-parts:active { transform: scale(.95); }
+/* colour step: the palette takes the items' place, sized to whole rows */
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-color-palette-container { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-parts-container { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-color-palette-container {
+  display: flex !important; flex-direction: column !important; flex: 1 1 0 !important; min-height: 0 !important; width: auto !important; max-width: none !important; height: auto !important;
+  margin: 0 !important; padding: 0 !important; gap: 0 !important; background: none !important; border: 0 !important; animation: pu-in-r .22s var(--pu-ease);
+}
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-colour] .avatar-color-palette-container .insidething { display: contents !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-palette-set-view {
+  display: grid !important; grid-template-columns: repeat(var(--lk-pc, 10), minmax(0, 1fr)) !important; grid-auto-rows: var(--lk-ps, 30px) !important; grid-template-rows: none !important;
+  gap: 5px !important; align-content: start !important; flex: none !important; width: 100% !important; height: var(--lk-ph, 100%) !important; max-height: 100% !important;
+  margin: 0 !important; padding: 4px !important; overflow-x: hidden !important; overflow-y: auto !important; scroll-snap-type: y mandatory; scroll-padding: 4px;
+  overscroll-behavior: contain; scrollbar-width: none; background: none !important; border: 0 !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .avatar-editor-palette-set-view::-webkit-scrollbar { display: none; }
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-slot="1"] [data-pu-pal="2"],
+html.pu-on .draggable-window .nitro-avatar-editor[data-pu-slot="2"] [data-pu-pal="1"] { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame { width: 100% !important; height: 100% !important; min-height: 0 !important; margin: 0 !important; scroll-snap-align: start; overflow: visible !important; transition: transform .08s !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame:active { transform: scale(.92); }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active { z-index: 1; }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame::before { content: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .color-picker-frame.active::after {
+  content: '' !important; position: absolute; left: 50%; top: 46%; width: 30%; height: 15%; border-top: 0; border-right: 0; background: none !important; transform: translate(-50%, -50%) rotate(-45deg);
+}
+/* My Wardrobe (the hanger tab): Nitro shows it beside the preview; here it fills the sheet */
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel {
+  position: absolute !important; z-index: 8; top: calc(var(--lk-hh, 48px) + var(--lk-st, 300px) + 54px) !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: auto !important; height: auto !important; margin: 0 !important; padding: 0 var(--pu-pad) var(--pu-pad) !important; overflow-y: auto !important;
+  background: var(--pu-s0) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; animation: pu-fade .2s;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex { height: auto !important; align-items: stretch !important; gap: var(--pu-gap) !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child { height: 20px; gap: 6px !important; align-self: stretch !important; justify-content: flex-start !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container { height: auto !important; display: block !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .nitro-avatar-editor-wardrobe-container {
+  display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: var(--pu-gap) !important; width: 100% !important; height: auto !important;
+  overflow: visible !important; padding: 0 !important; background: none !important; border: 0 !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .nitro-avatar-editor-wardrobe-container > * {
+  position: relative !important; display: flex !important; flex-direction: column-reverse !important; align-items: stretch !important; justify-content: flex-start !important;
+  gap: 0 !important; aspect-ratio: .62; min-width: 0; overflow: hidden !important;
+  background: var(--pu-stage-card) !important; border: var(--pu-edge) !important; border-radius: var(--pu-r) !important; box-shadow: var(--pu-hi-soft) !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container {
+  flex: 1 1 auto !important; width: auto !important; height: auto !important; min-height: 0 !important; position: relative !important;
+  display: flex !important; align-items: flex-end !important; justify-content: center !important; overflow: hidden !important; background: none !important; border-radius: 0 !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container .avatar-image {
+  position: absolute !important; left: 50% !important; right: auto !important; top: auto !important; bottom: 4px !important; width: 90px !important; height: 130px !important;
+  margin: 0 0 0 -45px !important; transform: none !important; zoom: .7; image-rendering: pixelated !important; background-position: center -8px !important;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .avatar-container:empty::before { content: ''; position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container { position: static !important; flex: none !important; width: 100% !important; flex-direction: row !important; gap: 1px !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > * { flex: 1 1 0 !important; height: 28px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; display: grid !important; place-items: center !important; }
+/* slot buttons: Nitro's arrows become Save (floppy, saves the current look into the slot) and Wear (shirt, blue, loads the
+   saved look; only on slots that have one). An empty slot's lone Save button also gets its label. */
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button { display: flex !important; align-items: center; justify-content: center; gap: 4px; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container svg { display: none !important; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button::before {
+  content: ''; flex: none; width: 15px; height: 15px; background: currentColor; -webkit-mask: var(--pu-i-save) center / contain no-repeat; mask: var(--pu-i-save) center / contain no-repeat;
+}
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:only-child::after { content: 'Save'; }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button + button::before { -webkit-mask-image: var(--pu-i-wear); mask-image: var(--pu-i-wear); }
+html.pu-on .draggable-window .nitro-avatar-editor .saved-outfit-container .button-container > button:disabled { opacity: .4; }
+/* key for the two icons, on the right of the "My Wardrobe" title */
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before,
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { order: 9; padding-left: 17px; white-space: nowrap; background: var(--pu-bg-save) left center / 13px no-repeat; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::before { content: 'Save current look'; margin-left: auto; }
+html.pu-on .draggable-window .nitro-avatar-editor .wardrobe-panel > .d-flex > .d-flex:first-child::after { content: 'Wear'; margin-left: 6px; background-image: var(--pu-bg-wear); }
+
+
+/* ================================================================ 5. MOTION */
+@keyframes pu-up { from { transform: translateY(28px); opacity: 0; } }
+@keyframes pu-in-r { from { transform: translateX(36px); opacity: 0; } }
+@keyframes pu-in-l { from { transform: translateX(-36px); opacity: 0; } }
+@keyframes pu-fade { from { opacity: 0; } }
+html.pu-on .draggable-window > .nitro-card { animation: pu-up .24s var(--pu-ease); }
+html.pu-on .nitro-catalog.pu-page .catalog-left + .g-col-8 { animation: pu-in-r .24s var(--pu-ease); }
+html.pu-on .nitro-catalog:not(.pu-page) .catalog-left { animation: pu-in-l .24s var(--pu-ease); }
+html.pu-on .popover:has(.room-info) { animation: pu-up .24s var(--pu-ease); }
+html.pu-on #hud-more-voice:not(:empty), html.pu-on .nitro-phone-corner .phone-corner-card { animation: pu-fade .18s; }
+@media (prefers-reduced-motion: reduce) {
+  html.pu-on .draggable-window > .nitro-card, html.pu-on .nitro-catalog .catalog-left, html.pu-on .nitro-catalog .g-col-8 { animation: none !important; }
+  html.pu-on .nitro-avatar-editor *, html.pu-on .nitro-avatar-editor *::before, html.pu-on .nitro-avatar-editor *::after { animation: none !important; transition: none !important; }
+}
+</style>
+<style>
+/* VOICE: a product team's internal reference, calm and exact.
+   IDEA: the spec sheet that ships with a UI kit: tokens first, then each part with where it is used.
+   PICTURE: real phone screens built from the shipped CSS, side by side.
+   COLOUR and TYPE: the Peace HUD itself (near-black two-tone, Peace blue, Ubuntu).
+   LAYOUT: sticky section links, token tables, component cards, a row of phone screens. */
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--pu-bg) !important; color: var(--pu-ink); font: 400 var(--pu-fs-md)/1.55 var(--pu-font); overflow-x: clip; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; min-width: 0; }
+.sb-top { position: sticky; top: 0; z-index: 50; display: flex; gap: 6px; padding: 10px max(4vw, 12px); overflow-x: auto; scrollbar-width: none; background: var(--pu-tone-bar); border-bottom: var(--pu-edge); }
+.sb-top a { flex: none; height: 32px; padding: 0 12px; display: flex; align-items: center; border-radius: var(--pu-r); background: var(--pu-tone); border: var(--pu-edge); box-shadow: var(--pu-hi); color: var(--pu-ink-2); font: 500 13px/1 var(--pu-font); text-decoration: none; }
+.sb-top a:active { background: var(--pu-blue-tone); color: var(--pu-ink-on); }
+.sb-band { padding: 28px max(4vw, 12px); max-width: 1240px; margin: 0 auto; }
+.sb-band + .sb-band { border-top: 1px solid var(--pu-line); }
+h1 { margin: 0 0 8px; font: 700 clamp(28px, 5vw, 40px)/1.08 var(--pu-font-bold); text-wrap: balance; }
+h2 { margin: 0 0 6px; font: 700 24px/1.2 var(--pu-font-bold); }
+h3.sb { margin: 0 0 4px; font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold); }
+p { margin: 0 0 12px; max-width: 70ch; color: var(--pu-ink-2); }
+p b, li b { color: var(--pu-ink); }
+code { font: 13px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--pu-ink); background: var(--pu-s1); border: 1px solid var(--pu-line-2); border-radius: var(--pu-r-in); padding: 1px 5px; overflow-wrap: anywhere; }
+.sb-lead { font-size: 17px; color: var(--pu-ink-2); }
+.sb-rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.sb-rules li { padding: 12px 14px; background: var(--pu-s1); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi-soft); color: var(--pu-ink-2); font-size: var(--pu-fs); }
+.sb-rules li b { display: block; margin-bottom: 2px; }
+/* phone screens */
+.sb-phones { display: flex; gap: 16px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x mandatory; }
+.sb-phone { flex: none; width: 360px; max-width: calc(100vw - 32px); scroll-snap-align: start; }
+.sb-phone > small { display: block; margin: 0 0 6px; color: var(--pu-ink-3); font-size: var(--pu-fs-sm); }
+.sb-screen { position: relative; height: 640px; overflow: hidden; border-radius: 14px; border: 1px solid var(--pu-line-2); background: linear-gradient(160deg, #24414f, #10202a 60%, #0b151b); }
+.sb-screen .sb-host { position: absolute; inset: 0; }
+.sb-screen > .draggable-window { position: absolute !important; top: 52px !important; bottom: 60px !important; }
+.sb-screen > .draggable-window > .nitro-card { height: 100% !important; max-height: none !important; }
+/* tokens */
+.sb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 8px; margin-top: 14px; }
+.sb-tok { display: flex; align-items: center; gap: 10px; padding: 8px; background: var(--pu-s1); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi-soft); }
+.sb-sw { flex: none; width: 52px; height: 40px; border-radius: var(--pu-r-in); border: 1px solid var(--pu-line-2); display: grid; place-items: center; overflow: hidden; }
+.sb-tok div { min-width: 0; }
+.sb-tok code { background: none; border: 0; padding: 0; font-size: 12.5px; }
+.sb-tok small { display: block; color: var(--pu-ink-3); font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-tok i { display: block; color: var(--pu-ink-2); font-style: normal; font-size: 12.5px; line-height: 1.3; }
+.sb-group { margin: 22px 0 0; font: 700 var(--pu-fs-xs)/1 var(--pu-font-bold); letter-spacing: .06em; text-transform: uppercase; color: var(--pu-ink-3); }
+/* components */
+.sb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); gap: 12px; margin-top: 14px; }
+.sb-card { display: flex; flex-direction: column; background: var(--pu-s0); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi); overflow: hidden; }
+.sb-card > header { padding: 12px 14px 8px; }
+.sb-card > header p { margin: 0; font-size: var(--pu-fs); }
+.sb-demo { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 14px; background: var(--pu-s0); border-top: 1px solid var(--pu-line); border-bottom: 1px solid var(--pu-line); }
+.sb-demo.col { flex-direction: column; align-items: stretch; }
+.sb-demo .sb-host { display: block; width: 100%; }
+/* Samples sit in the page flow, not at window positions */
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window { position: relative !important; inset: auto !important; transform: none !important; width: 100% !important; height: auto !important; max-height: none !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window > .nitro-card { position: relative !important; inset: auto !important; width: 100% !important; height: auto !important; max-height: none !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .content-area { flex-direction: column !important; gap: 8px !important; height: auto !important; overflow: visible !important; }
+html.pu-on.pu-dark .sb-card .sb-demo .draggable-window .choose-clothing { display: block !important; height: auto !important; }
+.sb-demo > .lbl, .sb-lbl { width: 100%; margin: 4px 0 -2px; font-size: 12px; color: var(--pu-ink-3); }
+.sb-use { padding: 10px 14px 12px; font-size: 13px; color: var(--pu-ink-3); }
+.sb-use b { color: var(--pu-ink-2); font-weight: 500; }
+/* bare Nitro structure the samples need (in the game, Nitro's own CSS does this) */
+.draggable-window { position: relative !important; }
+.nitro-card { display: flex; flex-direction: column; overflow: hidden; }
+.nitro-card-header { position: relative; display: flex; align-items: center; justify-content: center; flex: none; }
+.nitro-card-header-close { position: absolute; top: 6px; }
+.nitro-card-tabs .nav-tabs { display: flex; margin: 0; padding: 0; list-style: none; }
+.nitro-card-tabs .nav-link { display: flex; align-items: center; cursor: pointer; }
+.content-area { display: flex; flex-direction: column; gap: 8px; padding: 12px; overflow: hidden; flex: 1 1 auto; }
+.btn { display: inline-block; padding: 6px 12px; border: 1px solid transparent; cursor: pointer; }
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; }
+.form-control, .form-select { display: block; width: 100%; }
+.d-flex { display: flex !important; } .flex-column { flex-direction: column !important; } .gap-2 { gap: 8px !important; } .w-100 { width: 100% !important; }
+.navigator-item { display: flex; align-items: center; }
+.room-thumbnail { position: relative; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+.room-thumbnail .badge.w-100 { position: absolute; left: 0; bottom: 0; justify-content: center; }
+.nav-thumbnail { display: flex; flex-direction: column; }
+.nav-thumbnail .room-thumbnail .badge { position: absolute; }
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.navigator-item .flex-column { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.sb-pic { width: 100%; height: 100%; background: linear-gradient(135deg, #3c6e85, #1d3946 55%, #2b2b2b); }
+.sb-pic.b { background: linear-gradient(135deg, #8a5a3a, #3b2a20 55%, #2b2b2b); }
+.sb-pic.c { background: linear-gradient(135deg, #5b4a8a, #2a2340 55%, #2b2b2b); }
+.sb-ico { width: 12px; height: 12px; fill: currentColor; }
+.sb-coin { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--pu-edge-c); flex: none; }
+.builders-tools .is-ticked, .builders-tools .is-not-ticked { position: relative; display: inline-block; }
+</style>
+</head>
+<body>
+<nav class="sb-top" aria-label="Sections">
+  <a href="#screens">Screens</a><a href="#rules">Rules</a><a href="#colour">Colour</a><a href="#type">Type</a><a href="#shape">Shape &amp; size</a>
+  <a href="#icons">Icons</a><a href="#buttons">Buttons</a><a href="#close">Close (X)</a><a href="#chips">Chips</a><a href="#inputs">Inputs</a>
+  <a href="#panels">Panels &amp; tiles</a><a href="#badges">Badges</a><a href="#floating">Floating</a>
+</nav>
+
+<section class="sb-band">
+  <h1>Peace UI design system</h1>
+  <p class="sb-lead">One source of truth for every colour, corner, size and component in the Peace Hotel phone UI. Built from the real <code>nitro.css</code> and <code>ui.css</code> of UI version 14, so what you see here is exactly what the game draws.</p>
+</section>
+
+<section class="sb-band" id="screens">
+  <h2>Screens</h2>
+  <p>Real windows, all built from the same parts: same header, same X, same 36px controls, same 6px corner.</p>
+  <div class="sb-phones">
+    <div class="sb-phone"><small>Top bar, Room menu (owner tools 6px apart)</small><div class="sb-screen"><div class="sb-host" data-ui="room"></div></div></div>
+    <div class="sb-phone"><small>Rooms: people badges grey / green / red</small><div class="sb-screen" id="scr-rooms"></div></div>
+    <div class="sb-phone"><small>Friends</small><div class="sb-screen"><div class="sb-host" data-ui="friends"></div></div></div>
+    <div class="sb-phone"><small>Me: Credits and Duckets on one row</small><div class="sb-screen"><div class="sb-host" data-ui="me"></div></div></div>
+    <div class="sb-phone"><small>Inventory: Place in room = primary button</small><div class="sb-screen" id="scr-inv"></div></div>
+  </div>
+</section>
+
+<section class="sb-band" id="rules">
+  <h2>Rules</h2>
+  <p>Follow these and nothing can drift out of sync again. <code>tools/check-design.js</code> runs on every pull request and fails when a rule is broken.</p>
+  <ul class="sb-rules">
+    <li><b>Raw values live in one place</b>Every colour, corner, font and font size is a <code>--pu-*</code> token at the top of nitro.css. The Peace UI panels read the same tokens.</li>
+    <li><b>One look per job</b>Main action = primary (blue). Delete, report, the profile X = danger (red). Everything else = default (dark two-tone).</li>
+    <li><b>One height</b>Buttons, chips, inputs, selects and square icon buttons are 36px (<code>--pu-ctl</code>). Only bottom action bars use 44px.</li>
+    <li><b>One corner</b>6px (<code>--pu-r</code>) on everything you can tap or read in a box. 4px only for parts inside a padded control.</li>
+    <li><b>One X</b>Every close button is the same 36px square with the same drawing (<code>--pu-i-x</code>), in Nitro windows and Peace panels.</li>
+    <li><b>Pages set layout only</b>A window's own section in nitro.css may set size, position, order and gaps. A new look means adding the element to a component list.</li>
+  </ul>
+</section>
+
+<section class="sb-band" id="colour">
+  <h2>Colour</h2>
+  <p>Near-black surfaces in steps, light text in three strengths, and three accents with a job each. Duotone fills are Peace's HUD look: the top half a shade lighter.</p>
+  <div id="tok-colour"></div>
+</section>
+
+<section class="sb-band" id="type">
+  <h2>Type</h2>
+  <p>Ubuntu for text, Ubuntu Bold for titles, names and primary buttons. Seven sizes.</p>
+  <div id="tok-type"></div>
+</section>
+
+<section class="sb-band" id="shape">
+  <h2>Shape &amp; size</h2>
+  <div id="tok-shape"></div>
+</section>
+
+<section class="sb-band" id="icons">
+  <h2>Icons</h2>
+  <p>Icons drawn by CSS are tokens too. Masks take the text colour, so one drawing works on dark, blue and red.</p>
+  <div id="tok-icons"></div>
+</section>
+
+<section class="sb-band" id="components">
+  <div id="buttons"></div>
+  <h2>Components</h2>
+  <p>Each card shows the game sample (Nitro window markup + nitro.css) and, where the Peace UI has the same part, its sample (shadow root + ui.css). Below each: where it is used.</p>
+  <div class="sb-cards">
+    <article class="sb-card"><header><h3 class="sb">Buttons</h3><p>Default, primary, danger. 36px, 6px corner, black edge, light inner line.</p></header>
+      <div class="sb-demo"><span class="lbl">Game windows</span>
+        <div class="draggable-window" style="width:100%"><div class="nitro-card nitro-mentions" style="animation:none;border:0;box-shadow:none;border-radius:0"><div class="content-area" style="flex-direction:row;flex-wrap:wrap;padding:0">
+          <button class="btn btn-secondary">Cancel</button><button class="btn btn-primary">Place in room</button><button class="btn btn-danger">Report</button><button class="btn btn-primary" disabled>Disabled</button>
+        </div></div></div>
+        <span class="lbl">Peace UI</span><div class="sb-host" data-ui="buttons"></div>
+      </div>
+      <div class="sb-use"><b>Default:</b> .btn-secondary/-light/-dark/-outline-*, Shop Gift, Create room Cancel, Inventory Sell, room info buttons, zoom, back bar, voice tools, music, Change looks tools · <b>Primary:</b> .btn-primary, .btn-success, Save changes, Wear, profile edit, voice Join, Accept · <b>Danger:</b> .btn-danger, profile X, remove layer, Report</div>
+    </article>
+
+    <article class="sb-card" id="close"><header><h3 class="sb">Close (X)</h3><p>One 36px square, one drawing. The profile's X is the red variant.</p></header>
+      <div class="sb-demo"><span class="lbl">Game window header</span>
+        <div class="draggable-window" style="width:100%"><div class="nitro-card nitro-mentions" style="animation:none;border-radius:var(--pu-r)"><div class="nitro-card-header"><span class="nitro-card-header-text">Inventory</span><div class="nitro-card-header-close"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor"/></svg></div></div></div></div>
+        <span class="lbl">Peace UI window header (Friends, Me)</span><div class="sb-host" data-ui="whead"></div>
+        <span class="lbl">Profile (danger variant) and room details</span>
+        <div class="draggable-window"><div class="nitro-card user-profile" style="animation:none;border:0;box-shadow:none;background:none!important"><div class="nitro-card-tabs profile-nav-bar" style="display:flex"><div class="profile-nav-actions d-flex"><button class="btn profile-nav-edit"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M4 20h4L19 9l-4-4L4 16z" fill="currentColor"/></svg></button><button class="btn btn-danger profile-nav-close"></button></div></div></div></div>
+        <div class="popover" style="position:relative"><div class="pu-x"></div></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> every Nitro window header, Friends, Me, friend card, zoomed preview, room details card, voice panel, profile</div>
+    </article>
+
+    <article class="sb-card" id="chips"><header><h3 class="sb">Chips and segmented control</h3><p>Filter tabs. Selected = Peace blue. Segments sit inside a track.</p></header>
+      <div class="sb-demo col"><span class="lbl">Game window tabs</span>
+        <div class="draggable-window"><div class="nitro-card nitro-mentions" style="animation:none;border:0;box-shadow:none;border-radius:0"><div class="nitro-card-tabs" style="padding:0!important"><ul class="nav-tabs"><li class="nav-link">Public</li><li class="nav-link active">All Rooms</li><li class="nav-link">My World</li></ul></div></div></div>
+        <span class="lbl">Peace UI (Friends)</span><div class="sb-host" data-ui="chips"></div>
+        <span class="lbl">Segmented (Change looks item types)</span>
+        <div class="draggable-window"><div class="nitro-card nitro-avatar-editor" style="animation:none;display:block!important;background:none!important;border:0!important;box-shadow:none!important"><div class="choose-clothing" style="display:block!important"><div class="d-flex" style="height:40px;padding:3px;gap:3px"><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center"><div class="selected"></div>Shirts</div><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center">Prints</div><div class="category-item d-flex" style="flex:1;align-items:center;justify-content:center">Jackets</div></div></div></div></div></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> all window tabs, Shop category rows (white text), Change looks categories, Friends filters · <b>Segmented:</b> item types, Colour 1 / 2</div>
+    </article>
+
+    <article class="sb-card" id="inputs"><header><h3 class="sb">Inputs</h3><p>The Friends search look: deep field, black edge, 36px. Search gets the magnifier, selects one chevron.</p></header>
+      <div class="sb-demo col">
+        <div class="draggable-window"><div class="nitro-card nitro-navigator" style="animation:none;border:0;box-shadow:none;border-radius:0;height:auto!important"><div class="content-area" style="padding:0!important">
+          <div class="d-flex gap-2"><select class="form-select" style="width:130px;flex:none"><option>Anything</option></select><input class="form-control" placeholder="filter rooms by..."></div>
+        </div></div></div>
+        <div class="draggable-window"><div class="nitro-card nitro-room-creator" style="animation:none;border:0;box-shadow:none;border-radius:0;height:auto!important"><div class="content-area" style="padding:0!important;background:none!important">
+          <input class="form-control" type="text" value="Typed text">
+          <textarea class="form-control" rows="2" placeholder="Room description"></textarea>
+        </div></div></div>
+        <span class="lbl">Peace UI search and message field</span><div class="sb-host" data-ui="inputs"></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> every input, select and textarea in windows, Shop / Rooms / Inventory / Chat history search, Builders tool numbers, Friends search, message box</div>
+    </article>
+
+    <article class="sb-card" id="panels"><header><h3 class="sb">Panels and tiles</h3><p>Panels hold information (s1, faint inner line). Tiles are picked (s2); selected = blue ring.</p></header>
+      <div class="sb-demo col">
+        <div class="draggable-window"><div class="nitro-card nitro-catalog" style="animation:none;border:0;box-shadow:none;height:auto!important"><div class="content-area" style="padding:0!important">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+            <div class="catalog-grid-active" style="aspect-ratio:1"><div class="layout-catalog-grid-item" style="height:100%"></div></div>
+          </div>
+        </div></div></div>
+        <span class="lbl">Peace UI: stats panel, icon tiles</span><div class="sb-host" data-ui="tiles"></div>
+      </div>
+      <div class="sb-use"><b>Panels:</b> Inventory preview, room rows and cards, Builders tool rows, profile sections, Me stats and list · <b>Tiles:</b> Shop items, room layouts, Me tools, Room menu tools, room actions · <b>Light tiles:</b> Change looks items and layers</div>
+    </article>
+
+    <article class="sb-card" id="badges"><header><h3 class="sb">People badge, tags, labels</h3><p>One colour rule for people in a room, the same in the list, the grid and the details.</p></header>
+      <div class="sb-demo">
+        <div class="nitro-navigator" style="display:flex;gap:8px"><span class="badge" data-pu-ppl="0"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>0</span><span class="badge" data-pu-ppl="1"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>1</span><span class="badge" data-pu-ppl="full"><svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>25</span></div>
+        <span class="lbl">Grey = empty · green = people inside · red = full</span>
+        <div class="nitro-room-info"><span class="text-tag">chill</span> <span class="text-tag">music</span></div>
+        <div class="user-profile"><span class="bento-title">Section label</span></div>
+      </div>
+      <div class="sb-use"><b>Badge:</b> Rooms list, Rooms grid, room details · <b>Tags:</b> room tags, profile counts · <b>Labels:</b> My Wardrobe, profile sections, Friends sections, Room info</div>
+    </article>
+
+    <article class="sb-card" id="floating"><header><h3 class="sb">Floating panels and switch</h3><p>Things that float over the game: dark s0, black edge, a soft drop shadow.</p></header>
+      <div class="sb-demo col">
+        <div class="nitro-phone-corner" style="position:static!important;display:block!important"><div class="phone-corner-card" style="padding:12px;animation:none">Music card, voice panel, room details and drop-downs all use this look.</div></div>
+        <div class="builders-tools" style="display:flex;gap:10px;align-items:center"><span class="is-ticked"></span><span class="is-not-ticked"></span><span style="color:var(--pu-ink-2);font-size:13px">Switch on / off (Builders tool)</span></div>
+      </div>
+      <div class="sb-use"><b>Used on:</b> room details card, voice panel, music card, currency drop-down, Room menu, friend card, toasts, layer actions</div>
+    </article>
+  </div>
+</section>
+
+<template id="t-room">
+  <div class="top"><div class="lcol"><button class="pill roomchip"><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg><span class="ct"><b>3</b></span><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m6 9 6 6 6-6"/></svg></button></div>
+  <button class="pill money"><span class="cy"><i class="sb-coin" style="background:var(--pu-gold)"></i><b>283.2K</b></span><span class="cy"><i class="sb-coin" style="background:#c08bfa"></i><b>309.3K</b></span><span class="cy"><i class="sb-coin" style="background:#7dd3fc"></i><b>35</b></span><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="m6 9 6 6 6-6"/></svg></button></div>
+  <div class="pop rpop on" style="display:block">
+    <div class="rhead"><div class="rht"><b>Batu Caves</b><small>3 of 25 people here</small></div><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></button><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg></button></div>
+    <div class="rts"><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2M11 8v6M8 11h6"/></svg><span>Zoom in</span></button><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span>Chat history</span></button><button class="rt"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg><span>Hide bubbles</span></button><button class="rt on"><svg class="i" viewBox="0 0 24 24" style="width:22px;height:22px"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4"/></svg><span>Room voice</span></button></div>
+    <div class="rinfo"><div class="rlbl">Room info</div><div class="rkv"><span>Owner</span><b>Calcifer</b></div><div class="rkv"><span>Rating</span><b>12</b></div><div class="rtags"><span>caves</span><span>chill</span></div>
+      <div class="racts"><button class="ra"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg><span>Home room</span></button><button class="ra on"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/></svg><span>Favourite</span></button><button class="ra"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z"/></svg><span>Like</span></button></div>
+      <button class="btn dng">Report room</button></div>
+  </div>
+  <nav class="tabs" data-tabs="rooms"></nav>
+</template>
+
+<template id="t-friends">
+  <div class="sheet open" style="top:52px"><div class="shc">
+    <div class="whead"><h3>Friends</h3><button class="sqb"><i class="gx"></i></button></div>
+    <label class="search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg><input placeholder="Search 48 friends"></label>
+    <div class="chips"><button class="chip on">Online<span class="n">3</span></button><button class="chip">All<span class="n">48</span></button><button class="chip">Chats<span class="n">5</span><i class="rd"></i></button><button class="chip">Requests<span class="n">1</span><i class="rd"></i></button></div>
+    <div class="sbody"><div class="sec"><span>Online</span><span>3</span></div>
+      <div class="row unread"><span class="avw"><span class="av ini" style="--h:200">C</span><i class="st"></i></span><span class="who"><span class="nm"><span>Calcifer</span></span><span class="mt">building the caves</span></span><span class="acts"><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><b class="badge">2</b></button></span></div>
+      <div class="row"><span class="avw"><span class="av ini" style="--h:30">S</span><i class="st"></i></span><span class="who"><span class="nm"><span>soupy</span></span><span class="mt">11:11</span></span><span class="acts"><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button></span></div>
+      <div class="row"><span class="avw"><span class="av ini" style="--h:300">A</span><i class="st"></i></span><span class="who"><span class="nm"><span>Addaaaa</span></span><span class="mt">Online</span></span><span class="acts"><button class="act" disabled><svg class="i" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg></button><button class="act"><svg class="i" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button></span></div>
+    </div></div></div>
+  <nav class="tabs" data-tabs="friends"></nav>
+</template>
+
+<template id="t-me">
+  <div class="sheet open"><div class="shc">
+    <div class="whead"><h3>Me</h3><button class="sqb"><i class="gx"></i></button></div>
+    <div class="sbody"><div class="mehero"><span class="av xl ini" style="--h:210">S</span><div class="tt"><h3>SKIBIDI</h3><div class="sub">peace and love</div></div></div>
+      <div class="stats"><div class="stat w3"><b><i class="sb-coin" style="background:var(--pu-gold)"></i>283,214</b><span>Credits</span></div><div class="stat w3"><b><i class="sb-coin" style="background:#c08bfa"></i>309,312</b><span>Duckets</span></div><div class="stat"><b><i class="sb-coin" style="background:#7dd3fc"></i>35</b><span>Diamonds</span></div><div class="stat"><b><i class="sb-coin" style="background:#f472b6"></i>1.2K</b><span>Event points</span></div><div class="stat"><b><i class="sb-coin" style="background:var(--pu-green)"></i>80</b><span>Peace coins</span></div></div>
+      <div class="tools" id="me-tools"></div>
+      <div class="sec"><span>App</span></div><div class="list mx"><button class="li"><span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span></button><button class="li"><span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span></button><button class="li danger"><span class="lt">Back to website<small>Leaves the game</small></span></button></div>
+    </div></div></div>
+  <nav class="tabs" data-tabs="me"></nav>
+</template>
+
+<template id="t-buttons"><div style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn">Show all</button><button class="btn pri">Accept</button><button class="btn dng">Report room</button><button class="sqb"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m15 18-6-6 6-6"/></svg></button></div></template>
+<template id="t-whead"><div class="whead"><h3>Friends</h3><button class="sqb"><i class="gx"></i></button></div></template>
+<template id="t-chips"><div class="chips" style="padding:0"><button class="chip on">Online<span class="n">3</span></button><button class="chip">All<span class="n">48</span></button><button class="chip">Chats<span class="n">5</span></button></div></template>
+<template id="t-inputs"><div style="display:flex;flex-direction:column;gap:8px"><label class="search" style="margin:0"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg><input placeholder="Search 48 friends"></label><div style="display:flex;gap:8px"><label class="field"><input placeholder="Message Calcifer"></label><button class="send on"><svg class="i" viewBox="0 0 24 24" style="width:18px;height:18px"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button></div></div></template>
+<template id="t-tiles"><div class="stats" style="padding:0"><div class="stat w3"><b><i class="sb-coin" style="background:var(--pu-gold)"></i>283,214</b><span>Credits</span></div><div class="stat w3"><b><i class="sb-coin" style="background:#c08bfa"></i>309,312</b><span>Duckets</span></div></div><div class="tools" style="padding:8px 0 0;grid-template-columns:repeat(3,1fr)" id="tl-tools"></div></template>
+
+<script>
+{
+  const UI_CSS = "/*\n * Peace UI styles (top bar, tab bar, Friends, Me, Room menu, friend card, messages). Lives inside a shadow root,\n * so Nitro's CSS can't leak in and this can't leak out.\n *\n * Every colour, size, corner, font and icon comes from the --pu-* tokens at the top of nitro.css: custom\n * properties inherit into the shadow root (all: initial does not reset them). Components here match the ones\n * in nitro.css (see storybook/index.html): .sqb = square icon button / close, .chip, .btn (.pri / .dng), .search /\n * .field = input, .panel-like boxes (.stat, .list, .motto), tiles (.tool, .rt, .ra, .trio button), floating\n * panels (.pop, .card, .toast). tools/check-design.js keeps raw values out of this file.\n */\n:host {\n  all: initial;\n  position: fixed;\n  inset: 0;\n  z-index: 2147483000;\n  pointer-events: none;\n  color-scheme: dark;\n  font: 400 var(--pu-fs-md)/1.45 var(--pu-font);\n  color: var(--pu-ink);\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;\n  user-select: none;\n  -webkit-user-select: none;\n}\n* { box-sizing: border-box; min-width: 0; }\nbutton { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }\nbutton:disabled { cursor: default; }\ninput { font: inherit; color: inherit; margin: 0; }\ninput[type=search]::-webkit-search-cancel-button { display: none; }\n[hidden] { display: none !important; }\nsvg.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }\n.fill svg.i, svg.i.fill { fill: currentColor; }\n/* the close (X) drawing, shared with every Nitro window */\n.gx { display: block; flex: none; width: 14px; height: 14px; background: currentColor; -webkit-mask: var(--pu-i-x) center / contain no-repeat; mask: var(--pu-i-x) center / contain no-repeat; }\n.sdot { display: inline-block; width: 8px; height: 8px; border-radius: var(--pu-r-pill); background: var(--pu-green); flex: none; }\n.sdot.off { background: var(--pu-ink-3); }\n\n/* ================================================================ components */\n\n/* Square icon button (also the close X): 36px, dark two-tone */\n.sqb, .act, .send {\n  position: relative; width: var(--pu-ctl); height: var(--pu-ctl); flex: none; display: grid; place-items: center; color: var(--pu-ink);\n  background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);\n}\n.sqb:active, .act:active, .send:active { background: var(--pu-tone-press); }\n.sqb:disabled, .act:disabled { opacity: .3; }\n\n/* Buttons with text: default, primary (.pri), danger (.dng) */\n.btn {\n  height: var(--pu-ctl); padding: 0 var(--pu-pad); display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;\n  font: 400 var(--pu-fs)/1 var(--pu-font); color: var(--pu-ink);\n  background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);\n}\n.btn:active { background: var(--pu-tone-press); }\n.pri, .send.on, .chip.on, .rt.on, .ra.on, .tab.on .ico, .m.me {\n  background: var(--pu-blue-tone); border: var(--pu-edge); box-shadow: var(--pu-blue-hi); color: var(--pu-ink-on);\n}\n.pri { font-family: var(--pu-font-bold); font-weight: 700; }\n.pri:active { background: var(--pu-blue-press); }\n.dng { background: var(--pu-red-tone); box-shadow: var(--pu-red-hi); color: var(--pu-ink-on); font-family: var(--pu-font-bold); font-weight: 700; }\n.dng:active { background: var(--pu-red-press); }\n\n/* Chips */\n.chips { position: relative; flex: none; display: flex; gap: 6px; padding: 10px var(--pu-pad); overflow-x: auto; scrollbar-width: none; }\n.chips::-webkit-scrollbar { display: none; }\n.chip {\n  flex: none; height: var(--pu-ctl); padding: 0 13px; display: flex; align-items: center; gap: 6px; white-space: nowrap;\n  font: 500 var(--pu-fs)/1 var(--pu-font); color: var(--pu-ink-2);\n  background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);\n}\n.chip:active { background: var(--pu-tone-press); }\n.chip.on:active { background: var(--pu-blue-press); }\n.chip .n { opacity: .62; font-variant-numeric: tabular-nums; }\n.chip .rd { width: 6px; height: 6px; border-radius: var(--pu-r-pill); background: var(--pu-red); }\n\n/* Inputs: deep field, black edge, 36px */\n.search, .field {\n  flex: none; height: var(--pu-ctl); display: flex; align-items: center; gap: var(--pu-gap); color: var(--pu-ink-3);\n  background: var(--pu-well); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-inset);\n}\n.search { margin: 10px var(--pu-pad) 0; padding: 0 4px 0 11px; }\n.field { flex: 1; padding: 0 3px 0 var(--pu-pad); }\n.search:focus-within, .field:focus-within { border-color: var(--pu-blue); }\n.search input, .field input { flex: 1; height: 100%; background: none; border: 0; outline: 0; font-size: var(--pu-fs); color: var(--pu-ink); user-select: text; -webkit-user-select: text; }\n.search input::placeholder, .field input::placeholder { color: var(--pu-ink-3); }\n.search > svg.i { width: var(--pu-ic); height: var(--pu-ic); stroke-width: 2; }\n.clr { width: 28px; height: 28px; border-radius: var(--pu-r-in); display: grid; place-items: center; color: var(--pu-ink-2); }\n.clr .gx { width: 12px; height: 12px; }\n\n/* Panels: boxes that show information */\n.stat, .list { background: var(--pu-s1); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi-soft); }\n.motto { background: var(--pu-well); border: var(--pu-edge); border-radius: var(--pu-r); color: var(--pu-ink-2); user-select: text; -webkit-user-select: text; }\n\n/* Tiles: icon + caption buttons */\n.tool, .rt, .ra, .trio button {\n  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; color: var(--pu-ink);\n  font: 400 var(--pu-fs-xs)/1.15 var(--pu-font);\n  background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);\n}\n.tool:active, .rt:active, .ra:active, .trio button:active { background: var(--pu-tone-press); }\n.tool span, .rt span { max-width: 92%; }\n.ra span, .trio span { max-width: 94%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n\n/* Floating panels: drop-downs, the friend card, toasts */\n.pop, .card, .toast { background: var(--pu-s0); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi), var(--pu-float); color: var(--pu-ink); }\n\n/* Section label */\n.sec, .rlbl { font: 700 var(--pu-fs-xs)/1 var(--pu-font-bold); text-transform: uppercase; letter-spacing: .06em; color: var(--pu-ink-3); }\n\n/* Counters and dots */\n.badge, .cnt { min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--pu-r-pill); background: var(--pu-red); color: var(--pu-ink-on); font: 700 var(--pu-fs-xs)/18px var(--pu-font); text-align: center; font-variant-numeric: tabular-nums; font-style: normal; }\n.badge { position: absolute; top: -5px; right: -5px; height: 18px; line-height: 14px; border: 2px solid var(--pu-s0); }\n.cnt { min-width: 22px; height: 22px; line-height: 22px; }\n.rdot { position: absolute; top: 3px; right: 3px; width: 9px; height: 9px; border-radius: var(--pu-r-pill); background: var(--pu-red); border: 2px solid var(--pu-s0); }\n\n/* Avatar heads (Peace's imager always returns the full body, 64x110: the head is about x 32, y 37) */\n.av {\n  position: relative; width: 44px; height: 44px; display: grid; place-items: center; overflow: hidden; flex: none;\n  background: var(--pu-tone-press); border-radius: var(--pu-r); box-shadow: var(--pu-hi); color: var(--pu-ink-2); font: 700 var(--pu-fs-lg)/1 var(--pu-font-bold);\n}\n.av img { position: absolute; left: 50%; top: 50%; width: 64px; height: 110px; max-width: none; margin: -38px 0 0 -32px; }\n.av.ini { background: hsl(var(--h, 200) 22% 22%); color: hsl(var(--h, 200) 60% 78%); }\n.av.xl { width: 72px; height: 72px; font-size: var(--pu-fs-xl); }\n.av.xl img { width: 96px; height: 165px; margin: -57px 0 0 -48px; }\n.avw { position: relative; flex: none; }\n.avw .st { position: absolute; right: -3px; bottom: -3px; width: 13px; height: 13px; border-radius: var(--pu-r-pill); background: var(--pu-green); border: 3px solid var(--pu-s0); }\n.off .av img { filter: grayscale(.9); opacity: .55; }\n.off .av.ini { opacity: .55; }\n.mehead { position: relative; width: 28px; height: 28px; border-radius: var(--pu-r-in); overflow: hidden; display: grid; place-items: center; background: var(--pu-s3); box-shadow: var(--pu-hi); }\n.mehead img { position: absolute; left: 50%; top: 50%; width: 46px; height: 79px; max-width: none; margin: -27px 0 0 -23px; }\n\n/* ================================================================ top bar */\n.top { position: absolute; left: 10px; right: 10px; top: 10px; display: flex; gap: var(--pu-gap); align-items: flex-start; pointer-events: none; }\n.top > * { pointer-events: auto; }\n/* left column: room chip, online counter under it (same width) */\n.lcol { flex: none; display: flex; flex-direction: column; gap: 6px; }\n.lcol:not(:has(> :not([hidden]))) { display: none; }\n.pill {\n  height: var(--pu-ctl); display: flex; align-items: center; gap: 6px; padding: 0 6px 0 9px; color: var(--pu-ink);\n  font: 700 var(--pu-fs-sm)/1 var(--pu-font-bold); font-variant-numeric: tabular-nums;\n  background: var(--pu-tone); border: var(--pu-edge); border-radius: var(--pu-r); box-shadow: var(--pu-hi);\n}\n.pill:active { background: var(--pu-tone-press); }\n.pill > svg.i:last-child { color: var(--pu-ink-3); }\n.roomchip .ct, .online .ct { display: flex; align-items: center; gap: 3px; color: var(--pu-ink-2); flex: none; }\n.lcol > .pill { justify-content: flex-start; }\n.online .ct::before { content: ''; width: 7px; height: 7px; margin-right: 2px; border-radius: var(--pu-r-pill); background: var(--pu-green); }\n.money { flex: 1 1 auto; justify-content: space-between; gap: var(--pu-gap); padding: 0 6px 0 var(--pu-gap); }\n.money .cy { display: flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; }\n.ci { width: 18px; height: 18px; object-fit: contain; image-rendering: pixelated; flex: none; }\n/* currency drop-down */\n.pop { position: absolute; z-index: 3; top: var(--pu-top); right: 10px; width: 220px; padding: 4px; display: none; pointer-events: auto; }\n.pop.on { display: block; animation: fade .15s; }\n.pr { display: flex; align-items: center; gap: 9px; height: var(--pu-ctl); padding: 0 var(--pu-gap); font-size: var(--pu-fs); color: var(--pu-ink-2); }\n.pr + .pr { border-top: 1px solid var(--pu-line); }\n.pr b { margin-left: auto; color: var(--pu-ink); font-family: var(--pu-font-bold); font-variant-numeric: tabular-nums; }\n\n/* Room menu: name on top (owner tools on the right), 4 tools in a 2x2 grid, room info below */\n.rpop { left: 10px; right: auto; width: min(312px, calc(100% - 20px)); max-height: calc(100% - 140px); padding: 0; overflow: auto; scrollbar-width: none; }\n.rhead { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px var(--pu-pad); background: var(--pu-tone-bar); border-bottom: var(--pu-edge); }\n.rht { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; margin-right: 4px; }\n.rhead b { font: 700 var(--pu-fs)/1.3 var(--pu-font-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.rhead small { font-size: var(--pu-fs-sm); color: var(--pu-ink-2); }\n.rts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: var(--pu-gap); }\n.rt { height: var(--pu-tile); font-size: var(--pu-fs-sm); }\n.rinfo { display: flex; flex-direction: column; gap: 6px; padding: 10px var(--pu-pad) var(--pu-pad); border-top: var(--pu-edge); box-shadow: var(--pu-hi-line); }\n.rkv { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; font-size: var(--pu-fs-sm); }\n.rkv > span { color: var(--pu-ink-2); }\n.rkv > b { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n.rkv > button { display: inline-flex; align-items: center; gap: 2px; min-width: 0; padding: 2px 0; font: 700 var(--pu-fs-sm)/1 var(--pu-font); color: var(--pu-ink); }\n.rkv > button .i { color: var(--pu-ink-2); }\n.rdesc { margin: 0; font-size: var(--pu-fs-sm); line-height: 1.4; color: var(--pu-ink-2); white-space: pre-line; overflow-wrap: anywhere; max-height: 5.6em; overflow: auto; }\n.rtags { display: flex; flex-wrap: wrap; gap: 4px; }\n.rtags span { padding: 2px 7px; border-radius: var(--pu-r-in); background: var(--pu-s2); border: 1px solid var(--pu-line-2); font-size: var(--pu-fs-sm); color: var(--pu-ink-2); }\n.racts { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; margin-top: 4px; }\n.ra { height: var(--pu-tile-sm); gap: 4px; }\n.rinfo > .btn { width: 100%; margin-top: 2px; }\n.empty { padding: 28px 24px; text-align: center; color: var(--pu-ink-2); font-size: var(--pu-fs); }\n.empty p { margin: 0 0 14px; }\n.empty.sm { padding: 16px; font-size: var(--pu-fs-sm); }\n\n/* Online players list (opens from the online counter) */\n.opop { left: 10px; right: 10px; width: auto; max-height: calc(100% - 140px); padding: 0; display: none; flex-direction: column; overflow: hidden; }\n.opop.on { display: flex; }\n.opop .olist { overflow: auto; scrollbar-width: none; padding: 4px 0; }\n.opop .row { min-height: 52px; }\n\n/* ================================================================ tab bar */\n.tabs { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: var(--pu-tabs); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: var(--pu-tone-bar); border-top: var(--pu-edge); box-shadow: var(--pu-hi-line); pointer-events: auto; }\n.tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font: 500 var(--pu-fs-xs)/1.2 var(--pu-font); color: var(--pu-ink-2); }\n.tab .ico { position: relative; width: 50px; height: 30px; border-radius: var(--pu-r); display: grid; place-items: center; transition: background .2s, color .2s; }\n.tab.on { color: var(--pu-ink-on); }\n.tab:active .ico { background: var(--pu-s3); }\n.tab .badge { top: -4px; right: 2px; }\n.tab .rdot { top: -2px; right: 8px; }\n\n/* ================================================================ windows: Friends, Me (same frame as Nitro's windows) */\n.sheet {\n  position: absolute; z-index: 1; left: 0; right: 0; top: var(--pu-top); bottom: var(--pu-tabs); display: flex; flex-direction: column; overflow: hidden; visibility: hidden; pointer-events: auto;\n  background: var(--pu-s0); border-top: var(--pu-edge); box-shadow: var(--pu-hi);\n  transform: translateY(24px); opacity: 0; transition: transform .24s var(--pu-ease), opacity .2s, visibility 0s linear .24s;\n}\n.sheet.open { visibility: visible; transform: none; opacity: 1; transition: transform .24s var(--pu-ease), opacity .2s, visibility 0s; }\n.shc { flex: 1; min-height: 0; display: flex; flex-direction: column; }\n.whead { flex: none; position: relative; height: var(--pu-head); display: flex; align-items: center; justify-content: center; background: var(--pu-tone-bar); border-bottom: var(--pu-edge); }\n.whead h3 { margin: 0; font: 700 var(--pu-fs-lg)/1.2 var(--pu-font-bold); }\n.whead .sqb { position: absolute; right: 6px; top: 50%; margin-top: calc(var(--pu-ctl) / -2); }\n.sbody { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 14px; scrollbar-width: none; }\n.sbody::-webkit-scrollbar { display: none; }\n.sec { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; padding: var(--pu-gap) var(--pu-pad) 4px; background: var(--pu-s0); box-shadow: 0 -4px 0 var(--pu-s0); }\n.link { font: 700 var(--pu-fs-sm)/1 var(--pu-font-bold); color: var(--pu-blue); text-transform: none; letter-spacing: 0; }\n\n/* rows */\n.row { display: flex; align-items: center; gap: 10px; width: 100%; min-height: var(--pu-tile); padding: 4px var(--pu-pad); text-align: left; cursor: pointer; }\n.row:active { background: var(--pu-s2); }\n.row + .row { border-top: 1px solid var(--pu-line); }\n.who { flex: 1; display: flex; flex-direction: column; }\n.nm { display: flex; align-items: center; gap: 5px; font-size: var(--pu-fs-md); font-weight: 500; white-space: nowrap; }\n.nm > span:first-child { overflow: hidden; text-overflow: ellipsis; }\n.nm time { margin-left: auto; font-size: var(--pu-fs-sm); font-weight: 400; color: var(--pu-ink-3); }\n.mt { font-size: var(--pu-fs-sm); color: var(--pu-ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.off .nm { color: var(--pu-ink-2); }\n.unread .nm { font-weight: 700; }\n.unread .mt { color: var(--pu-ink); }\n.rl { display: inline-flex; color: var(--c); }\n.rl svg.i { width: 15px; height: 15px; }\n.rl.fill svg.i { fill: currentColor; }\n.acts { display: flex; gap: 6px; align-items: center; }\n.act .badge { top: -6px; right: -6px; }\n.act > svg.i { width: 18px; height: 18px; }\n\n/* Me */\n.mehero { display: flex; align-items: flex-end; gap: 14px; padding: var(--pu-pad); }\n.mehero .tt { flex: 1; padding-bottom: 6px; }\n.mehero h3 { margin: 0; font: 700 var(--pu-fs-xl)/1.25 var(--pu-font-bold); }\n.sub { display: flex; align-items: center; gap: 6px; font-size: var(--pu-fs-sm); color: var(--pu-ink-2); }\n.stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; padding: 0 var(--pu-pad) var(--pu-pad); }\n.stat { grid-column: span 2; padding: 7px 9px; }\n.stat.w3 { grid-column: span 3; }\n.stat.w6 { grid-column: 1 / -1; }\n.stat b { display: flex; align-items: center; gap: 5px; font: 700 var(--pu-fs-md)/1.3 var(--pu-font-bold); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.stat span { font-size: var(--pu-fs-sm); color: var(--pu-ink-2); }\n.stat .ci { width: var(--pu-ic); height: var(--pu-ic); }\n.tools { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 var(--pu-pad) var(--pu-pad); }\n.tool { height: var(--pu-tile); }\n.tool.dis { opacity: .4; filter: grayscale(1); }\n.list { overflow: hidden; }\n.list.mx { margin: 0 var(--pu-pad); }\n.li { display: flex; align-items: center; gap: var(--pu-pad); width: 100%; min-height: 50px; padding: 6px var(--pu-pad); text-align: left; font-size: var(--pu-fs); }\n.li + .li { border-top: var(--pu-edge); }\n.li .end { margin-left: auto; display: flex; gap: 6px; align-items: center; color: var(--pu-ink-3); }\n.lt { display: flex; flex-direction: column; }\n.lt small { font-size: var(--pu-fs-sm); color: var(--pu-ink-2); }\n.danger { color: var(--pu-red); }\n.footnote { display: flex; align-items: center; gap: var(--pu-gap); margin: var(--pu-pad) var(--pu-pad) 0; font-size: var(--pu-fs-sm); color: var(--pu-ink-3); }\n\n/* friend card */\n.modal { position: absolute; z-index: 6; inset: 0; display: none; pointer-events: auto; }\n.modal.on { display: block; }\n.scrim { position: absolute; inset: 0; background: var(--pu-scrim); animation: fade .2s; }\n.card { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--pu-pad) 14px 14px; border-bottom: 0; border-radius: var(--pu-r) var(--pu-r) 0 0; animation: up .28s var(--pu-ease); }\n.hero { display: flex; align-items: flex-start; gap: var(--pu-pad); padding: 0 0 var(--pu-pad); }\n.hero .tt { flex: 1; padding-top: 4px; }\n.hero h4 { margin: 0; display: flex; align-items: center; gap: 6px; font: 700 var(--pu-fs-xl)/1.25 var(--pu-font-bold); }\n.hero .sub { margin-top: 2px; }\n.hero .motto { margin: var(--pu-gap) 0 0; padding: 7px 10px; font-size: var(--pu-fs); }\n.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--pu-gap); }\n.trio button { height: 58px; gap: 4px; font: 400 var(--pu-fs-sm)/1.15 var(--pu-font); }\n.trio button:disabled { opacity: .35; }\n\n/* messages (open in the Friends window) */\n.page { position: absolute; z-index: 5; left: 0; right: 0; top: var(--pu-top); bottom: var(--pu-tabs); display: none; flex-direction: column; background: var(--pu-s0); border-top: var(--pu-edge); pointer-events: auto; }\n.page.on { display: flex; animation: slide .24s ease-out; }\n.phead { flex: none; display: flex; align-items: center; gap: 10px; height: var(--pu-head); padding: 0 6px; background: var(--pu-tone-bar); border-bottom: var(--pu-edge); }\n.phead .tt { flex: 1; }\n.phead h3 { margin: 0; font: 700 var(--pu-fs-lg)/1.25 var(--pu-font-bold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.phead .av { width: 36px; height: 36px; }\n.phead .av img { margin: -40px 0 0 -32px; }\n.msgs { flex: 1; min-height: 0; overflow: auto; padding: 10px var(--pu-pad); display: flex; flex-direction: column; gap: 4px; }\n.day { align-self: center; margin: 6px 0 var(--pu-gap); font-size: var(--pu-fs-sm); color: var(--pu-ink-3); text-align: center; }\n.m {\n  align-self: flex-start; max-width: 80%; padding: 7px var(--pu-pad) 6px; font-size: var(--pu-fs-md); line-height: 1.35; user-select: text; -webkit-user-select: text; overflow-wrap: anywhere;\n  background: var(--pu-s2); border: var(--pu-edge); border-radius: var(--pu-r) var(--pu-r) var(--pu-r) var(--pu-r-in); box-shadow: var(--pu-hi);\n}\n.m time { display: block; margin-top: 1px; font-size: var(--pu-fs-xs); text-align: right; opacity: .55; }\n.m.me { align-self: flex-end; border-radius: var(--pu-r) var(--pu-r) var(--pu-r-in) var(--pu-r); }\n.m + .m.me, .m.me + .m:not(.me) { margin-top: 6px; }\n.compose { flex: none; display: flex; gap: var(--pu-gap); padding: var(--pu-gap) 10px var(--pu-pad); background: var(--pu-s1); border-top: var(--pu-edge); }\n.field input { font-size: var(--pu-fs-lg); }\n\n/* toast */\n.toast { position: absolute; z-index: 7; left: 50%; bottom: calc(var(--pu-tabs) + 72px); max-width: 88%; padding: 9px 14px; font: 500 var(--pu-fs)/1.3 var(--pu-font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translate(-50%, 8px); transition: opacity .2s, transform .2s; pointer-events: none; }\n.toast.on { opacity: 1; transform: translate(-50%, 0); }\n\n/* zoomed item preview */\n.zoom { position: absolute; z-index: 8; inset: 0 0 var(--pu-tabs); display: none; flex-direction: column; background: var(--pu-scrim-strong); pointer-events: auto; }\n.zoom.on { display: flex; animation: fade .18s; }\n.zstage { flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; padding: var(--pu-pad); }\n.zstage img { display: block; max-width: none; image-rendering: pixelated; border-radius: var(--pu-r); border: var(--pu-edge); background: var(--pu-stage); }\n.zbar { flex: none; display: flex; justify-content: center; gap: var(--pu-gap); padding: var(--pu-pad); }\n.zbar .sqb { width: var(--pu-ctl-lg); height: var(--pu-ctl-lg); }\n\n/* Change looks is full screen (frame.js adds .looks while Nitro's avatar editor is open): no top bar or tab bar */\n:host(.looks) .top, :host(.looks) .tabs, :host(.looks) .pop { display: none !important; }\n:host(.looks) .toast { bottom: 50%; }\n\n/* Scrolling lists fade at the top and bottom edge while there is more to scroll (nitro.css registers the properties) */\n.sbody, .msgs, .opop .olist {\n  -webkit-mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);\n  mask-image: linear-gradient(to bottom, transparent 0, black var(--pu-ft), black calc(100% - var(--pu-fb)), transparent 100%);\n  animation: pu-edge linear both; animation-timeline: scroll(self);\n}\n@keyframes pu-edge { 0% { --pu-ft: 0px; --pu-fb: 22px; } 6% { --pu-ft: 22px; --pu-fb: 22px; } 94% { --pu-ft: 22px; --pu-fb: 22px; } 100% { --pu-ft: 22px; --pu-fb: 0px; } }\n@keyframes up { from { transform: translateY(100%); } }\n@keyframes fade { from { opacity: 0; } }\n@keyframes slide { from { transform: translateX(28px); opacity: 0; } }\n@media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } }\n";
+  const TOKENS = [["Type", "--pu-font", "Ubuntu, system-ui, -apple-system, Roboto, sans-serif", ""], ["Type", "--pu-font-bold", "UbuntuBold, Ubuntu, system-ui, sans-serif", ""], ["Type", "--pu-fs-2xs", "10px", "micro labels on the Change looks stage"], ["Type", "--pu-fs-xs", "11px", "tile captions, section labels, wardrobe"], ["Type", "--pu-fs-sm", "12.5px", "secondary text, owners, timestamps, badges"], ["Type", "--pu-fs", "14px", "body text, buttons, chips, inputs"], ["Type", "--pu-fs-md", "15px", "names, list titles"], ["Type", "--pu-fs-lg", "16px", "window titles"], ["Type", "--pu-fs-xl", "19px", "the big name in Me and the friend card"], ["Text", "--pu-ink", "#f2f2f2", "main text"], ["Text", "--pu-ink-2", "#a6a6a6", "secondary text"], ["Text", "--pu-ink-3", "#7a7a7a", "hints, placeholders, timestamps"], ["Text", "--pu-ink-on", "#fff", "text on blue, red and green"], ["Surfaces, darkest to lightest", "--pu-bg", "#0b0b0b", "behind the game"], ["Surfaces, darkest to lightest", "--pu-well", "#0d0d0d", "inside inputs and picture wells"], ["Surfaces, darkest to lightest", "--pu-s0", "#141414", "window body, floating panels"], ["Surfaces, darkest to lightest", "--pu-s1", "#1c1c1c", "panels, cards, list rows"], ["Surfaces, darkest to lightest", "--pu-s2", "#262626", "tiles and rows inside panels"], ["Surfaces, darkest to lightest", "--pu-s3", "#2e2e2e", "open rows"], ["Surfaces, darkest to lightest", "--pu-scrim", "rgba(0, 0, 0, .52)", ""], ["Surfaces, darkest to lightest", "--pu-scrim-strong", "rgba(0, 0, 0, .86)", ""], ["Lines", "--pu-edge-c", "#000", ""], ["Lines", "--pu-edge", "1px solid var(--pu-edge-c)", "the black outline every control and panel has"], ["Lines", "--pu-line", "rgba(255, 255, 255, .07)", "soft divider between rows"], ["Lines", "--pu-line-2", "rgba(255, 255, 255, .14)", "visible light border (chat history, tags)"], ["Lines", "--pu-line-solid", "#3a3a3a", "light edge round picture cards (Rooms grid)"], ["Lines", "--pu-hi", "inset 0 0 0 1px rgba(255, 255, 255, .12)", "inner highlight of buttons and chips"], ["Lines", "--pu-hi-soft", "inset 0 0 0 1px rgba(255, 255, 255, .08)", "inner highlight of panels"], ["Lines", "--pu-hi-top", "inset 0 1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08)", ""], ["Lines", "--pu-hi-bottom", "inset 0 -1px 0 rgba(255, 255, 255, .08), inset 1px 0 0 rgba(255, 255, 255, .08), inset -1px 0 0 rgba(255, 255, 255, .08)", ""], ["Lines", "--pu-hi-line", "inset 0 1px 0 rgba(255, 255, 255, .1)", "light line on top of a bar"], ["Lines", "--pu-inset", "inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .06)", "sunken field"], ["Duotone fills", "--pu-tone", "linear-gradient(#262626 50%, #1a1a1a 50%)", "buttons, chips"], ["Duotone fills", "--pu-tone-press", "linear-gradient(#303030 50%, #222 50%)", ""], ["Duotone fills", "--pu-tone-bar", "linear-gradient(#202020 50%, #161616 50%)", "window headers, bars"], ["Duotone fills", "--pu-tone-track", "linear-gradient(#1d1d1d 50%, #171717 50%)", "segmented control track"], ["Accents", "--pu-blue", "#169ccc", ""], ["Accents", "--pu-blue-tone", "linear-gradient(#22ade0 50%, #1591c0 50%)", ""], ["Accents", "--pu-blue-press", "linear-gradient(#1591c0 50%, #127fa9 50%)", ""], ["Accents", "--pu-blue-hi", "inset 0 1px 0 #7eeaff, inset 0 0 0 1px rgba(255, 255, 255, .14)", ""], ["Accents", "--pu-blue-soft", "#1d3340", "selected tile"], ["Accents", "--pu-ring", "inset 0 0 0 2px #169ccc", "selected tile outline"], ["Accents", "--pu-red", "#e5383b", ""], ["Accents", "--pu-red-tone", "linear-gradient(#e0443f 50%, #c22f2b 50%)", ""], ["Accents", "--pu-red-press", "linear-gradient(#c22f2b 50%, #a92724 50%)", ""], ["Accents", "--pu-red-hi", "inset 0 1px 0 #ff9a97, inset 0 0 0 1px rgba(255, 255, 255, .14)", ""], ["Accents", "--pu-green", "#3fd26b", ""], ["Accents", "--pu-green-tone", "linear-gradient(#35b85c 50%, #2a9b4c 50%)", ""], ["Accents", "--pu-green-hi", "inset 0 1px 0 #8af0a8, inset 0 0 0 1px rgba(255, 255, 255, .14)", ""], ["Accents", "--pu-gold", "#f5c542", ""], ["Light tiles", "--pu-lt", "#c9cdd2", ""], ["Light tiles", "--pu-lt-on", "#d9eef7", ""], ["Light tiles", "--pu-lt-hi", "inset 0 1px 0 rgba(255, 255, 255, .55)", ""], ["Light tiles", "--pu-lt-shine", "rgba(255, 255, 255, .6)", ""], ["Light tiles", "--pu-lt-dash", "#7d838a", ""], ["Change looks stage", "--pu-stage", "radial-gradient(60% 46% at 50% 0%, rgba(120, 225, 255, .2), transparent 70%), linear-gradient(#11394a, #0c2a37 45%, #08171f)", ""], ["Change looks stage", "--pu-stage-beam", "linear-gradient(rgba(150, 235, 255, .17), rgba(150, 235, 255, .03) 85%, transparent)", ""], ["Change looks stage", "--pu-stage-ink", "rgba(200, 240, 255, .72)", ""], ["Change looks stage", "--pu-stage-card", "linear-gradient(#1c3a48, #0e2029)", "wardrobe slots"], ["Change looks stage", "--pu-stage-dash", "rgba(255, 255, 255, .2)", ""], ["Change looks stage", "--pu-stage-float", "rgba(12, 14, 16, .94)", "layer actions over the stage"], ["Change looks stage", "--pu-swatch-hi", "inset 0 0 0 1px rgba(255, 255, 255, .2), inset 0 -3px 0 rgba(0, 0, 0, .14)", ""], ["Change looks stage", "--pu-swatch-on", "0 0 0 2px #141414, 0 0 0 4px #fff", ""], ["Shape and size", "--pu-r", "6px", "one corner for every button, chip, input, panel, tile and window"], ["Shape and size", "--pu-r-in", "4px", "parts inside a padded control (segments, badges, swatches)"], ["Shape and size", "--pu-r-pill", "999px", "counters and dots"], ["Shape and size", "--pu-ctl", "36px", "height of every button, chip, input, select and square icon button"], ["Shape and size", "--pu-ctl-lg", "44px", "bottom action bars only (Buy, Create room)"], ["Shape and size", "--pu-head", "48px", "window header"], ["Shape and size", "--pu-tile", "64px", "icon tiles with a caption (Me tools, Room menu)"], ["Shape and size", "--pu-tile-sm", "50px", "small icon tiles (room actions)"], ["Shape and size", "--pu-ic", "16px", "icon inside a control"], ["Shape and size", "--pu-gap", "8px", ""], ["Shape and size", "--pu-pad", "12px", "window gutter"], ["Shape and size", "--pu-top", "52px", "top of the windows, under the top bar"], ["Shape and size", "--pu-tabs", "60px", "tab bar"], ["Shape and size", "--pu-bottom", "var(--pu-tabs)", ""], ["Depth", "--pu-float", "0 12px 28px rgba(0, 0, 0, .55)", ""], ["Depth", "--pu-sheet", "0 -10px 30px rgba(0, 0, 0, .55)", ""], ["Depth", "--pu-lift", "0 -1px 0 rgba(255, 255, 255, .1), 0 -8px 18px rgba(0, 0, 0, .35)", ""], ["Depth", "--pu-ease", "cubic-bezier(.2, .8, .2, 1)", ""], ["Icons", "--pu-i-x", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-i-turn", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-i-undo", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10.5a5.5 5.5 0 0 1 0 11H11'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-i-save", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-i-wear", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-bg-search", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7.5'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-bg-chev", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-bg-save", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3Cpath d='M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7'/%3E%3Cpath d='M7 3v4a1 1 0 0 0 1 1h7'/%3E%3C/svg%3E\")", ""], ["Icons", "--pu-bg-wear", "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a7a7a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z'/%3E%3C/svg%3E\")", ""]];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // Shadow root samples: the real ui.css, with the host made static so it sits in the page.
+  const HOST_FIX = ':host{position:absolute!important;inset:0!important;z-index:auto!important;pointer-events:auto!important;display:block}';
+  const HOST_INLINE = ':host{position:relative!important;inset:auto!important;z-index:auto!important;pointer-events:auto!important;display:block}';
+  const ic = (p, z) => '<svg class="i" viewBox="0 0 24 24" style="width:' + z + 'px;height:' + z + 'px">' + p + '</svg>';
+  const P = {
+    compass: '<circle cx="12" cy="12" r="9.5"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3Z"/>', bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+    box: '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+    user: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', shirt: '<path d="M20.4 3.5 16 2a4 4 0 0 1-8 0L3.6 3.5a2 2 0 0 0-1.3 2.2l.6 3.5a1 1 0 0 0 1 .8H6v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V10h2.2a1 1 0 0 0 1-.8l.6-3.5a2 2 0 0 0-1.4-2.2Z"/>',
+    at: '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>', phone: '<rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M11 18h2"/>',
+    trophy: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16"/><path d="M18 2H6v7a6 6 0 0 0 12 0Z"/>', camera: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3Z"/><circle cx="12" cy="13" r="3"/>',
+    gem: '<path d="M6 3h12l4 6-10 12L2 9Z"/><path d="M2 9h20"/>', star: '<path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9Z"/>'
+  };
+  const tabs = (on) => [['rooms', 'compass', 'Rooms'], ['shop', 'bag', 'Shop'], ['friends', 'users', 'Friends'], ['inventory', 'box', 'Inventory'], ['me', 'user', 'Me']]
+    .map((t) => '<button class="tab' + (t[0] === on ? ' on' : '') + '"><span class="ico">' + (t[0] === 'me' ? '<span class="mehead">' + ic(P.user, 18) + '</span>' : ic(P[t[1]], 22)) + (t[0] === 'friends' ? '<b class="badge">1</b>' : '') + '</span><span>' + t[2] + '</span></button>').join('');
+  const tools = (list) => list.map((t) => '<button class="tool">' + ic(P[t[1]], 22) + '<span>' + t[0] + '</span></button>').join('');
+  document.querySelectorAll('.sb-host[data-ui]').forEach((h) => {
+    const t = document.getElementById('t-' + h.dataset.ui), inScreen = !!h.closest('.sb-screen');
+    const r = h.attachShadow({ mode: 'open' });
+    r.innerHTML = '<style>' + UI_CSS + (inScreen ? HOST_FIX : HOST_INLINE) + '</style>' + t.innerHTML;
+    r.querySelectorAll('[data-tabs]').forEach((n) => { n.innerHTML = tabs(n.dataset.tabs); });
+    const mt = r.getElementById('me-tools'); if (mt) mt.innerHTML = tools([['Profile', 'user'], ['Change looks', 'shirt'], ['Mentions', 'at'], ['Phone', 'phone'], ['Achievements', 'trophy'], ['Camera', 'camera'], ['Rare values', 'gem'], ['Prestige', 'star']]);
+    const tl = r.getElementById('tl-tools'); if (tl) tl.innerHTML = tools([['Profile', 'user'], ['Change looks', 'shirt'], ['Mentions', 'at']]);
+    if (!inScreen) { r.host.style.height = 'auto'; }
+  });
+  // Nitro screens: the game's own window markup, styled only by nitro.css
+  const person = '<svg class="sb-ico" viewBox="0 0 16 16"><circle cx="8" cy="5" r="3"/><path d="M2 15c0-3.3 2.7-5 6-5s6 1.7 6 5z"/></svg>';
+  const header = (t) => '<div class="nitro-card-header"><span class="nitro-card-header-text">' + t + '</span><div class="nitro-card-header-close"><svg viewBox="0 0 10 10" width="10" height="10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor" stroke-width="2.5"/></svg></div></div>';
+  const row = (name, owner, n, ppl, pic) => '<div class="navigator-item"><div class="room-thumbnail"><div class="sb-pic ' + pic + '"></div><div class="badge w-100" data-pu-ppl="' + ppl + '">' + person + n + '</div></div><div class="flex-column"><div class="titleromddas text-truncate">' + name + '</div><div class="pu-owner pu-lo"><span>Owner:</span> ' + owner + '</div></div></div>';
+  const card = (name, owner, n, ppl, pic) => '<div class="nav-thumbnail"><div class="room-thumbnail"><div class="sb-pic ' + pic + '" style="position:absolute;inset:0"></div><div class="badge" data-pu-ppl="' + ppl + '">' + person + n + '</div></div><div class="d-flex w-100"><div class="text-truncate">' + name + '</div></div><div class="pu-owner">' + owner + '</div></div>';
+  document.getElementById('scr-rooms').innerHTML = '<div class="sb-host" data-ui="none"></div><div class="draggable-window"><div class="nitro-card nitro-navigator">' + header('Navigator') +
+    '<div class="nitro-card-tabs"><ul class="nav-tabs"><li class="nav-link">Public</li><li class="nav-link active">All Rooms</li><li class="nav-link">My World</li></ul></div>' +
+    '<div class="content-area"><div class="d-flex gap-2"><select class="form-select" style="width:120px;flex:none"><option>Anything</option></select><input class="form-control" placeholder="filter rooms by..."></div>' +
+    '<div class="containernew-kvjd"><div class="grid" style="display:grid">' + card('11:11', 'soupy', 1, '1', '') + card('Batu Caves', 'Calcifer', 1, '1', 'b') + '</div></div>' +
+    '<div class="d-flex flex-column gap-2">' + row('Cafe', 'Calcifer', 0, '0', 'c') + row('Pool party', 'Addaaaa', 25, 'full', 'b') + '</div></div></div></div>';
+  document.getElementById('scr-inv').innerHTML = '<div class="draggable-window"><div class="nitro-card nitro-inventory">' + header('Inventory') +
+    '<div class="nitro-card-tabs"><ul class="nav-tabs"><li class="nav-link active">Furni</li><li class="nav-link">Pets</li><li class="nav-link">Badges</li><li class="nav-link">Bots</li></ul></div>' +
+    '<div class="content-area"><div class="d-flex gap-2"><input class="form-control" placeholder="Search"><button class="btn btn-danger"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>' +
+    '<div class="grid"><div class="g-col-5 d-flex"><div><div class="sb-pic"></div></div><div class="d-flex flex-column gap-2"><div class="font-bold">Throne</div><button class="btn btn-success">Place in room</button><button class="btn btn-primary">Sell</button></div></div></div></div></div></div>';
+  // add the Peace UI top bar and tab bar to the Nitro screens
+  document.querySelectorAll('#scr-rooms, #scr-inv').forEach((s) => {
+    const h = document.createElement('div'); h.className = 'sb-host'; s.prepend(h);
+    const r = h.attachShadow({ mode: 'open' }), on = s.id === 'scr-rooms' ? 'rooms' : 'inventory';
+    r.innerHTML = '<style>' + UI_CSS + HOST_FIX + '</style>' + document.getElementById('t-room').innerHTML.replace(/<div class="pop rpop[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<nav/, '<nav');
+    r.querySelectorAll('[data-tabs]').forEach((n) => { n.innerHTML = tabs(on); });
+    r.querySelectorAll('.pop').forEach((n) => n.remove());
+  });
+  document.querySelectorAll('.sb-host[data-ui="none"]').forEach((n) => n.remove());
+
+  // Tokens
+  const groups = {};
+  TOKENS.forEach((t) => { (groups[t[0]] = groups[t[0]] || []).push(t); });
+  const sw = (name, value) => {
+    if (/^--pu-(i|bg)-/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2)"><span style="width:22px;height:22px;display:block;' + (name.indexOf('--pu-i-') === 0 ? 'background:var(--pu-ink);-webkit-mask:var(' + name + ') center/contain no-repeat;mask:var(' + name + ') center/contain no-repeat' : 'background:var(' + name + ') center/contain no-repeat') + '"></span></span>';
+    if (/^--pu-font/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font:700 18px var(' + name + ')">Aa</span>';
+    if (/^--pu-fs/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font-size:var(' + name + ')">Aa</span>';
+    if (/^--pu-r(-|$)/.test(name)) return '<span class="sb-sw" style="background:none;border:0"><span style="width:36px;height:36px;display:block;background:var(--pu-tone);border:var(--pu-edge);box-shadow:var(--pu-hi);border-radius:var(' + name + ')"></span></span>';
+    if (/^--pu-(ctl|head|tile|ic|gap|pad|top|tabs|bottom)/.test(name)) return '<span class="sb-sw" style="background:none;border:0;place-items:end center"><span style="width:14px;height:min(40px,var(' + name + '));display:block;background:var(--pu-blue-tone);border-radius:2px"></span></span>';
+    if (/inset|0 \d|px rgba/.test(value) && !/gradient/.test(value)) return '<span class="sb-sw" style="background:var(--pu-s1);box-shadow:var(' + name + ')"></span>';
+    if (/^--pu-edge$/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);border:var(--pu-edge)"></span>';
+    if (/^--pu-(ease)/.test(name)) return '<span class="sb-sw" style="background:var(--pu-s2);font-size:12px;color:var(--pu-ink-3)">ease</span>';
+    return '<span class="sb-sw" style="background:var(' + name + ')"></span>';
+  };
+  const tile = (t) => '<div class="sb-tok">' + sw(t[1], t[2]) + '<div><code>' + esc(t[1]) + '</code>' + (t[3] ? '<i>' + esc(t[3]) + '</i>' : '') + '<small>' + esc(t[2].length > 60 ? t[2].slice(0, 58) + '…' : t[2]) + '</small></div></div>';
+  const put = (id, names) => { document.getElementById(id).innerHTML = names.filter((g) => groups[g]).map((g) => '<div class="sb-group">' + esc(g) + '</div><div class="sb-grid">' + groups[g].map(tile).join('') + '</div>').join(''); };
+  const known = ['Type', 'Shape and size', 'Icons'];
+  put('tok-colour', Object.keys(groups).filter((g) => known.indexOf(g) < 0 && g !== 'Depth'));
+  put('tok-type', ['Type']);
+  put('tok-shape', ['Shape and size', 'Depth']);
+  put('tok-icons', ['Icons']);
+}
+</script>
+</body>
+</html>
