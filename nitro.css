@@ -1059,3 +1059,41 @@ html.pu-on .user-profile .profile-nav-close {
 html.pu-on .user-profile .profile-nav-edit:active { background: linear-gradient(#1591c0 50%, #127fa9 50%) !important; }
 html.pu-on .user-profile .profile-nav-close:active { background: linear-gradient(#c22f2b 50%, #a92724 50%) !important; }
 html.pu-on .user-profile .profile-nav-edit svg, html.pu-on .user-profile .profile-nav-close svg { color: #fff !important; fill: currentColor; }
+
+/* Profiles: one standard dark design for everyone. Stickers, custom colours, gradients, name styles and the
+   card background picture are ignored; the picture behind the avatar (banner + stand) stays. */
+html.pu-on .draggable-window > .nitro-card.user-profile,
+html.pu-dark .draggable-window > .nitro-card.user-profile { background: #141414 !important; --profile-surface: #141414 !important; --profile-fg: #f2f2f2 !important; --profile-tab-fg: #f2f2f2 !important; }
+html.pu-on .user-profile .content-area,
+html.pu-dark .user-profile .content-area {
+  background: #141414 !important; background-image: none !important; color: #f2f2f2 !important;
+  --profile-bento-bg: #1c1c1c !important; --profile-bento-blur: 0px !important; --profile-fg: #f2f2f2 !important; padding: 0 12px 12px !important;
+}
+html.pu-on .user-profile .profile-stickers-layer, html.pu-on .user-profile .profile-sticker { display: none !important; }
+html.pu-on .user-profile :is(.bento, section.identity-relationships, .relationship-row, .profile-section, .bento-card) {
+  background: #1c1c1c !important; background-image: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08) !important; color: #f2f2f2 !important;
+}
+html.pu-on .user-profile .bento { padding: 10px !important; }
+html.pu-on .user-profile section.identity-relationships { padding: 10px !important; margin-top: 10px !important; background: #181818 !important; }
+html.pu-on .user-profile .relationship-row { padding: 8px 10px !important; min-height: 40px; background: #202020 !important; }
+html.pu-on .user-profile .relationship-row :is(a, .text-decoration-underline, b, strong) { color: #f2f2f2 !important; }
+html.pu-on .user-profile .relationship-empty, html.pu-on .user-profile .relationship-row .small { color: #8a8a8a !important; font-style: normal !important; }
+html.pu-on .user-profile :is(.bento-title) { color: #a6a6a6 !important; font: 700 11px/1 UbuntuBold, Ubuntu, sans-serif !important; letter-spacing: .06em; text-transform: uppercase; }
+html.pu-on .user-profile .bento-count { background: #262626 !important; color: #d0d0d0 !important; border: 1px solid #000 !important; border-radius: 5px !important; padding: 2px 7px !important; font-size: 12px !important; }
+/* Name: plain white bold, no gradient or name-style icon */
+html.pu-on .user-profile .name-profile-kk :is(strong, span, b) { background: none !important; -webkit-text-fill-color: #f2f2f2 !important; color: #f2f2f2 !important; text-shadow: none !important; filter: none !important; animation: none !important; }
+html.pu-on .user-profile .name-profile-kk strong { font: 700 16px/1.2 UbuntuBold, Ubuntu, sans-serif !important; }
+html.pu-on .user-profile .name-profile-kk span[style*="namecustomizer"], html.pu-on .user-profile .name-profile-kk span[style*="namecustomizer"] + span { display: none !important; }
+html.pu-on .user-profile .profile-motto { color: #a6a6a6 !important; font-style: normal !important; }
+html.pu-on .user-profile .meta-label { color: #8a8a8a !important; }
+html.pu-on .user-profile .meta-value { color: #f2f2f2 !important; font-weight: 700 !important; }
+html.pu-on .user-profile .identity-footer .line { background: rgba(255, 255, 255, .1) !important; }
+html.pu-on .user-profile .friend-btn {
+  display: inline-flex !important; align-items: center !important; gap: 4px !important; height: 28px !important; padding: 0 10px !important;
+  background: var(--pu-hud) !important; border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: var(--pu-in) !important; color: #f2f2f2 !important; font-size: 12.5px !important;
+}
+html.pu-on .user-profile .profile-avatar { border: 1px solid #000 !important; border-radius: 6px !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08) !important; }
+/* Every other tab of the profile: plain dark text on the dark card */
+html.pu-on .user-profile .content-area :is(.text-black, .text-dark, [class*="text-muted"]) { color: #a6a6a6 !important; }
+html.pu-on .user-profile .content-area :is(h1, h2, h3, h4, h5, h6, p, span, div):not(.meta-label):not(.bento-title):not(.relationship-empty) { text-shadow: none !important; }
