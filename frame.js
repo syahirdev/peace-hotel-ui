@@ -47,7 +47,10 @@
     looks: ['.nitro-toolbar-me .icon-me-clothing'],
     achievements: ['.nitro-toolbar-me .icon-me-achievements'],
     prestige: ['.nitro-toolbar-me .icon-me-battlepass'],
-    rares: ['.nitro-toolbar-me .icon-me-rarevalues']
+    rares: ['.nitro-toolbar-me .icon-me-rarevalues'],
+    // Peace's Help and Settings buttons sit under its wallet, which Peace UI hides (our money pill replaces it).
+    settings: ['.nitro-purse-container .icon-cog', '.nitro-purse-container .icon-settings', '.nitro-phone-corner .icon-cog'],
+    help: ['.nitro-purse-container .icon-help', '.nitro-phone-corner .icon-help']
   };
   // The avatar button that opens Nitro's Me menu. It has the "active" class while the menu is open.
   var NITRO_ME = ['.nitro-toolbar .navigation-item.item-avatar-bg-icon', '.navigation-item.item-avatar-bg-icon'];
@@ -1402,6 +1405,11 @@
     ['phone', 'Phone', 'phone'], ['achievements', 'Achievements', 'trophy'], ['camera', 'Camera', 'camera'],
     ['rares', 'Rare values', 'gem'], ['prestige', 'Prestige', 'star']
   ];
+  // Peace's own Help and Settings windows (its wallet buttons).
+  var GAME = [
+    ['settings', 'Settings', 'cog', 'Sound, chat and game options'],
+    ['help', 'Help', 'help', 'Get help or report a problem']
+  ];
   function meHTML() {
     var all = CURRENCIES.filter(function (c) { return c[0] === -1 || amount(c[0]) != null; });
     // Credits and duckets share the first row (two columns, whole numbers); the rest share rows of three
@@ -1421,6 +1429,9 @@
         }
         return '<button class="' + cls + '" data-me="' + t[0] + '">' + dot + ic(t[2], 22) + '<span>' + t[1] + '</span></button>';
       }).join('') + '</div>' +
+      '<div class="sec"><span>Game</span></div><div class="list mx">' +
+      GAME.map(function (g) { return '<button class="li" data-game="' + g[0] + '">' + ic(g[2]) + '<span class="lt">' + g[1] + '<small>' + g[3] + '</small></span><span class="end">' + ic('chevr', 18) + '</span></button>'; }).join('') +
+      '</div>' +
       '<div class="sec"><span>App</span></div><div class="list mx">' +
       '<button class="li" data-app="reload">' + ic('refresh') + '<span class="lt">Reload game<small>Fixes a stuck or frozen game</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
       '<button class="li" data-app="chatlog">' + ic('file') + '<span class="lt">Saved chat log<small>Read room chat after a disconnect</small></span><span class="end">' + ic('chevr', 18) + '</span></button>' +
@@ -1501,7 +1512,7 @@
     }, true);
 
     root.addEventListener('click', function (e) {
-      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-app],[data-rt],[data-ri],[data-on]');
+      var el = e.target.closest('[data-tab],[data-a],[data-ff],[data-f],[data-chat],[data-follow],[data-prof],[data-acc],[data-dec],[data-me],[data-game],[data-app],[data-rt],[data-ri],[data-on]');
       if (!el || el.disabled) return;
       var d = el.dataset;
       if (d.tab) {
@@ -1558,6 +1569,12 @@
         var tile = TILES.find(function (x) { return x[0] === d.me; });
         closeNitroWindows();
         openNitro(d.me, tile ? tile[1] : 'This');
+        return;
+      }
+      if (d.game) {
+        var g = GAME.find(function (x) { return x[0] === d.game; });
+        closeNitroWindows();
+        openNitro(d.game, g ? g[1] : 'This');
         return;
       }
       if (d.on) { profileByName(d.on); return; }
