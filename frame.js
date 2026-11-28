@@ -346,8 +346,21 @@
     for (var i = 0; i < NITRO_ME.length; i++) { var el = document.querySelector(NITRO_ME[i]); if (el) return el; }
     return null;
   }
+  // Peace's wallet buttons (Help, Settings): exact selectors first, then any control in its hidden
+  // wallet areas whose class, title or label names it, so a renamed class in a Peace update still works.
+  var WALLET_AREAS = '.nitro-purse-container, .nitro-purse, .nitro-phone-corner';
+  var WALLET_RX = { help: /help/i, settings: /setting|icon-cog|gear/i };
+  function findWalletBtn(key) {
+    var rx = WALLET_RX[key]; if (!rx) return null;
+    var all = document.querySelectorAll(WALLET_AREAS.split(', ').map(function (a) { return a + ' *'; }).join(', '));
+    for (var i = 0; i < all.length; i++) {
+      var e = all[i], txt = (typeof e.className === 'string' ? e.className : '') + ' ' + (e.title || '') + ' ' + (e.getAttribute('aria-label') || '');
+      if (rx.test(txt)) return e.closest('button, [role=button], .nitro-purse-button, [class*="-btn"], [class*="button"]') || e;
+    }
+    return null;
+  }
   function pressNitro(key) {
-    var el = findNitro(key);
+    var el = findNitro(key) || findWalletBtn(key);
     if (el) { el.click(); return Promise.resolve(true); }
     // A Me menu control: open Nitro's Me menu, press the control, and make sure the menu ends up closed.
     // The menu fades out (still in the page for a moment), so check the toggle's "active" class, not the menu.
